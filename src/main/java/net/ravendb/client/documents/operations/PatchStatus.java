@@ -9,7 +9,7 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum PatchStatus {
 
     /**
-     * The document does not exists, operation was a no-op
+     * The document does not exist, operation was a no-op
      */
     DOCUMENT_DOES_NOT_EXIST,
 

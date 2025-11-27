@@ -11,18 +11,35 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.Set;
 
+/**
+ * Allows to specify the IDs of database instances that no longer exist so that their entries can be removed from the database change vector.
+ * This operation does not affect any documents' current change vectors, but from now on when documents are modified or created their change vector will not include the obsolete entries.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#UpdateUnusedDatabasesOperation
+ */
 public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
 
     private final String _database;
     private final Parameters _parameters;
-
+    /**
+     * {@inheritDoc}
+     * @see UpdateUnusedDatabasesOperation
+     * @param database Name of the database
+     * @param unusedDatabaseIds The database IDs to be removed from the change vector
+     * @throws IllegalArgumentException if {@code database} is null
+     */
     public UpdateUnusedDatabasesOperation(String database, Set<String> unusedDatabaseIds) {
         this(database, unusedDatabaseIds, false);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see UpdateUnusedDatabasesOperation#UpdateUnusedDatabasesOperation(String, Set)
+     * @param validate Default: {@code false}
+     */
     public UpdateUnusedDatabasesOperation(String database, Set<String> unusedDatabaseIds, boolean validate) {
         if (StringUtils.isEmpty(database)) {
             throw new IllegalArgumentException("Database cannot be null");

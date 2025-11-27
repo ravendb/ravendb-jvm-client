@@ -25,6 +25,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Operation to insert or update a compare exchange value in the RavenDB database.
+ * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+ * that ensures a consistent state across the cluster.
+ *
+ * @param <T> the type of the value to be stored in the compare exchange
+ */
 public class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private final String _key;
@@ -36,6 +43,22 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
         this(key, value, index, null);
     }
 
+    /**
+     * Operation to insert or update a compare exchange value in the RavenDB database.
+     * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+     * that ensures a consistent state across the cluster.
+     * <p>
+     * Initializes a new instance of the {@code PutCompareExchangeValueOperation<T>} class.
+     * </p>
+     *
+     * @param key the key associated with the compare exchange value
+     * @param value the value to be stored in the compare exchange
+     * @param index the index used for optimistic concurrency control. The operation will only succeed
+     *              if the provided index matches the current index. Pass 0 to create a new compare exchange.
+     * @param metadata optional metadata associated with the compare exchange value
+     * @implNote The index must be set to 0 for new compare exchange entries. For updates, the current
+     *           index of the existing entry must be provided.
+     */
     public PutCompareExchangeValueOperation(String key, T value, long index, IMetadataDictionary metadata) {
         _key = key;
         _value = value;

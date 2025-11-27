@@ -14,11 +14,24 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
-
+/**
+ * Adjusts the priority of index threads using the {@code SetIndexesPriorityOperation}.
+ * Each index operates on its own dedicated thread, and this operation allows you to raise or lower the thread's priority.
+ * By default, RavenDB assigns a lower priority to indexing threads compared to request-processing threads.
+ *
+ * <p><strong>Indexes scope:</strong> The priority can be set for both static and auto indexes.</p>
+ * <p><strong>Nodes scope:</strong> The priority is updated on all nodes within the database group.</p>
+ */
 public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
 
     private final Parameters _parameters;
 
+    /**
+     * Inherits documentation from {@link SetIndexesPriorityOperation}.
+     *
+     * @param indexName The name of the index for which the priority is being modified.
+     * @param priority  The priority level to set for the index. Valid values are Low, Normal, and High.
+     */
     public SetIndexesPriorityOperation(String indexName, IndexPriority priority) {
         if (indexName == null) {
             throw new IllegalArgumentException("IndexName cannot be null");
@@ -28,7 +41,11 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
         _parameters.setPriority(priority);
         _parameters.setIndexNames(new String[]{ indexName });
     }
-
+    /**
+     * Inherits documentation from {@link SetIndexesPriorityOperation}.
+     *
+     * @param parameters The Parameters object containing the list of index names and the priority level to apply.
+     */
     public SetIndexesPriorityOperation(Parameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");
@@ -83,8 +100,18 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
         }
     }
 
+    /**
+     * Represents the parameters required to set the priority level for multiple indexes.
+     * This class includes the list of index names and the priority level to apply.
+     */
     public static class Parameters {
+        /**
+         * An array of index names for which the priority is being modified.
+         */
         private String[] indexNames;
+        /**
+         * The priority level to apply to the specified indexes. Valid values are Low, Normal, and High.
+         */
         private IndexPriority priority;
 
         public String[] getIndexNames() {

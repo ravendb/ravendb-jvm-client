@@ -16,6 +16,13 @@ public class TimeSeriesBatchOperation implements IVoidOperation {
     private final String _documentId;
     private final TimeSeriesOperation _operation;
 
+    /**
+     * Initializes a new instance of the {@link TimeSeriesBatchOperation} class,
+     * performing batch operations on a time series, including appending or deleting entries.
+     *
+     * @param documentId The ID of the document that holds the time series.
+     * @param operation  The batch of time series operations to be applied.
+     */
     public TimeSeriesBatchOperation(String documentId, TimeSeriesOperation operation) {
         if (documentId == null) {
             throw new IllegalArgumentException("Document id cannot be null");

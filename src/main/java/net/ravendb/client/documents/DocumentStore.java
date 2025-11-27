@@ -41,7 +41,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
+    final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Lazy<RequestExecutor>> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -71,6 +71,10 @@ public class DocumentStore extends DocumentStoreBase {
 
     public DocumentStore() {
 
+    }
+
+    public ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> getAggressiveCacheChanges() {
+        return _aggressiveCacheChanges;
     }
 
     public ExecutorService getExecutorService() {

@@ -8,7 +8,17 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
+/**
+ * Retrieves detailed collection statistics, providing in-depth information for each collection.
+ * This includes the count of documents, total size, and sizes of documents, revisions, and tombstones.
+ */
 public class GetDetailedCollectionStatisticsOperation implements IMaintenanceOperation<DetailedCollectionStatistics> {
+    /**
+     * Inherits documentation from {@link GetDetailedCollectionStatisticsOperation}.
+     */
+    public GetDetailedCollectionStatisticsOperation() {
+    }
+
     @Override
     public RavenCommand<DetailedCollectionStatistics> getCommand(DocumentConventions conventions) {
         return new GetDetailedCollectionStatisticsCommand();

@@ -6,6 +6,10 @@ import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.function.Consumer;
 
+/**
+ * {@inheritDoc}
+ * @see IGroupByDocumentQuery
+ */
 public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
 
     private final DocumentQuery<T> _query;
@@ -13,23 +17,31 @@ public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
     public GroupByDocumentQuery(DocumentQuery<T> query) {
         _query = query;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IGroupByDocumentQuery<T> selectKey() {
         return selectKey(null, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IGroupByDocumentQuery<T> selectKey(String fieldName) {
         return selectKey(fieldName, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IGroupByDocumentQuery<T> selectKey(String fieldName, String projectedName) {
         _query._groupByKey(fieldName, projectedName);
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IDocumentQuery<T> selectSum(GroupByField field, GroupByField... fields) {
         if (field == null) {
@@ -48,23 +60,31 @@ public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
 
         return _query;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IDocumentQuery<T> selectCount() {
         return selectCount("count");
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IDocumentQuery<T> selectCount(String projectedName) {
         _query._groupByCount(projectedName);
         return _query;
     }
-
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IGroupByDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder) {
         return filter(builder, Integer.MAX_VALUE);
     }
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IGroupByDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder, int limit) {
         try (CleanCloseable mode = _query.setFilterMode(true)) {

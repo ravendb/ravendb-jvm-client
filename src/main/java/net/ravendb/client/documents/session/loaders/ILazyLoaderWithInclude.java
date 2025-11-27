@@ -10,9 +10,8 @@ public interface ILazyLoaderWithInclude {
     //TBD expr overrides with expressions + maybe we TInclude, see:
 
     /**
-     * Begin a load while including the specified path
-     * @param path Path in documents in which server should look for a 'referenced' documents.
-     * @return Lazy loader with includes support
+     * {@inheritDoc}
+     * @see IDocumentIncludeBuilder#includeDocuments
      */
     ILazyLoaderWithInclude include(String path);
 

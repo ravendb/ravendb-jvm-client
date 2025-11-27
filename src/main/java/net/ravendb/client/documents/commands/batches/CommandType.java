@@ -24,7 +24,6 @@ public enum CommandType {
     TIME_SERIES_COPY,
 
     BATCH_PATCH,
-
     JSON_PATCH,
     CLIENT_ANY_COMMAND,
     CLIENT_MODIFY_DOCUMENT_COMMAND,
@@ -63,6 +62,8 @@ public enum CommandType {
                 return TIME_SERIES;
             case "TimeSeriesWithIncrements":
                 return TIME_SERIES_WITH_INCREMENTS;
+            case "JsonPatch":
+                return JSON_PATCH;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }

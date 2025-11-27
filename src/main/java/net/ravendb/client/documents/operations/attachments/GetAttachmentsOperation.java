@@ -21,10 +21,23 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents an operation to retrieve multiple attachments associated with specified documents.
+ *
+ * <p>This class implements the {@link IOperation}&lt;Iterator&lt;AttachmentEnumeratorResult&gt;&gt; interface,
+ * allowing for the retrieval of attachments in a batch operation.</p>
+ */
+
 public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsResult> {
     private final AttachmentType _type;
     private final List<AttachmentRequest> _attachments;
 
+    /**
+     * Initializes a new instance of the {@link GetAttachmentsOperation} class.
+     *
+     * @param attachments A collection of {@link AttachmentRequest} instances specifying the attachments to retrieve.
+     * @param type        The type of attachments to retrieve.
+     */
     public GetAttachmentsOperation(List<AttachmentRequest> attachments, AttachmentType type) {
         _type = type;
         _attachments = attachments;

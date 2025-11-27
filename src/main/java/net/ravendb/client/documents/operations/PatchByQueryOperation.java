@@ -18,11 +18,19 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
+/**
+ * A class for creating operations that update documents according to a given patch query.
+ */
 public class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
     private final IndexQuery _queryToUpdate;
     private final QueryOperationOptions _options;
 
+    /**
+     * Returns an operation which updates all documents according to the provided {@code queryToUpdate}.
+     *
+     * @param queryToUpdate The patch query according to which the documents will be updated.
+     */
     public PatchByQueryOperation(String queryToUpdate) {
         this(new IndexQuery(queryToUpdate));
     }
@@ -30,6 +38,12 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
     public PatchByQueryOperation(IndexQuery queryToUpdate) {
         this(queryToUpdate, null);
     }
+    /**
+     * Returns an operation which updates all documents according to the provided {@code queryToUpdate}.
+     *
+     * @param queryToUpdate An object containing the patch query according to which the documents will be updated, as well as optional parameters.
+     * @param options       Provides additional options for configuring the patch execution when updating documents.
+     */
     public PatchByQueryOperation(IndexQuery queryToUpdate, QueryOperationOptions options) {
         if (queryToUpdate == null) {
             throw new IllegalArgumentException("QueryToUpdate cannot be null");

@@ -1,17 +1,30 @@
 package net.ravendb.client.documents.queries.suggestions;
 
+import net.ravendb.client.documents.conventions.DocumentConventions;
+
 public class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionOperations<T> {
 
+    private final DocumentConventions conventions;
     private SuggestionWithTerm _term;
     private SuggestionWithTerms _terms;
 
+    public SuggestionBuilder(DocumentConventions conventions)
+    {
+        this.conventions = conventions;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionOperations<T> withDisplayName(String displayName) {
         getSuggestion().setDisplayField(displayName);
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionOperations<T> byField(String fieldName, String term) {
         if (fieldName == null) {
@@ -27,7 +40,9 @@ public class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionOperations<T> byField(String fieldName, String[] terms) {
         if (fieldName == null) {
@@ -47,7 +62,9 @@ public class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionOperations<T> withOptions(SuggestionOptions options) {
         getSuggestion().setOptions(options);
@@ -62,5 +79,4 @@ public class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
 
         return _terms;
     }
-
 }

@@ -62,19 +62,31 @@ public class SessionTimeSeriesBase {
         this.name = name;
         this.session = session;
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double, String)
+     */
     public void append(Date timestamp, double value) {
         append(timestamp, value, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double, String)
+     */
     public void append(Date timestamp, double value, String tag) {
         append(timestamp, new double[] { value }, tag);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double[], String)
+     */
     public void append(Date timestamp, double[] values) {
         append(timestamp, values, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double[], String)
+     */
     public void append(Date timestamp, double[] values, String tag) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -94,15 +106,24 @@ public class SessionTimeSeriesBase {
             session.defer(new TimeSeriesBatchCommandData(docId, name, appends, null));
         }
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete()
+     */
     public void delete() {
         delete(null, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete(Date)
+     */
     public void delete(Date at) {
         delete(at, at);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete(Date, Date)
+     */
     public void delete(Date from, Date to) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -141,7 +162,10 @@ public class SessionTimeSeriesBase {
             ranges.removeIf(range -> compare(leftDate(range.getFrom()), leftDate(from)) <= 0 && compare(rightDate(range.getTo()), rightDate(to)) >= 0);
         }
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(Date, double[])
+     */
     public void increment(Date timestamp, double[] values) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -163,14 +187,24 @@ public class SessionTimeSeriesBase {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(double[])
+     */
     public void increment(double[] values) {
         increment(new Date(), values);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(Date, double)
+     */
     public void increment(Date timestamp, double value) {
         increment(timestamp, new double[] { value });
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(double)
+     */
     public void increment(double value) {
         increment(new Date(), value);
     }

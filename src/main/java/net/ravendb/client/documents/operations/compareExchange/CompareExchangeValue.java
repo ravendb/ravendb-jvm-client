@@ -4,10 +4,25 @@ import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.json.MetadataAsDictionary;
 
 public class CompareExchangeValue<T> implements ICompareExchangeValue {
+    /**
+     * @see ICompareExchangeValue#getKey()
+     */
     private String key;
+    /**
+     * @see ICompareExchangeValue#getIndex()
+     */
     private long index;
+    /**
+     * @see ICompareExchangeValue#getValue()
+     */
     private T value;
+    /**
+     * The change vector for the compare-exchange value, used for concurrency checks.
+     */
     private String changeVector;
+    /**
+     * @see ICompareExchangeValue#getMetadata()
+     */
     private IMetadataDictionary metadataAsDictionary;
 
     public CompareExchangeValue(String key, long index, T value) {
@@ -18,6 +33,14 @@ public class CompareExchangeValue<T> implements ICompareExchangeValue {
         this(key, index, value, null, metadata);
     }
 
+    /**
+     * Initializes a new instance of the {@link CompareExchangeValue} class with the specified key, index, value, and optional metadata.
+     *
+     * @param key The unique key of the compare-exchange value.
+     * @param index The index used for optimistic concurrency control; used for concurrency checks.
+     * @param value The value associated with the specified compare-exchange key.
+     * @param metadata Optional metadata associated with the compare-exchange value.
+     */
     public CompareExchangeValue(String key, long index, T value, String changeVector, IMetadataDictionary metadata) {
         this.key = key;
         this.index = index;

@@ -11,6 +11,7 @@ public interface IAbstractIndexCreationTask {
     DocumentConventions getConventions();
     void setConventions(DocumentConventions conventions);
     IndexDefinition createIndexDefinition();
+    SearchEngineType getSearchEngineType();
     void execute(IDocumentStore store);
     void execute(IDocumentStore store, DocumentConventions conventions);
     void execute(IDocumentStore store, DocumentConventions conventions, String database);

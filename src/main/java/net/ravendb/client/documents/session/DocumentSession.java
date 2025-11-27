@@ -214,7 +214,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     /**
      * Generates the document ID.
+     * <p>
+     * This method is not supported anymore.
+     * Will be removed in the next major version of the product.
+     * </p>
      */
+    @Deprecated
     @Override
     protected String generateId(Object entity) {
         return getConventions().generateDocumentId(getDatabaseName(), entity);
@@ -309,6 +314,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public ILoaderWithInclude include(String path) {
         return new MultiLoaderWithInclude(this).include(path);
     }
+
+    //TODO: Add include expression api
 
     public <T> Lazy<T> addLazyOperation(Class<T> clazz, ILazyOperation operation, Consumer<T> onEval) {
         pendingLazyOperations.add(operation);
@@ -1073,11 +1080,18 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * @see IDocumentSession#countersFor(String) 
+     */
     @Override
     public ISessionDocumentCounters countersFor(String documentId) {
         return new SessionDocumentCounters(this, documentId);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see IDocumentSession#countersFor(Object)
+     */
     @Override
     public ISessionDocumentCounters countersFor(Object entity) {
         return new SessionDocumentCounters(this, entity);

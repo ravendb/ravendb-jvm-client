@@ -40,6 +40,10 @@ public class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCo
         indexDefinitionBuilder.setPriority(getPriority());
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
+        indexDefinitionBuilder.setCompoundFieldsStrings(compoundFieldsStrings);
+
+        if (this.getSearchEngineType() != null)
+            indexDefinitionBuilder.getConfiguration().put(net.ravendb.client.Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, this.getSearchEngineType().toString());
 
         CountersIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

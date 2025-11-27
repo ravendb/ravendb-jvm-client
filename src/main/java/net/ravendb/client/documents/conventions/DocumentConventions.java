@@ -15,17 +15,29 @@ import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
 import org.apache.commons.lang3.ObjectUtils;
-
+import net.ravendb.client.documents.DocumentStore;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import net.ravendb.client.DocumentationUrls;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
+/**
+ * The set of conventions used by the {@link DocumentStore} which allow the users to customize
+ * the way the Raven client API behaves
+ * {@inheritDoc}
+ * @see DocumentationUrls.Session.Options#Conventions
+ */
 public class DocumentConventions {
 
     public static final DocumentConventions defaultConventions = new DocumentConventions();
@@ -47,15 +59,17 @@ public class DocumentConventions {
     private ClientConfiguration _originalConfiguration;
     private final Map<Class, Field> _idPropertyCache = new HashMap<>();
     private boolean _saveEnumsAsIntegers;
+    private boolean _saveEnumsAsIntegersForPatching;
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
     private final boolean _disableTcpCompression = true;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
-
+    private Function<HttpClientBuilder, CloseableHttpClient> createHttpClient;
     private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
     private BiFunction<String, Object, String> _documentIdGenerator;
+    //TODO: make thid documentIdGenerator async and change the method to be async.
     private Function<String, String> _findIdentityPropertyNameFromCollectionName;
     private Function<String, String> _loadBalancerPerSessionContextSelector;
 
@@ -67,14 +81,16 @@ public class DocumentConventions {
 
     private boolean _useOptimisticConcurrency;
     private int _maxNumberOfRequestsPerSession;
-
+    private Boolean useHttpDecompression;
     private Duration _requestTimeout;
     private Duration _firstBroadcastAttemptTimeout;
     private Duration _secondBroadcastAttemptTimeout;
     private Duration _waitForIndexesAfterSaveChangesTimeout;
     private Duration _waitForReplicationAfterSaveChangesTimeout;
     private Duration _waitForNonStaleResultsTimeout;
-
+    private Duration globalHttpClientTimeout;
+    private Duration httpPooledConnectionLifetime;
+    private Duration httpPooledConnectionIdleTimeout;
     private int _loadBalancerContextSeed;
     private LoadBalanceBehavior _loadBalanceBehavior;
     private ReadBalanceBehavior _readBalanceBehavior;
@@ -84,6 +100,8 @@ public class DocumentConventions {
     private Boolean _useHttpDecompression;
     private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
     private boolean _sendApplicationIdentifier;
+    private Type httpClientType;
+    private Consumer<HttpClientBuilder> configureHttpMessageHandler;
 
     private final BulkInsertConventions _bulkInsert;
 
@@ -147,7 +165,40 @@ public class DocumentConventions {
         }
     }
 
+    public Function<HttpClientBuilder, CloseableHttpClient> getCreateHttpClient() {
+        return createHttpClient;
+    }
+    public Type getHttpClientType() {
+        return httpClientType;
+    }
 
+    public Consumer<HttpClientBuilder> getConfigureHttpMessageHandler() {
+        return configureHttpMessageHandler;
+    }
+
+    public void setConfigureHttpMessageHandler(Consumer<HttpClientBuilder> configureHttpMessageHandler) {
+        this.configureHttpMessageHandler = configureHttpMessageHandler;
+    }
+
+    public void setHttpClientType(Type httpClientType) {
+        this.httpClientType = httpClientType;
+    }
+
+    public void setCreateHttpClient(Function<HttpClientBuilder, CloseableHttpClient> createHttpClient) {
+        this.createHttpClient = createHttpClient;
+    }
+
+    public boolean hasExplicitlySetDecompressionUsage() {
+        return useHttpDecompression != null;
+    }
+
+    public Duration getGlobalHttpClientTimeout() {
+        return globalHttpClientTimeout;
+    }
+
+    public void setGlobalHttpClientTimeout(Duration globalHttpClientTimeout) {
+        this.globalHttpClientTimeout = globalHttpClientTimeout;
+    }
 
     public BulkInsertConventions bulkInsert() {
         return _bulkInsert;
@@ -215,7 +266,9 @@ public class DocumentConventions {
         _aggressiveCache = new AggressiveCacheConventions(this);
         _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
         _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
-
+        globalHttpClientTimeout = Duration.ofHours(12);
+        httpClientType = HttpClient.class;
+        createHttpClient = builder -> builder.build();
         _waitForIndexesAfterSaveChangesTimeout = Duration.ofSeconds(15);
         _waitForReplicationAfterSaveChangesTimeout = Duration.ofSeconds(15);
         _waitForNonStaleResultsTimeout = Duration.ofSeconds(15);
@@ -249,6 +302,22 @@ public class DocumentConventions {
     public void setSendApplicationIdentifier(boolean sendApplicationIdentifier) {
         assertNotFrozen();
         _sendApplicationIdentifier = sendApplicationIdentifier;
+    }
+
+    public Duration getHttpPooledConnectionLifetime() {
+        return httpPooledConnectionLifetime;
+    }
+
+    public void setHttpPooledConnectionLifetime(Duration httpPooledConnectionLifetime) {
+        this.httpPooledConnectionLifetime = httpPooledConnectionLifetime;
+    }
+
+    public Duration getHttpPooledConnectionIdleTimeout() {
+        return httpPooledConnectionIdleTimeout;
+    }
+
+    public void setHttpPooledConnectionIdleTimeout(Duration httpPooledConnectionIdleTimeout) {
+        this.httpPooledConnectionIdleTimeout = httpPooledConnectionIdleTimeout;
     }
 
     /**
@@ -304,6 +373,15 @@ public class DocumentConventions {
      */
     public Duration getWaitForIndexesAfterSaveChangesTimeout() {
         return _waitForIndexesAfterSaveChangesTimeout;
+    }
+
+    /**
+     * Patches enums as integers.
+     */
+    public boolean isSaveEnumsAsIntegersForPatching() { return _saveEnumsAsIntegersForPatching; }
+    public void setSaveEnumsAsIntegersForPatching(boolean saveEnumsAsIntegersForPatching) {
+        assertNotFrozen();
+        this._saveEnumsAsIntegersForPatching = saveEnumsAsIntegersForPatching;
     }
 
     /**

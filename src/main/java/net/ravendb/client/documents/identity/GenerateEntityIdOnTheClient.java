@@ -6,17 +6,28 @@ import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class GenerateEntityIdOnTheClient {
 
     private final DocumentConventions _conventions;
     private final Function<Object, String> _generateId;
+    private final Function<Object, CompletableFuture<String>> generateIdAsync;
 
+    /**
+     * @deprecated This constructor is not supported anymore.
+     *             Will be removed in the next major version of the product.
+     *             Use constructor with 'generateIdAsync' parameter instead.
+     */
+    @Deprecated
     public GenerateEntityIdOnTheClient(DocumentConventions conventions, Function<Object, String> generateId) {
         this._conventions = conventions;
+        this.generateIdAsync = entity -> CompletableFuture.completedFuture(generateId.apply(entity));
         this._generateId = generateId;
     }
+//TODO: add async methods.
 
     private Field getIdentityProperty(Class<?> entityType) {
         return _conventions.getIdentityProperty(entityType);
@@ -67,11 +78,26 @@ public class GenerateEntityIdOnTheClient {
         }
         return id;
     }
+//TODO: add async methods.
 
     public String generateDocumentKeyForStorage(Object entity) {
         String id = getOrGenerateDocumentId(entity);
-        trySetIdentity(entity, id);
+
+        if (entity instanceof Map) {
+            trySetIdOnDynamic(entity, id);
+        } else {
+            trySetIdentity(entity, id); // reflection-based setter
+        }
         return id;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void trySetIdOnDynamic(Object entity, String id) {
+        try {
+            if (entity instanceof Map) {
+                ((Map<String, Object>) entity).put("Id", id);
+            }
+        } catch (Exception e) {}
     }
 
     public void trySetIdentity(Object entity, String id) {

@@ -13,11 +13,22 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Server-wide operation to send custom analyzer to the server
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations.Analyzers#CustomAnalyzers
+ */
 public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
 
     private final AnalyzerDefinition[] _analyzersToAdd;
-
+    /**
+     * {@inheritDoc}
+     * @see PutServerWideAnalyzersOperation
+     * @param analyzersToAdd List (as param) of AnalyzerDefinition to send to the server
+     * @throws IllegalArgumentException if {@code analyzersToAdd} is null or empty.
+     */
     public PutServerWideAnalyzersOperation(AnalyzerDefinition... analyzersToAdd) {
         if (analyzersToAdd == null || analyzersToAdd.length == 0) {
             throw new IllegalArgumentException("AnalyzersToAdd cannot be null or empty.");

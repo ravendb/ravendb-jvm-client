@@ -8,10 +8,22 @@ import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Server-wide operation to delete custom sorter definition from the server.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations.Sorters#CustomSorters
+ */
 public class DeleteServerWideSorterOperation implements IVoidServerOperation {
     private final String _sorterName;
 
+    /**
+     * {@inheritDoc}
+     * @see DeleteServerWideSorterOperation
+     * @param sorterName Name of the custom sorter to delete from the server.
+     * @throws IllegalArgumentException if {@code sorterName} is null or empty.
+     */
     public DeleteServerWideSorterOperation(String sorterName) {
         if (sorterName == null) {
             throw new IllegalArgumentException("SorterName cannot be null");

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes.timeSeries;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.util.ArrayList;
@@ -43,6 +44,10 @@ public class AbstractMultiMapTimeSeriesIndexCreationTask extends AbstractGeneric
         indexDefinitionBuilder.setPriority(getPriority());
         indexDefinitionBuilder.setState(state);
         indexDefinitionBuilder.setDeploymentMode(deploymentMode);
+        indexDefinitionBuilder.setCompoundFieldsStrings(compoundFieldsStrings);
+
+        if (getSearchEngineType() != null)
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, getSearchEngineType().toString());
 
         TimeSeriesIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

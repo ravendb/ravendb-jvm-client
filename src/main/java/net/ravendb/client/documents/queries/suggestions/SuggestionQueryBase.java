@@ -17,6 +17,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * {@inheritDoc}
+ * @see SuggestionBase
+ */
 public abstract class SuggestionQueryBase {
 
     private final InMemoryDocumentSessionOperations _session;

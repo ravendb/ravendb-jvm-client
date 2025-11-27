@@ -27,6 +27,11 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
         this.hubName = hubName;
     }
 
+    @Override
+    public ReplicationType getReplicationType() {
+        return ReplicationType.PULL_AS_SINK;
+    }
+
     @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
     public EnumSet<PullReplicationMode> getMode() {
         return mode;

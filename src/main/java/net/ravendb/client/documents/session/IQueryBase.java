@@ -7,6 +7,7 @@ import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.DocumentationUrls;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -49,10 +50,11 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
     TSelf noTracking();
 
     /**
-     *  Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
-     *  results). Default: false
-     * @param timings Reference to output parameter
-     * @return Query instance
+     *  Enables calculation of query execution time. Returns both total time of query and time spent on each query part.
+     *  Timings are not enabled by default.
+     * @param timings An out param that will be filled with the timings results.
+     * {@inheritDoc}
+     * @see DocumentationUrls.Session.Querying.HowToCustomizeQuery#QueryTimings
      */
     TSelf timings(Reference<QueryTimings> timings);
 

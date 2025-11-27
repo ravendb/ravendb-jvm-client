@@ -15,6 +15,9 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
+/**
+ * A Patch operation used to perform updates on a specific document in the database.
+ */
 public class PatchOperation implements IOperation<PatchResult> {
 
     public static class Payload {
@@ -36,7 +39,13 @@ public class PatchOperation implements IOperation<PatchResult> {
     }
 
     public static class Result<TEntity> {
+        /**
+         * The status of the patch operation on the document.
+         */
         private PatchStatus status;
+        /**
+         * The document after the patch operation has completed (the document may have remained unchanged).
+         */
         private TEntity document;
 
         public PatchStatus getStatus() {
@@ -66,6 +75,17 @@ public class PatchOperation implements IOperation<PatchResult> {
         this(id, changeVector, patch, null, false);
     }
 
+    /**
+     * Executes a patch operation on a document in the database.
+     *
+     * @param id                           The ID of the document on which to execute the {@code patch} operation.
+     * @param changeVector                 Change vector of the document to be patched.
+     *                                     Used to verify that the document was not modified before the patch reached it.
+     *                                     Can be null.
+     * @param patch                        The patch request to perform the operation.
+     * @param patchIfMissing               A patch request to perform if the document was not found.
+     * @param skipPatchIfChangeVectorMismatch Whether to skip the execution of the patch if the document has been modified.
+     */
     public PatchOperation(String id, String changeVector, PatchRequest patch, PatchRequest patchIfMissing, boolean skipPatchIfChangeVectorMismatch) {
         if (patch == null) {
             throw new IllegalArgumentException("Patch cannot be null");

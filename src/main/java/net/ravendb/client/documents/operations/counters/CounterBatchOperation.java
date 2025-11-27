@@ -17,7 +17,11 @@ import java.io.IOException;
 public class CounterBatchOperation implements IOperation<CountersDetail> {
 
     private final CounterBatch _counterBatch;
-
+    /**
+     * Initializes a new instance of the {@link CounterBatchOperation} class with the specified counter batch.
+     *
+     * @param counterBatch The batch of counter operations to be processed.
+     */
     public CounterBatchOperation(CounterBatch counterBatch) {
         _counterBatch = counterBatch;
     }

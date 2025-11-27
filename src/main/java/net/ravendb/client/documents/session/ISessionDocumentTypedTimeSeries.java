@@ -5,6 +5,7 @@ import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import java.util.Date;
 
 public interface ISessionDocumentTypedTimeSeries<TValues> extends
+        ITimeSeriesStreamingBase<TypedTimeSeriesEntry<TValues>>,
         ISessionDocumentTypedAppendTimeSeriesBase<TValues>,
         ISessionDocumentDeleteTimeSeriesBase {
 

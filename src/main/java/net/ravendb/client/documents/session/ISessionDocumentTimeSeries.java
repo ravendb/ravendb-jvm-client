@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 /**
  * Time series synchronous session operations
  */
-public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSeriesBase, ISessionDocumentDeleteTimeSeriesBase {
+public interface ISessionDocumentTimeSeries extends ITimeSeriesStreamingBase<TimeSeriesEntry>,ISessionDocumentAppendTimeSeriesBase, ISessionDocumentDeleteTimeSeriesBase {
     /**
      * Return all time series values
      * @return time series values

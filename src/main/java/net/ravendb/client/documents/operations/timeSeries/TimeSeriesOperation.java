@@ -7,11 +7,23 @@ import net.ravendb.client.primitives.NetISO8601Utils;
 import java.io.IOException;
 import java.util.*;
 
-public class TimeSeriesOperation {
+/**
+ * Represents a batch operation for time series data, including appends, increments, and deletions,
+ * to be performed on a single document’s time series.
+ */
+public final class TimeSeriesOperation {
 
     private TreeSet<AppendOperation> _appends;
     private List<DeleteOperation> _deletes;
     private TreeSet<IncrementOperation> _increments;
+    /**
+     * The name of the time series on which the operations are performed.
+     * This field is mandatory and must be set before executing the {@link TimeSeriesBatchOperation}
+     * that contains this {@link TimeSeriesOperation}.
+     *
+     * <p>The {@link #name} field identifies the time series within the document to which the batch operations apply.
+     * If this field is not set, an exception will be thrown when attempting to execute the batch operation.</p>
+     */
     private String name;
 
     public String getName() {
@@ -67,6 +79,17 @@ public class TimeSeriesOperation {
         generator.writeEndObject();
     }
 
+    /**
+     * Adds an incremental operation to the batch for the specified time series.
+     * This operation increments the values at the given timestamp, supporting concurrent updates in a distributed environment.
+     *
+     * @param incrementOperation The increment operation to add, specifying the timestamp and values to increment.
+     *
+     * <p>Incremental time series in RavenDB are designed to handle concurrent updates from multiple nodes.
+     * Each node maintains its own local changes for the specified timestamp, which are aggregated to provide a unified view.</p>
+     *
+     * @throws IllegalStateException Thrown if the number of values in the new operation does not match the number in an existing operation for the same timestamp.
+     */
     public void increment(IncrementOperation incrementOperation) {
         if (_increments == null) {
             _increments = new TreeSet<>(Comparator.comparing(x -> x.getTimestamp().getTime()));
@@ -84,6 +107,12 @@ public class TimeSeriesOperation {
         }
     }
 
+    /**
+     * Adds an append operation to the batch.
+     * This operation adds new data points to the time series at a specific timestamp.
+     *
+     * @param appendOperation The append operation to add.
+     */
     public void append(AppendOperation appendOperation) {
         if (_appends == null) {
             _appends = new TreeSet<>(Comparator.comparing(x -> x.getTimestamp().getTime()));
@@ -101,6 +130,12 @@ public class TimeSeriesOperation {
         }
     }
 
+    /**
+     * Adds a delete operation to the batch.
+     * This operation removes data points within a specific range from the time series.
+     *
+     * @param deleteOperation The delete operation to add.
+     */
     public void delete(DeleteOperation deleteOperation) {
         if (_deletes == null) {
             _deletes = new ArrayList<>();
@@ -108,9 +143,24 @@ public class TimeSeriesOperation {
         _deletes.add(deleteOperation);
     }
 
-    public static class AppendOperation {
+    /**
+     * Represents an append operation in a time series, allowing new data points to be added at specific timestamps.
+     */
+    public static final class AppendOperation {
+        /**
+         * The timestamp of the data point to be appended.
+         * This specifies when the data point occurred.
+         */
         private Date timestamp;
+        /**
+         * The values associated with the data point.
+         * These are the numeric measurements recorded at the specified {@link #timestamp}.
+         */
         private double[] values;
+        /**
+         * An optional tag for the data point.
+         * The tag can provide additional context or metadata for the appended data, such as the source or a descriptive label.
+         */
         private String tag;
 
         public Date getTimestamp() {
@@ -170,8 +220,21 @@ public class TimeSeriesOperation {
         }
     }
 
-    public static class DeleteOperation {
+    /**
+     * Represents a delete operation in a time series, allowing data points within a specific range to be removed.
+     */
+    public static final class DeleteOperation {
+        /**
+         * The start of the range for the delete operation.
+         * Data points from this timestamp (inclusive) will be considered for deletion.
+         * If {@code null}, the range starts from the beginning of the time series.
+         */
         private Date from;
+        /**
+         * The end of the range for the delete operation.
+         * Data points up to this timestamp (inclusive) will be considered for deletion.
+         * If {@code null}, the range extends to the end of the time series.
+         */
         private Date to;
 
         public DeleteOperation() {
@@ -207,8 +270,19 @@ public class TimeSeriesOperation {
         }
     }
 
+    /**
+     * Represents an increment operation in a time series, allowing values at a specific timestamp to be incremented.
+     */
     public static class IncrementOperation {
+        /**
+         * The timestamp of the data point to be incremented.
+         * This specifies the exact point in time where the values should be adjusted.
+         */
         private Date timestamp;
+        /**
+         * The values to increment at the specified {@link #timestamp}.
+         * Each value corresponds to a numeric field in the time series, and the increment operation adds the specified amount to the current values.
+         */
         private double[] values;
 
         public Date getTimestamp() {

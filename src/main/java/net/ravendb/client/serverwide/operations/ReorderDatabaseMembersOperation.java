@@ -12,9 +12,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.List;
 
+/**
+ * Allows to change the order of nodes in the database group topology.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#ReorderDatabaseMembersOperation
+ */
 public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
 
     public static class Parameters {
@@ -41,11 +46,22 @@ public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
     private final String _database;
     private final Parameters _parameters;
 
-
+    /**
+     * {@inheritDoc}
+     * @see ReorderDatabaseMembersOperation
+     * @param database Name of a database to operate on.
+     * @param order List of node tags in the exact desired order.
+     */
     public ReorderDatabaseMembersOperation(String database, List<String> order) {
         this(database, order, false);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ReorderDatabaseMembersOperation#ReorderDatabaseMembersOperation(String, List)
+     * @param fixed When set to true, the cluster will try to remain provided nodes order. Otherwise, it may be changed after being initially set.
+     * @throws IllegalArgumentException Thrown when the reordered list doesn't correspond to the existing nodes of the database group.
+     */
     public ReorderDatabaseMembersOperation(String database, List<String> order, boolean fixed) {
         if (order == null || order.isEmpty()) {
             throw new IllegalArgumentException("Order list must contain values");

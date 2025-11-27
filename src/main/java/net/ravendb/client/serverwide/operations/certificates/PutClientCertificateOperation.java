@@ -12,9 +12,14 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.Map;
 
+/**
+ * Allows to register a client certificate.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#PutClientCertificateOperation
+ */
 public class PutClientCertificateOperation implements IVoidServerOperation {
 
     private final String _certificate;
@@ -23,6 +28,15 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
     private final SecurityClearance _clearance;
     private final String _twoFactorAuthenticationKey;
 
+    /**
+     * {@inheritDoc}
+     * @see PutClientCertificateOperation
+     * @param name Certificate name.
+     * @param certificate Client certificate to be registered.
+     * @param permissions Dictionary mapping databases (by name) to access level.
+     * @param clearance Access level (role) assigned to certificate.
+     * @throws IllegalArgumentException if {@code name}, {@code certificate} or {@code permissions} is null.
+     */
     public PutClientCertificateOperation(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
         this(name, certificate, permissions, clearance, null);
     }

@@ -11,10 +11,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Removes a previously defined hub access configuration using the {@code UnregisterReplicationHubAccessOperation}.
+ * This operation disables the specified access by removing the associated certificate and permissions from the replication hub.
+ */
 public class UnregisterReplicationHubAccessOperation implements IVoidMaintenanceOperation {
     private final String _hubName;
     private final String _thumbprint;
 
+    /**
+     * Inherits documentation from {@link UnregisterReplicationHubAccessOperation}.
+     *
+     * @param hubName    The name of the replication hub from which the access configuration is being removed.
+     * @param thumbprint The thumbprint of the certificate associated with the access configuration to be unregistered.
+     */
     public UnregisterReplicationHubAccessOperation(String hubName, String thumbprint) {
         if (StringUtils.isBlank(hubName)) {
             throw new IllegalArgumentException("HubName cannot be null or whitespace.");

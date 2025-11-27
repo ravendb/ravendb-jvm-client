@@ -50,7 +50,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
     private final String _database;
 
     private final Runnable _onDispose;
-
+    protected final String nodeTag;
     private final WebSocketClient _client;
     private Session _clientSession;
     private DatabaseChanges.WebSocketChangesProcessor _processor;
@@ -98,6 +98,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
         }, _executorService);
 
         _onDispose = onDispose;
+        this.nodeTag = nodeTag;
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
         _task = CompletableFuture.runAsync(() -> doWork(nodeTag), executorService);
@@ -312,6 +313,10 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
         }
     }
 
+    public static class OnReconnect extends VoidArgs {
+        public static OnReconnect INSTANCE = new OnReconnect();
+    }
+
     private void doWork(String nodeTag) {
         CurrentIndexAndNode preferredNode;
         try {
@@ -327,6 +332,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
             return;
         }
 
+        int timerInSec = 1;
         boolean wasConnected = false;
         while (!_cts.getToken().isCancellationRequested()) {
             try {
@@ -338,11 +344,11 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
-
                     _processor = new AbstractDatabaseChanges.WebSocketChangesProcessor();
                     ClientUpgradeRequest request = new ClientUpgradeRequest();
                     request.setTimeout(10_000, TimeUnit.MILLISECONDS);
                     _clientSession = _client.connect(_processor, url, request).get();
+                    timerInSec = 1;
                     wasConnected = true;
 
                     _immediateConnection.set(1);
@@ -351,7 +357,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                         counter.onConnect.run();
                     }
 
-                    EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+                    EventHelper.invoke(_connectionStatusChanged, this, OnReconnect.INSTANCE);
                 }
 
                 _processor.processing.get();
@@ -361,13 +367,22 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                 }
 
                 try {
+                    notifyAboutReconnection(e);
                     if (wasConnected) {
                         EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
                     }
                     wasConnected = false;
 
                     try {
-                        _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                        if ( nodeTag == null || nodeTag.isEmpty())
+                            _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                        else {
+                            UpdateTopologyParameters params = new UpdateTopologyParameters(_serverNode);
+                            params.setTimeoutInMs(0);
+                            params.setForceUpdate(true);
+                            params.setDebugTag("changes-api-connection-failure-" + _database);
+                            _requestExecutor.updateTopologyAsync(params).join();
+                        }
                     } catch (DatabaseDoesNotExistException databaseDoesNotExistException) {
                         e = databaseDoesNotExistException;
                         throw databaseDoesNotExistException;
@@ -394,11 +409,16 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                 _confirmations.clear();
             }
 
-            try {
-                // wait before next retry
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
+            timerInSec = Math.min(timerInSec * 2, 60);
+            long delayMillis = timerInSec * 1000L;
+            CompletableFuture<Void> waitFuture = CompletableFuture.runAsync(() -> {
+                try {
+                    Thread.sleep(delayMillis);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            }, _executorService);
         }
     }
 
@@ -426,7 +446,10 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
         notifyAboutError(new RuntimeException(exceptionAsString));
     }
 
-    protected void notifyAboutError(Exception e) {
+    protected void notifyAboutReconnection(Exception e) {
+    }
+
+    void notifyAboutError(Exception e) {
         if (_cts.getToken().isCancellationRequested()) {
             return;
         }

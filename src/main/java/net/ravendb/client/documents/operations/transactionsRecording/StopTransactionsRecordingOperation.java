@@ -7,6 +7,10 @@ import net.ravendb.client.http.VoidRavenCommand;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Stops the recording of database transactions that was initiated with the StartTransactionsRecordingOperation.
+ * This operation finalizes the recording and closes the file where transactions were being saved.
+ */
 public class StopTransactionsRecordingOperation implements IVoidMaintenanceOperation {
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {

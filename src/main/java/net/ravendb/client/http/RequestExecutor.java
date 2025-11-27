@@ -11,6 +11,7 @@ import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.security.AuthorizationException;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
@@ -58,6 +59,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
+
+    private static final int DEFAULT_CONNECTION_LIMIT = Integer.MAX_VALUE;
 
     private static UUID GLOBAL_APPLICATION_IDENTIFIER = UUID.randomUUID();
 
@@ -111,6 +114,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient _httpClient;
+    private AbstractCommandResponseBehavior.CommandUnsuccessfulResponseBehavior commandUnsuccessfulResponseBehavior = AbstractCommandResponseBehavior.CommandUnsuccessfulResponseBehavior.WRAP_EXCEPTION;
 
     public CloseableHttpClient getHttpClient() {
         CloseableHttpClient httpClient = _httpClient;
@@ -1348,7 +1352,7 @@ public class RequestExecutor implements CleanCloseable {
 
                     return true;
                 default:
-                    return command.getResponseBehavior().tryHandleUnsuccessfulResponse(command, response);
+                    return command.getResponseBehavior().tryHandleUnsuccessfulResponse(command, response, commandUnsuccessfulResponseBehavior);
             }
         } catch (IOException | ExecutionException | InterruptedException e) {
             throw ExceptionsUtils.unwrapException(e);
@@ -1814,6 +1818,10 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         return httpClientBuilder.build();
+    }
+
+    public static Integer getDefaultConnectionLimit(){
+        return DEFAULT_CONNECTION_LIMIT;
     }
 
     public SSLContext createSSLContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {

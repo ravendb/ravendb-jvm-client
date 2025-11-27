@@ -30,6 +30,7 @@ import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
+import net.ravendb.client.util.ClientChangeVectorUtils;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.IdentityLinkedHashMap;
 import org.apache.commons.beanutils.BeanUtils;
@@ -37,7 +38,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -883,7 +883,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck);
     }
-
+    /**
+     * InMemoryDocumentSessionOperations.generateId is not supported anymore.
+     * Will be removed in the next major version of the product.
+     */
+    @Deprecated
     protected abstract String generateId(Object entity);
 
     protected void rememberEntityForDocumentIdGeneration(Object entity) {
@@ -1434,7 +1438,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deferredCommands.add(command);
         deferInternal(command);
 
-        if (commands != null && commands.length > 0)
+        if (commands != null)
             defer(commands);
     }
 
@@ -1514,6 +1518,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerIncludes(ObjectNode includes) {
+        this.registerIncludes(includes, false);
+    }
+
+    public void registerIncludes(ObjectNode includes, boolean registerMissingIds) {
         if (noTracking) {
             return;
         }
@@ -1526,6 +1534,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             JsonNode fieldValue = includes.get(fieldName);
 
             if (fieldValue == null) {
+                if (registerMissingIds)
+                    registerMissing(fieldName);
                 continue;
             }
 
@@ -2385,7 +2395,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (!isIndex && !isCollection) {
             collectionName = ObjectUtils.firstNonNull(
                     conventions.getCollectionName(clazz),
-                    Constants.Documents.Metadata.ALL_DOCUMENTS_COLLECTION);
+                    Constants.Documents.Collections.ALL_DOCUMENTS_COLLECTION);
         }
 
         return Tuple.create(indexName, collectionName);
@@ -2452,6 +2462,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             public void updateEntityDocumentInfo(DocumentInfo documentInfo, ObjectNode document) {
+                String clusterId = _session.getSessionInfo() != null ? _session.getSessionInfo().getClusterTransactionId() : null;
+                if (clusterId != null) {
+                    Long clusterTxIndex = ClientChangeVectorUtils.getEtagById(documentInfo.getChangeVector(), clusterId);
+                    if (clusterTxIndex > 0) {
+                        Long lastIndex = _session.getSessionInfo().getLastClusterTransactionIndex();
+                        _session.getSessionInfo().setLastClusterTransactionIndex(
+                                Math.max(lastIndex != null ? lastIndex : 0, clusterTxIndex)
+                        );
+                    }
+                }
                 _documentInfosToUpdate.add(Tuple.create(documentInfo, document));
             }
 

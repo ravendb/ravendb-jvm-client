@@ -12,11 +12,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class NodeSelector implements CleanCloseable {
 
     private final ExecutorService executorService;
-    private Timer _updateFastestNodeTimer;
+    Timer _updateFastestNodeTimer;
     protected NodeSelectorState _state;
 
     public Topology getTopology() {
@@ -178,6 +180,23 @@ public class NodeSelector implements CleanCloseable {
         Arrays.fill(state.fastestRecords, 0);
 
         state.speedTestMode.incrementAndGet();
+    }
+
+    void DisableFastestNodeReadBalance(){
+        if (this._updateFastestNodeTimer == null) return;
+        Lock lock = new ReentrantLock();
+        lock.lock();
+        try {
+            if (_updateFastestNodeTimer == null) return;
+            _updateFastestNodeTimer.close();
+            _updateFastestNodeTimer = null;
+
+            NodeSelectorState state = this._state;
+            state.speedTestMode.set(0);
+            Arrays.fill(state.fastestRecords, 0);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean inSpeedTestPhase() {

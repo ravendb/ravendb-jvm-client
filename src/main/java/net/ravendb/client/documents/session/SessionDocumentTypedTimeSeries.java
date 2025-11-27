@@ -4,8 +4,11 @@ import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 
 public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
         implements ISessionDocumentTypedTimeSeries<T>, ISessionDocumentTypedIncrementalTimeSeries<T> {
@@ -22,21 +25,34 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
         _clazz = clazz;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementalTimeSeries#get()
+     */
     @Override
     public TypedTimeSeriesEntry<T>[] get() {
         return get(null, null, 0, Integer.MAX_VALUE);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementalTimeSeries#get(Date, Date)
+     */
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to) {
         return get(from, to, 0, Integer.MAX_VALUE);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementalTimeSeries#get(Date, Date, int)
+     */
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to, int start) {
         return get(from, to, start, Integer.MAX_VALUE);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementalTimeSeries#get(Date, Date, int, int)
+     */
     @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to, int start, int pageSize) {
@@ -55,12 +71,19 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
                 .map(x -> x.asTypedEntry(_clazz))
                 .toArray(TypedTimeSeriesEntry[]::new);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedAppendTimeSeriesBase#append(Date, Object)
+     */
     @Override
     public void append(Date timestamp, T entry) {
         append(timestamp, entry, null);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedAppendTimeSeriesBase#append(Date, Object, String) 
+     */
     @SuppressWarnings("unchecked")
     @Override
     public void append(Date timestamp, T entry, String tag) {
@@ -68,18 +91,33 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
         append(timestamp, values, tag);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedAppendTimeSeriesBase#append(TypedTimeSeriesEntry)
+     */
     @Override
     public void append(TypedTimeSeriesEntry<T> entry) {
         append(entry.getTimestamp(), entry.getValue(), entry.getTag());
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementTimeSeriesBase#increment(Date, Object)
+     */
     public void increment(Date timestamp, T entry) {
         double[] values = TimeSeriesValuesHelper.getValues(_clazz, entry);
         increment(timestamp, values);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentTypedIncrementTimeSeriesBase#increment(Object)
+     */
     public void increment(T entry) {
         double[] values = TimeSeriesValuesHelper.getValues(_clazz, entry);
         increment(values);
+    }
+
+    @Override
+    public Iterator<TypedTimeSeriesEntry<T>> stream(Instant from, Instant to, Duration offset) {
+        return null;
     }
 }

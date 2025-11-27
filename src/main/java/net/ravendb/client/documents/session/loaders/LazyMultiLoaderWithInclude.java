@@ -18,7 +18,8 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     }
 
     /**
-     * Includes the specified path.
+     * {@inheritDoc}
+     * @see IGenericIncludeBuilder
      */
     @Override
     public ILazyLoaderWithInclude include(String path) {
@@ -27,7 +28,8 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     }
 
     /**
-     * Loads the specified ids.
+     * {@inheritDoc}
+     * @see IGenericIncludeBuilder
      */
     @Override
     public <T> Lazy<Map<String, T>> load(Class<T> clazz, String... ids) {
@@ -35,7 +37,8 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     }
 
     /**
-     * Loads the specified ids.
+     * {@inheritDoc}
+     * @see IGenericIncludeBuilder
      */
     @Override
     public <TResult> Lazy<Map<String, TResult>> load(Class<TResult> clazz, Collection<String> ids) {
@@ -43,7 +46,8 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     }
 
     /**
-     * Loads the specified id.
+     * {@inheritDoc}
+     * @see IGenericIncludeBuilder
      */
     @SuppressWarnings("unchecked")
     @Override

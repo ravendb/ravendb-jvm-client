@@ -7,6 +7,9 @@ import java.util.function.Function;
 
 public class Facet extends FacetBase {
 
+    /**
+     * Name of field the facet aggregate on.
+     */
     @JsonProperty("FieldName")
     private String fieldName;
 

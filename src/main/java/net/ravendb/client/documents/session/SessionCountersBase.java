@@ -39,11 +39,17 @@ public abstract class SessionCountersBase {
         docId = document.getId();
         this.session = session;
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentCountersBase#increment(String, long)
+     */
     public void increment(String counter) {
         increment(counter, 1);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentCountersBase#increment(String, long)
+     */
     public void increment(String counter, long delta) {
         if (StringUtils.isBlank(counter)) {
             throw new IllegalArgumentException("Counter cannot be empty");
@@ -72,6 +78,10 @@ public abstract class SessionCountersBase {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentCountersBase#delete(String)
+     */
     public void delete(String counter) {
         if (StringUtils.isBlank(counter)) {
             throw new IllegalArgumentException("Counter is required");

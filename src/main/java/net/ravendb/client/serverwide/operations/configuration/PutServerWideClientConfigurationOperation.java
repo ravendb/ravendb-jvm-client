@@ -13,10 +13,23 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Allows to put a server-wide client configuration - set of configuration options that are set on the server
+ * and apply to any client when communicating with any database in the cluster.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#PutServerWideClientConfiguration
+ */
 public class PutServerWideClientConfigurationOperation implements IVoidServerOperation {
     private final ClientConfiguration _configuration;
 
+    /**
+     * {@inheritDoc}
+     * @see PutServerWideClientConfigurationOperation
+     * @param configuration See {@link ClientConfiguration}
+     * @throws IllegalArgumentException if {@code configuration} is null.
+     */
     public PutServerWideClientConfigurationOperation(ClientConfiguration configuration) {
         if (configuration == null) {
             throw new IllegalArgumentException("Configuration cannot be null");

@@ -11,16 +11,28 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import java.io.IOException;
 import java.time.Duration;
 
+/**
+ * Retrieves the state of a specific operation by its ID, providing information such as the current status and progress.
+ */
 public class GetOperationStateOperation implements IMaintenanceOperation<ObjectNode> {
 
     private final long _id;
     private final String _nodeTag;
 
+    /**
+     * Inherits documentation from {@link GetOperationStateOperation}.
+     *
+     * @param id The ID of the requested operation.
+     */
     public GetOperationStateOperation(long id) {
         _id = id;
         _nodeTag = null;
     }
-
+    /**
+     * Inherits documentation from {@link GetOperationStateOperation#GetOperationStateOperation(long)}.
+     *
+     * @param nodeTag The node tag specifying which node should be queried for the operation's state.
+     */
     public GetOperationStateOperation(long id, String nodeTag) {
         _id = id;
         _nodeTag = nodeTag;

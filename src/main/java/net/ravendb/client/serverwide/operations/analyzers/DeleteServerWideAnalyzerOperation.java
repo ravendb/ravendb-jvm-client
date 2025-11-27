@@ -8,10 +8,22 @@ import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Server-wide operation to delete custom analyzer from the server.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations.Analyzers#CustomAnalyzers
+ */
 public class DeleteServerWideAnalyzerOperation implements IVoidServerOperation {
     private final String _analyzerName;
 
+    /**
+     * {@inheritDoc}
+     * @see DeleteServerWideAnalyzerOperation
+     * @param analyzerName Name of the analyzer to delete from the server.
+     * @throws IllegalArgumentException if {@code analyzerName} is null.
+     */
     public DeleteServerWideAnalyzerOperation(String analyzerName) {
         if (analyzerName == null) {
             throw new IllegalArgumentException("AnalyzerName cannot be null");

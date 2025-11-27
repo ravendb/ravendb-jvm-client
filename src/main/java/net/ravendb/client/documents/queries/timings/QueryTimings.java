@@ -2,12 +2,23 @@ package net.ravendb.client.documents.queries.timings;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.QueryResult;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.Map;
 
-public class QueryTimings {
-
+/**
+ * Representation of query timings.
+ * Consists of total time spent on server-side execution of query, and time spent on each query part.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Session.Querying#QueryTimings
+ */
+public final class QueryTimings {
+    /**
+     * Total time spent on server-side query execution in milliseconds.
+     */
     private long durationInMs;
+    /**
+     * Query timings for each part of query.
+     */
     private Map<String, QueryTimings> timings;
     private ObjectNode queryPlan;
 
@@ -45,5 +56,6 @@ public class QueryTimings {
 
         durationInMs = queryResult.getTimings().getDurationInMs();
         timings = queryResult.getTimings().getTimings();
+        queryPlan = queryResult.getTimings().getQueryPlan();
     }
 }

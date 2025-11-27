@@ -6,9 +6,24 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;
 
+/**
+ * Represents the result of a delete/put compare-exchange operation,
+ * containing the value, index, and success status.
+ *
+ * @param <T> The type of the value stored in the compare-exchange result.
+ */
 public class CompareExchangeResult<T> {
+    /**
+     * The value associated with the compare-exchange operation.
+     */
     private T value;
+    /**
+     * The index of the compare-exchange.
+     */
     private long index;
+    /**
+     * Indicates whether the compare-exchange operation was successful.
+     */
     private boolean successful;
 
     public static <T> CompareExchangeResult<T> parseFromString(Class<T> clazz, String responseString, DocumentConventions conventions) throws IOException {

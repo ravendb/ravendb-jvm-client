@@ -3,10 +3,12 @@ package net.ravendb.client.exceptions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.exceptions.database.BackupAlreadyRunningException;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
@@ -53,7 +55,7 @@ public class ExceptionDispatcher {
         return exception;
     }
 
-    public static void throwException(ClassicHttpResponse response) {
+    public static void throwException(ClassicHttpResponse response, AbstractCommandResponseBehavior.CommandUnsuccessfulResponseBehavior unsuccessfulResponseBehavior) {
         if (response == null) {
             throw new IllegalArgumentException("Response cannot be null");
         }
@@ -81,7 +83,8 @@ public class ExceptionDispatcher {
                 throw RavenException.generic(schema.getError(), jsonText);
             }
 
-            if (!RavenException.class.isAssignableFrom(type)) {
+            if (unsuccessfulResponseBehavior == AbstractCommandResponseBehavior.CommandUnsuccessfulResponseBehavior.WRAP_EXCEPTION
+                    && !RavenException.class.isAssignableFrom(type)) {
                 throw new RavenException(schema.getError(), exception);
             }
 
@@ -116,6 +119,16 @@ public class ExceptionDispatcher {
             if (failImmediately != null) {
                 timeoutException.setFailImmediately(failImmediately.asBoolean());
             }
+        }
+
+        if (exception instanceof BackupAlreadyRunningException) {
+            BackupAlreadyRunningException backupAlreadyRunningException = (BackupAlreadyRunningException) exception;
+            JsonNode operationId = json.get("OperationId");
+            JsonNode nodeTag = json.get("NodeTag");
+            if (operationId != null)
+                backupAlreadyRunningException.setOperationId(operationId.asLong());
+            if (nodeTag != null)
+                backupAlreadyRunningException.setNodeTag(nodeTag.asText());
         }
     }
 
@@ -192,7 +205,7 @@ public class ExceptionDispatcher {
             throw ctxConcurrencyException;
         }
 
-        ConcurrencyException concurrencyException = new ConcurrencyException(schema.getMessage());
+        ConcurrencyException concurrencyException = new ConcurrencyException(schema.getMessage(), new RavenException(schema.getError()));
         JsonNode idNode = json.get("Id");
         if (idNode != null) {
             concurrencyException.setId(idNode.asText());

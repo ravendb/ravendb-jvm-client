@@ -12,6 +12,10 @@ public class GetDocumentsResult {
     private ArrayNode revisionIncludes;
     private ObjectNode timeSeriesIncludes;
     private ObjectNode compareExchangeValueIncludes;
+    /**
+     * @deprecated Will be removed in the next major version of the product.
+     */
+    @Deprecated
     private int nextPageStart;
 
     public ObjectNode getIncludes() {

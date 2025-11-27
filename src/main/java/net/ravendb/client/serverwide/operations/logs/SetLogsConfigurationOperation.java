@@ -10,13 +10,24 @@ import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
-
+import net.ravendb.client.DocumentationUrls;
 import java.time.Duration;
 
+/**
+ * Allows to set logs configuration.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Configuration#LogsConfiguration
+ */
 public class SetLogsConfigurationOperation implements IVoidServerOperation {
 
     private final Parameters _parameters;
 
+    /**
+     * {@inheritDoc}
+     * @see SetLogsConfigurationOperation
+     * @param parameters See {@link Parameters}
+     * @throws IllegalArgumentException when {@code parameters} is null
+     */
     public SetLogsConfigurationOperation(Parameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");

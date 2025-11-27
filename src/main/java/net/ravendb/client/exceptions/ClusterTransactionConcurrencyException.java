@@ -29,9 +29,21 @@ public class ClusterTransactionConcurrencyException extends ConcurrencyException
     }
 
     public static class ConcurrencyViolation {
+        /**
+         * Concurrency violation occured on {@link ViolationOnType}.
+         */
         private ViolationOnType type;
+        /**
+         * The ID of which the concurrency check failed.
+         */
         private String id;
+        /**
+         * The expected index for the concurrency check.
+         */
         private long expected;
+        /**
+         * The actual index of the concurrency check.
+         */
         private long actual;
 
         public ViolationOnType getType() {
@@ -69,7 +81,13 @@ public class ClusterTransactionConcurrencyException extends ConcurrencyException
 
     @UseSharpEnum
     public enum ViolationOnType {
+        /**
+         * Concurrency violation occured on a document.
+         */
         DOCUMENT,
+        /**
+         * Concurrency violation occured on a compare exchange
+         */
         COMPARE_EXCHANGE
     }
 }

@@ -166,9 +166,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private boolean _onProgressInitialized = false;
 
     private final Timer _timer;
-    private Date _lastWriteToStream;
     private final Semaphore _streamLock;
-    private final Duration _heartbeatCheckInterval = Duration.ofSeconds(40);
+    private final Duration _heartbeatCheckInterval = Duration.ofSeconds(30);
 
     public BulkInsertOperation(String database, DocumentStore store) {
         this(database, store, null);
@@ -201,7 +200,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 entity -> _requestExecutor.getConventions().generateDocumentId(database, entity));
 
         _streamLock = new Semaphore(1);
-        _lastWriteToStream = new Date();
 
         TimerState timerState = new TimerState();
         timerState.parent = new WeakReference<>(this);
@@ -226,9 +224,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     }
 
     private void sendHeartBeat() {
-        if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
+        if (!isHeartbeatIntervalExceeded())
             return;
-        }
 
         try {
             if (!_streamLock.tryAcquire(0, TimeUnit.SECONDS)) {
@@ -254,7 +251,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _writer.write("{\"Type\":\"HeartBeat\"}");
 
             flushIfNeeded(true);
-            _writer._requestBodyStream.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -270,9 +266,10 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 int minor = versionParsed.length > 1 ? Integer.parseInt(versionParsed[1]) : 0;
                 int build = versionParsed.length > 2 ? Integer.parseInt(versionParsed[2]) : 0;
 
-                if (major == 6 && build < 2) {
+                if (major == 6 && minor < 0)
+                    return true;
+                if (major == 6 && minor == 0 && build < 2)
                     return false;
-                }
 
                 return major > 5 || (major == 5 && minor >= 4 && build >= 110);
             }
@@ -673,12 +670,13 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
 
     private void flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
-        if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
-            _lastWriteToStream = new Date();
-            force = true;
-        }
+        force = force || isHeartbeatIntervalExceeded();
 
         _writer.flushIfNeeded(force);
+    }
+
+    private boolean isHeartbeatIntervalExceeded() {
+        return System.currentTimeMillis() * 10_000 - _writer.getLastFlushToStream().toEpochMilli() * 10_000 >= _heartbeatCheckInterval.toNanos() / 100;
     }
 
     private static class CountersBulkInsertOperation {

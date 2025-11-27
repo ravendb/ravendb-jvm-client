@@ -14,5 +14,10 @@ public abstract class AbstractCommandResponseBehavior {
 
     public abstract <TResult> boolean tryHandleConflict(RavenCommand<TResult> command, ClassicHttpResponse response);
 
-    public abstract <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, ClassicHttpResponse response);
+    public abstract <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, ClassicHttpResponse response, CommandUnsuccessfulResponseBehavior unsuccessfulResponseBehavior);
+
+    public enum CommandUnsuccessfulResponseBehavior {
+        NONE,
+        WRAP_EXCEPTION
+    }
 }

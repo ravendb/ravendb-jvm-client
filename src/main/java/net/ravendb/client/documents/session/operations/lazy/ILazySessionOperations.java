@@ -3,7 +3,7 @@ package net.ravendb.client.documents.session.operations.lazy;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.loaders.ILazyLoaderWithInclude;
-
+import net.ravendb.client.documents.session.loaders.IDocumentIncludeBuilder;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -14,9 +14,8 @@ import java.util.function.Consumer;
 public interface ILazySessionOperations {
 
     /**
-     * Begin a load while including the specified path
-     * @param path Path in documents in which server should look for a 'referenced' documents.
-     * @return Lazy loader with includes support
+     * {@inheritDoc}
+     * @see IDocumentIncludeBuilder#includeDocuments
      */
     ILazyLoaderWithInclude include(String path);
 

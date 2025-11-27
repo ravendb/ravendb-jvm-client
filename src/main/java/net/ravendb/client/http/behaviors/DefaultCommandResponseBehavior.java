@@ -40,15 +40,16 @@ public class DefaultCommandResponseBehavior extends AbstractCommandResponseBehav
 
     @Override
     public <TResult> boolean tryHandleConflict(RavenCommand<TResult> command, ClassicHttpResponse response) {
-        ExceptionDispatcher.throwException(response);
+        command.onResponseFailure(response);
+        ExceptionDispatcher.throwException(response, CommandUnsuccessfulResponseBehavior.WRAP_EXCEPTION);
         return false;
     }
 
     @Override
-    public <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, ClassicHttpResponse response) {
+    public <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, ClassicHttpResponse response, CommandUnsuccessfulResponseBehavior unsuccessfulResponseBehavior) {
         command.onResponseFailure(response);
 
-        ExceptionDispatcher.throwException(response);
+        ExceptionDispatcher.throwException(response, unsuccessfulResponseBehavior);
 
         return false;
     }

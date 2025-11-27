@@ -1,8 +1,8 @@
 package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
-
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 
 public class IndexStats {
@@ -39,8 +39,22 @@ public class IndexStats {
     private int errorsCount;
     private IndexSourceType sourceType;
     private boolean isTestIndex;
+    private HashSet<String> referencedCollections;
 
-
+    /**
+     * Returns the names of referenced collections
+     * @return referenced collections
+     */
+    public HashSet<String> getReferencedCollections() {
+        return referencedCollections;
+    }
+    /**
+     * Sets the names of referenced collections
+     * @param referencedCollections referenced collections
+     */
+    public void setReferencedCollections(HashSet<String> referencedCollections) {
+        this.referencedCollections = referencedCollections;
+    }
     /**
      * Index name.
      * @return Index name
@@ -502,12 +516,19 @@ public class IndexStats {
         private long lastProcessedTombstoneEtag;
         private long documentLag;
         private long tombstoneLag;
+        private long lastProcessedTimeSeriesDeletedRangeEtag;
 
         public CollectionStats() {
             documentLag = -1;
             tombstoneLag = -1;
         }
 
+        public long getLastProcessedTimeSeriesDeletedRangeEtag() {
+            return lastProcessedTimeSeriesDeletedRangeEtag;
+        }
+        public void setLastProcessedTimeSeriesDeletedRangeEtag(long lastProcessedTimeSeriesDeletedRangeEtag) {
+            this.lastProcessedTimeSeriesDeletedRangeEtag = lastProcessedTimeSeriesDeletedRangeEtag;
+        }
         public long getLastProcessedDocumentEtag() {
             return lastProcessedDocumentEtag;
         }

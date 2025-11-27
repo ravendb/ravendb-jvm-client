@@ -15,10 +15,19 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
+/**
+ * Configures time series settings (policies) for the database.
+ * This operation allows you to configure multiple time series policies
+ * for various collections within the database.
+ */
 public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<ConfigureTimeSeriesOperationResult> {
 
     private final TimeSeriesConfiguration _configuration;
-
+    /**
+     * Inherits documentation from {@link ConfigureTimeSeriesOperation}.
+     *
+     * @param configuration The time series configuration to apply to the database. If {@code null}, an empty configuration will be used.
+     */
     public ConfigureTimeSeriesOperation(TimeSeriesConfiguration configuration) {
         if (configuration == null) {
             throw new IllegalArgumentException("Configuration cannot be null");

@@ -1,8 +1,16 @@
 package net.ravendb.client.documents.queries.suggestions;
 
-public class SuggestionWithTerm extends SuggestionBase {
+/**
+ * {@inheritDoc}
+ */
+public final class SuggestionWithTerm extends SuggestionBase {
+    /**
+     * The term for which to get suggested similar terms.
+     */
     private String term;
-
+    /**
+     * {@inheritDoc}
+     */
     public SuggestionWithTerm(String field) {
         super(field);
     }

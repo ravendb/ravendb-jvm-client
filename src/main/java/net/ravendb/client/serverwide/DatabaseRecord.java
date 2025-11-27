@@ -483,8 +483,17 @@ public class DatabaseRecord {
 
     @UseSharpEnum
     public enum DatabaseLockMode {
+        /**
+         * Any change to the database will be applied
+         */
         UNLOCK,
+        /**
+         * Prevent database deletion (without exception)
+         */
         PREVENT_DELETES_IGNORE,
+        /**
+         * Prevent database deletion (throws exception)
+         */
         PREVENT_DELETES_ERROR
     }
 

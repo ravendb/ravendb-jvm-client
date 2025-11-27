@@ -703,6 +703,24 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                             if (_redirectNode == null) {
                                 RequestExecutor reqEx = getRequestExecutor();
                                 List<ServerNode> curTopology = reqEx.getTopologyNodes();
+                                if (curTopology != null && curTopology.size() > 0) {
+                                    try {
+                                        trySetRedirectNode(reqEx, curTopology).join();
+                                        if (_redirectNode == null) {
+                                            if (_logger.isInfoEnabled()) {
+                                                _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Cannot set redirect node, will try to connect anyway.");
+                                            }
+                                        } else {
+                                            if (_logger.isInfoEnabled()) {
+                                                _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                      if(_logger.isInfoEnabled())
+                                          _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Could not select the redirect node will keep it null.", e);
+                                    }
+                                }
+
                                 int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
                                 try {
                                     _redirectNode = reqEx.getRequestedNode(curTopology.get(nextNodeIndex).getClusterTag(), true).currentNode;
@@ -732,6 +750,15 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         }, _executorService);
     }
 
+    protected CompletableFuture<Void> trySetRedirectNode(RequestExecutor reqEx, List<ServerNode> curTopology) {
+        int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
+        ServerNode node = curTopology.get(nextNodeIndex);
+
+        return CompletableFuture.runAsync(() -> {
+            _redirectNode = reqEx.getRequestedNode(node.getClusterTag(), true).currentNode;
+        });
+    }
+
     private Date _lastConnectionFailure;
     private TcpConnectionHeaderMessage.SupportedFeatures _supportedFeatures;
 
@@ -749,6 +776,7 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
     private Tuple<Boolean, ServerNode> checkIfShouldReconnectWorker(Exception ex) {
         ex = ExceptionsUtils.unwrapException(ex);
+
         if (ex instanceof SubscriptionDoesNotBelongToNodeException) {
             SubscriptionDoesNotBelongToNodeException se = (SubscriptionDoesNotBelongToNodeException) ex;
             RequestExecutor requestExecutor = getRequestExecutor();
@@ -759,11 +787,14 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                 return Tuple.create(true, null);
             }
 
-            ServerNode nodeToRedirectTo = requestExecutor.getTopologyNodes()
-                    .stream()
-                    .filter(x -> x.getClusterTag().equals(se.getAppropriateNode()))
-                    .findFirst()
-                    .orElse(null);
+            ServerNode nodeToRedirectTo = null;
+            if (requestExecutor.getTopologyNodes() != null) {
+                nodeToRedirectTo = requestExecutor.getTopologyNodes()
+                        .stream()
+                        .filter(x -> Objects.equals(x.getClusterTag(), se.getAppropriateNode()))
+                        .findFirst()
+                        .orElse(null);
+            }
 
             if (nodeToRedirectTo == null) {
                 throw new IllegalStateException("Could not redirect to " + se.getAppropriateNode() + ", because it was not found in local topology, even after retrying");
@@ -788,7 +819,6 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             _processingCts.cancel();
             return Tuple.create(false, _redirectNode);
         }
-
         if (ex instanceof SubscriptionInUseException
                 || ex instanceof SubscriptionDoesNotExistException
                 || ex instanceof SubscriptionInvalidStateException

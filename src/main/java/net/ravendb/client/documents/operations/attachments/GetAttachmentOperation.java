@@ -17,6 +17,9 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 
+/**
+ * Represents an operation to retrieve an attachment from the database.
+ */
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
     private final String _documentId;
@@ -24,6 +27,18 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
     private final AttachmentType _type;
     private final String _changeVector;
 
+    /**
+     * Initializes a new instance of the {@link GetAttachmentOperation} class.
+     *
+     * @param documentId   The ID of the document associated with the attachment.
+     * @param name         The name of the attachment to be retrieved.
+     * @param type         The type of the attachment.
+     * @param changeVector Change vector for optimistic concurrency control. If no concurrency control is required, this should be set to {@code null}.
+     *
+     * <p>This constructor sets up an operation to retrieve a specific attachment.
+     * If the {@code changeVector} is provided, it ensures that the operation
+     * corresponds to the specified version of the document.</p>
+     */
     public GetAttachmentOperation(String documentId, String name, AttachmentType type, String changeVector) {
         _documentId = documentId;
         _name = name;

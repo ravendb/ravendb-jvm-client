@@ -14,6 +14,13 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Operation to retrieve multiple compare exchange values from a database in a single request.
+ * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+ * that ensures a consistent state across the cluster.
+ *
+ * @param <T> the type of the value associated with the compare exchange keys
+ */
 public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<String, CompareExchangeValue<T>>> {
 
     private final Class<T> _clazz;
@@ -25,6 +32,16 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
 
     private final boolean _materializeMetadata;
 
+    /**
+     * Operation to retrieve multiple compare exchange values from a database in a single request.
+     * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+     * that ensures a consistent state across the cluster.
+     * Initializes a new instance of the {@link GetCompareExchangeValuesOperation} class.
+     * Retrieves compare exchange values for the specified keys.
+     *
+     * @param keys the array of keys for the compare exchange values to retrieve
+     * @throws IllegalArgumentException if {@code keys} is null or empty
+     */
     public GetCompareExchangeValuesOperation(Class<T> clazz, String[] keys) {
         this(clazz, keys, true);
     }
