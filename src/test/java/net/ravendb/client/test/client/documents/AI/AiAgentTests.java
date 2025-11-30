@@ -18,6 +18,7 @@ import net.ravendb.client.documents.operations.connectionStrings.PutConnectionSt
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringResult;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -32,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 @EnableOnServer(thresholdVersion = "7.1")
 public class AiAgentTests extends RemoteTestBase {
 
-    @Disabled
+    @DisabledOnPullRequest
     @Test
     public void canStreamResults(){
         String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
@@ -80,7 +81,7 @@ public class AiAgentTests extends RemoteTestBase {
         }
     }
 
-    @Disabled
+    @DisabledOnPullRequest
     @Test
     public void AiAgentClientApiBasicTest(){
         String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
@@ -144,6 +145,7 @@ public class AiAgentTests extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canCreateAiAgent() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -193,6 +195,7 @@ public class AiAgentTests extends RemoteTestBase {
 
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canUpdateAiAgent() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -243,6 +246,7 @@ public class AiAgentTests extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canListAndDeleteAiAgent() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
