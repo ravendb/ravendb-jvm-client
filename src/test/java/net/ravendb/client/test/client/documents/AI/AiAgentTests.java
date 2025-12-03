@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 @EnableOnServer(thresholdVersion = "7.1")
 public class AiAgentTests extends RemoteTestBase {
 
-    @DisabledOnPullRequest
+    @Disabled
     @Test
     public void canStreamResults(){
         String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
@@ -81,7 +81,7 @@ public class AiAgentTests extends RemoteTestBase {
         }
     }
 
-    @DisabledOnPullRequest
+    @Disabled
     @Test
     public void AiAgentClientApiBasicTest(){
         String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
