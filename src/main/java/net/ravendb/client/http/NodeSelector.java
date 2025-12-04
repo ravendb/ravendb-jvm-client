@@ -182,7 +182,7 @@ public class NodeSelector implements CleanCloseable {
         state.speedTestMode.incrementAndGet();
     }
 
-    void DisableFastestNodeReadBalance(){
+    void disableFastestNodeReadBalance(){
         if (this._updateFastestNodeTimer == null) return;
         Lock lock = new ReentrantLock();
         lock.lock();
