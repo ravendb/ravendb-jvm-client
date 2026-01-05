@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations.replication;
 
 import net.ravendb.client.documents.replication.ReplicationNode;
+import org.apache.commons.lang3.StringUtils;
 
 public class PullReplicationAsHub extends ExternalReplication {
 
@@ -24,8 +25,8 @@ public class PullReplicationAsHub extends ExternalReplication {
         if (other instanceof PullReplicationAsHub) {
             PullReplicationAsHub hub = (PullReplicationAsHub) other;
             return super.isEqualTo(other)
-                    && getUrl().equalsIgnoreCase(hub.getUrl())
-                    && getName().equalsIgnoreCase(hub.getName());
+                    && StringUtils.equalsIgnoreCase(getUrl(), hub.getUrl())
+                    && StringUtils.equalsIgnoreCase(getName(), hub.getName());
         }
         return false;
     }

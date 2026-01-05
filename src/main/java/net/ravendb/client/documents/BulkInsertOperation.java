@@ -47,6 +47,7 @@ import org.apache.hc.core5.http.HttpEntity;
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -676,7 +677,12 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     }
 
     private boolean isHeartbeatIntervalExceeded() {
-        return System.currentTimeMillis() * 10_000 - _writer.getLastFlushToStream().toEpochMilli() * 10_000 >= _heartbeatCheckInterval.toNanos() / 100;
+        Instant now = Instant.now();
+        Instant lastFlush = _writer.getLastFlushToStream();
+
+        Duration elapsed = Duration.between(lastFlush, now);
+
+        return elapsed.compareTo(_heartbeatCheckInterval) >= 0;
     }
 
     private static class CountersBulkInsertOperation {

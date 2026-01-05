@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations.replication;
 
 import net.ravendb.client.documents.replication.ReplicationNode;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class ExternalReplicationBase extends ReplicationNode {
     private long taskId;
@@ -63,8 +64,8 @@ public abstract class ExternalReplicationBase extends ReplicationNode {
         if (other instanceof ExternalReplicationBase) {
             ExternalReplicationBase external = (ExternalReplicationBase) other;
 
-            return connectionStringName.equalsIgnoreCase(external.getConnectionStringName())
-                    && getDatabase().equalsIgnoreCase(external.getDatabase())
+            return StringUtils.equalsIgnoreCase(connectionStringName, external.getConnectionStringName())
+                    && StringUtils.equalsIgnoreCase(getDatabase(), external.getDatabase())
                     && taskId == external.getTaskId();
         }
 

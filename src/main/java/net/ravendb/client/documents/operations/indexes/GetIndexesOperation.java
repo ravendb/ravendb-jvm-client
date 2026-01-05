@@ -40,6 +40,9 @@ public class GetIndexesOperation implements IMaintenanceOperation<IndexDefinitio
             this.selectedNodeTag = nodeTag;
         }
 
+        public GetIndexesCommand(int start, int pageSize, String nodeTag) {
+            this(start,pageSize,null,nodeTag);
+        }
         public GetIndexesCommand(String indexName, String nodeTag) {
             this(0,0,new String[] {indexName}, nodeTag);
         }

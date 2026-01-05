@@ -2,19 +2,26 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.IdTypeAndName;
+import net.ravendb.client.documents.commands.StreamCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.commands.batches.IncrementalTimeSeriesBatchCommandData;
 import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
+import net.ravendb.client.documents.queries.timeSeries.TimeSeriesStreamIterator;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
+import net.ravendb.client.documents.session.operations.TimeSeriesStreamOperation;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -566,6 +573,15 @@ public class SessionTimeSeriesBase {
         return ranges.isEmpty()
                 || DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0
                 || DatesComparator.compare(rightDate(ranges.get(ranges.size() - 1).getTo()), leftDate(from)) < 0;
+    }
+
+    protected <TTValues> TimeSeriesStreamIterator<TTValues> getTimeSeriesStreamResult(Instant from, Instant to , Duration offset, Class clazz){
+        TimeSeriesStreamOperation streamOperation = new TimeSeriesStreamOperation(this.session, this.docId, this.name, from, to, offset);
+        StreamCommand command = streamOperation.createRequest();
+        this.session._requestExecutor.execute(command,this.session.sessionInfo);
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+
+        return new TimeSeriesStreamIterator<TTValues>(result, clazz);
     }
 
     private static class CachedEntryInfo {

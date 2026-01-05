@@ -118,6 +118,6 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
 
     @Override
     public Iterator<TypedTimeSeriesEntry<T>> stream(Instant from, Instant to, Duration offset) {
-        return null;
+        return getTimeSeriesStreamResult(from, to, offset, TypedTimeSeriesEntry.class);
     }
 }

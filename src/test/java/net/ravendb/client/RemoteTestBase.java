@@ -287,8 +287,6 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         customizeStore(store);
 
         hookLeakedConnectionCheck(store);
-        store.getConventions().setSaveEnumsAsIntegersForPatching(true);
-        store.getConventions().setSaveEnumsAsIntegers(true);
         store.initialize();
 
         store.addAfterCloseListener(((sender, event) -> {

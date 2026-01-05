@@ -2,7 +2,6 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -99,6 +98,6 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
 
     @Override
     public Iterator<TimeSeriesEntry> stream(Instant from, Instant to, Duration offset) {
-        return null;
+        return getTimeSeriesStreamResult(from, to, offset, TimeSeriesEntry.class);
     }
 }

@@ -409,16 +409,12 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                 _confirmations.clear();
             }
 
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
             timerInSec = Math.min(timerInSec * 2, 60);
             long delayMillis = timerInSec * 1000L;
-            CompletableFuture<Void> waitFuture = CompletableFuture.runAsync(() -> {
-                try {
-                    Thread.sleep(delayMillis);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e);
-                }
-            }, _executorService);
+            ScheduledFuture<?> waitFuture = scheduler.schedule(() -> {
+            }, delayMillis, TimeUnit.MILLISECONDS);
+
         }
     }
 

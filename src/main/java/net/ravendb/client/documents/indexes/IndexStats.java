@@ -39,22 +39,7 @@ public class IndexStats {
     private int errorsCount;
     private IndexSourceType sourceType;
     private boolean isTestIndex;
-    private HashSet<String> referencedCollections;
 
-    /**
-     * Returns the names of referenced collections
-     * @return referenced collections
-     */
-    public HashSet<String> getReferencedCollections() {
-        return referencedCollections;
-    }
-    /**
-     * Sets the names of referenced collections
-     * @param referencedCollections referenced collections
-     */
-    public void setReferencedCollections(HashSet<String> referencedCollections) {
-        this.referencedCollections = referencedCollections;
-    }
     /**
      * Index name.
      * @return Index name

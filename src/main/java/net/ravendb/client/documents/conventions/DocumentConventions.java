@@ -21,14 +21,12 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import net.ravendb.client.DocumentationUrls;
-import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 
@@ -81,16 +79,12 @@ public class DocumentConventions {
 
     private boolean _useOptimisticConcurrency;
     private int _maxNumberOfRequestsPerSession;
-    private Boolean useHttpDecompression;
     private Duration _requestTimeout;
     private Duration _firstBroadcastAttemptTimeout;
     private Duration _secondBroadcastAttemptTimeout;
     private Duration _waitForIndexesAfterSaveChangesTimeout;
     private Duration _waitForReplicationAfterSaveChangesTimeout;
     private Duration _waitForNonStaleResultsTimeout;
-    private Duration globalHttpClientTimeout;
-    private Duration httpPooledConnectionLifetime;
-    private Duration httpPooledConnectionIdleTimeout;
     private int _loadBalancerContextSeed;
     private LoadBalanceBehavior _loadBalanceBehavior;
     private ReadBalanceBehavior _readBalanceBehavior;
@@ -100,7 +94,6 @@ public class DocumentConventions {
     private Boolean _useHttpDecompression;
     private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
     private boolean _sendApplicationIdentifier;
-    private Type httpClientType;
     private Consumer<HttpClientBuilder> configureHttpMessageHandler;
 
     private final BulkInsertConventions _bulkInsert;
@@ -168,9 +161,6 @@ public class DocumentConventions {
     public Function<HttpClientBuilder, CloseableHttpClient> getCreateHttpClient() {
         return createHttpClient;
     }
-    public Type getHttpClientType() {
-        return httpClientType;
-    }
 
     public Consumer<HttpClientBuilder> getConfigureHttpMessageHandler() {
         return configureHttpMessageHandler;
@@ -180,24 +170,8 @@ public class DocumentConventions {
         this.configureHttpMessageHandler = configureHttpMessageHandler;
     }
 
-    public void setHttpClientType(Type httpClientType) {
-        this.httpClientType = httpClientType;
-    }
-
     public void setCreateHttpClient(Function<HttpClientBuilder, CloseableHttpClient> createHttpClient) {
         this.createHttpClient = createHttpClient;
-    }
-
-    public boolean hasExplicitlySetDecompressionUsage() {
-        return useHttpDecompression != null;
-    }
-
-    public Duration getGlobalHttpClientTimeout() {
-        return globalHttpClientTimeout;
-    }
-
-    public void setGlobalHttpClientTimeout(Duration globalHttpClientTimeout) {
-        this.globalHttpClientTimeout = globalHttpClientTimeout;
     }
 
     public BulkInsertConventions bulkInsert() {
@@ -266,8 +240,6 @@ public class DocumentConventions {
         _aggressiveCache = new AggressiveCacheConventions(this);
         _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
         _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
-        globalHttpClientTimeout = Duration.ofHours(12);
-        httpClientType = HttpClient.class;
         createHttpClient = builder -> builder.build();
         _waitForIndexesAfterSaveChangesTimeout = Duration.ofSeconds(15);
         _waitForReplicationAfterSaveChangesTimeout = Duration.ofSeconds(15);
@@ -302,22 +274,6 @@ public class DocumentConventions {
     public void setSendApplicationIdentifier(boolean sendApplicationIdentifier) {
         assertNotFrozen();
         _sendApplicationIdentifier = sendApplicationIdentifier;
-    }
-
-    public Duration getHttpPooledConnectionLifetime() {
-        return httpPooledConnectionLifetime;
-    }
-
-    public void setHttpPooledConnectionLifetime(Duration httpPooledConnectionLifetime) {
-        this.httpPooledConnectionLifetime = httpPooledConnectionLifetime;
-    }
-
-    public Duration getHttpPooledConnectionIdleTimeout() {
-        return httpPooledConnectionIdleTimeout;
-    }
-
-    public void setHttpPooledConnectionIdleTimeout(Duration httpPooledConnectionIdleTimeout) {
-        this.httpPooledConnectionIdleTimeout = httpPooledConnectionIdleTimeout;
     }
 
     /**

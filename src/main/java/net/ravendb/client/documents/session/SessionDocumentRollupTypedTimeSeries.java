@@ -2,7 +2,6 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -79,6 +78,6 @@ public class SessionDocumentRollupTypedTimeSeries<T> extends SessionTimeSeriesBa
 
     @Override
     public Iterator<TypedTimeSeriesRollupEntry<T>> stream(Instant from, Instant to, Duration offset) {
-        return null;
+        return this.getTimeSeriesStreamResult(from, to, offset, TypedTimeSeriesRollupEntry.class);
     }
 }
