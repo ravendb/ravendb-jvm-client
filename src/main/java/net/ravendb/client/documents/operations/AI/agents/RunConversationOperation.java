@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.AI.AiConversationCreationOptions;
 import net.ravendb.client.documents.AI.ContentPart;
+import net.ravendb.client.documents.AI.TextPart;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
@@ -16,6 +17,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import net.ravendb.client.util.UrlUtils;
+import net.ravendb.client.util.ValidationMethods;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ClassicHttpResponse;
@@ -25,8 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -37,42 +38,45 @@ import static net.ravendb.client.extensions.JsonExtensions.createDefaultJsonSeri
 public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
     private final String agentId;
     private final String conversationId;
-    private final List<ContentPart> promptParts;
+    private final Iterable<ContentPart> promptParts;
     private final List<AiAgentActionResponse> actionResponses;
     private final AiConversationCreationOptions options;
+    private final List<AiAgentArtificialActionResponse> artificialActions;
     private final String changeVector;
     private final String streamPropertyPath;
     private final AiStreamCallback streamCallback;
 
-    public RunConversationOperation(
-            String agentId,
-            String conversationId,
-            List<ContentPart> promptParts,
-            List<AiAgentActionResponse> actionResponses,
-            AiConversationCreationOptions options,
-            String changeVector,
-            String streamPropertyPath,
-            AiStreamCallback streamCallback
-    ) {
-        if (agentId == null || agentId.trim().isEmpty()) {
-            throw new IllegalArgumentException("agentId cannot be null or empty.");
-        }
-        if (conversationId == null || conversationId.trim().isEmpty()) {
-            throw new IllegalArgumentException("conversationId cannot be null or empty.");
-        }
+    public RunConversationOperation(String agentId, String conversationId, List<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, AiConversationCreationOptions options, String changeVector) {
+        this(agentId, conversationId, promptParts, actionResponses, Collections.emptyList(), options, changeVector, null, null);
+    }
 
-        if ((streamPropertyPath != null) != (streamCallback != null)) {
-            throw new IllegalStateException("Both streamPropertyPath and streamCallback must be specified together or neither.");
-        }
+    public RunConversationOperation(String agentId, String conversationId, List<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, List<AiAgentArtificialActionResponse> artificialActions, AiConversationCreationOptions options, String changeVector) {
+        this(agentId, conversationId, promptParts, actionResponses, artificialActions, options, changeVector, null, null);
+    }
+    public RunConversationOperation( String agentId, String conversationId, List<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, AiConversationCreationOptions options, String changeVector, String streamPropertyPath, AiStreamCallback streamedChunksCallback) {
+        this(agentId, conversationId, promptParts, actionResponses, Collections.emptyList(), options, changeVector, streamPropertyPath, streamedChunksCallback);
+    }
 
+    public RunConversationOperation( String agentId, String conversationId, Iterable<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, List<AiAgentArtificialActionResponse> artificialActions, AiConversationCreationOptions options, String changeVector, String streamPropertyPath, AiStreamCallback streamedChunksCallback) {
+        ValidationMethods.assertNotNullOrEmpty(agentId, "agentId");
+        ValidationMethods.assertNotNullOrEmpty(conversationId, "conversationId");
+        if ((streamPropertyPath == null) != (streamedChunksCallback == null)) {
+            throw new IllegalStateException( "Both streamPropertyPath and streamedChunksCallback must be specified together");
+        }
         this.agentId = agentId;
         this.conversationId = conversationId;
         this.promptParts = promptParts;
-        this.actionResponses = actionResponses;
-        this.options = options;
         this.changeVector = changeVector;
+        this.actionResponses = actionResponses;
+        this.artificialActions = artificialActions;
+        this.options = options;
         this.streamPropertyPath = streamPropertyPath;
-        this.streamCallback = streamCallback;
+        this.streamCallback = streamedChunksCallback;
+    }
+
+    @Deprecated
+    public RunConversationOperation(String agentId, String conversationId, String userPrompt, List<AiAgentActionResponse> actionResponses, AiConversationCreationOptions options, String changeVector, String streamPropertyPath, AiStreamCallback streamedChunksCallback) {
+        this(agentId, conversationId, Arrays.asList(new TextPart(userPrompt)), actionResponses, Collections.emptyList(), options, changeVector, streamPropertyPath, streamedChunksCallback);
     }
 
     public TcpConnectionHeaderMessage.OperationResultType getResultType() {
@@ -85,6 +89,10 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                 this,
                 conventions
         );
+    }
+
+    public List<AiAgentArtificialActionResponse> getArtificialActions() {
+        return artificialActions;
     }
 
     public String getStreamPropertyPath() {
@@ -111,7 +119,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         return actionResponses;
     }
 
-    public List<ContentPart> getPromptParts() {
+    public Iterable<ContentPart> getPromptParts() {
         return promptParts;
     }
 
@@ -169,6 +177,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode bodyObj = mapper.createObjectNode();
                     bodyObj.set("ActionResponses", mapper.valueToTree(this.parent.getActionResponses()));
+                    bodyObj.set("ArtificialActions", mapper.valueToTree(this.parent.getArtificialActions()));
                     bodyObj.set("UserPrompt", mapper.valueToTree(this.parent.getPromptParts()));
                     bodyObj.set("CreationOptions", mapper.valueToTree(this.parent.getOptions()));
                     generator.writeTree(bodyObj);

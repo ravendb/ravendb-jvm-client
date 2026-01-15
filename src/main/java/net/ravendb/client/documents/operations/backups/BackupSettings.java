@@ -19,4 +19,10 @@ public abstract class BackupSettings {
     public void setGetBackupConfigurationScript(GetBackupConfigurationScript getBackupConfigurationScript) {
         this.getBackupConfigurationScript = getBackupConfigurationScript;
     }
+
+    public boolean hasSettings() {
+        return getGetBackupConfigurationScript() != null
+                && getGetBackupConfigurationScript().getExec() != null
+                && !getGetBackupConfigurationScript().getExec().trim().isEmpty();
+    }
 }

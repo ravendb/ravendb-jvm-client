@@ -91,12 +91,10 @@ public class Inflector {
         }
 
         public String apply(String word) {
-            Matcher matcher = regex.matcher(word);
-            boolean find = matcher.find();
-            if (!find) {
-                return null;
+            if (regex.matcher(word).find()) {
+                return regex.matcher(word).replaceFirst(replacement);
             }
-            return matcher.replaceFirst(replacement);
+            return null;
         }
     }
 

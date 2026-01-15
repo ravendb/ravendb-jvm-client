@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.etl.elasticSearch;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchConnectionString extends ConnectionString {
@@ -10,6 +11,26 @@ public class ElasticSearchConnectionString extends ConnectionString {
     private String[] nodes;
 
     private Authentication authentication;
+
+    @Override
+    protected void validateImpl(List<String> errors) {
+
+        if (nodes == null || nodes.length == 0) {
+            errors.add("Nodes cannot be empty");
+        }
+        if (nodes == null) {
+            return;
+        }
+
+        for (int i = 0; i < nodes.length; i++) {
+            if (nodes[i] == null) {
+                errors.add("Url number " + (i + 1) + " in Nodes cannot be empty");
+                continue;
+            }
+
+            nodes[i] = nodes[i].trim();
+        }
+    }
 
     @Override
     public ConnectionStringType getType() {

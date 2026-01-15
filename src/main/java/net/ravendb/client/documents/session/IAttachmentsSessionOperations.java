@@ -7,12 +7,12 @@ import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsR
 import java.util.List;
 
 /**
- * Attachments advanced synchronous session operations
+ * Advanced synchronous session operations for working with attachments.
  */
 public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperationsBase {
 
     /**
-     * Check if attachment exists
+     * Checks whether an attachment exists for the specified document ID and attachment name.
      * @param documentId Document Id
      * @param name Attachment name
      * @return true, if attachment exists
@@ -20,7 +20,7 @@ public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     boolean exists(String documentId, String name);
 
     /**
-     * Returns the attachment by the document id and attachment name.
+     * Returns the attachment for the specified document ID and attachment name.
      * @param documentId Document Id
      * @param name Name of attachment
      * @return Attachment
@@ -28,7 +28,7 @@ public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     CloseableAttachmentResult get(String documentId, String name);
 
     /**
-     * Returns the attachment by the entity and attachment name.
+     * Returns the attachment for the specified entity instance and attachment name.
      * @param entity Entity
      * @param name Name of attachment
      * @return Attachment
@@ -36,14 +36,14 @@ public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     CloseableAttachmentResult get(Object entity, String name);
 
     /**
-     * Returns enumerator of attachment name and stream.
+     * Returns an enumerator over multiple attachments. Each result includes the attachment stream and metadata.
      * @param attachments Attachments to get
      * @return attachments
      */
     CloseableAttachmentsResult get(List<AttachmentRequest> attachments);
 
     /**
-     * Returns the revision attachment by the document id and attachment name.
+     * Returns the attachment from a document revision for the specified document ID, attachment name, and change vector.
      * @param documentId Document Id
      * @param name Name of attachment
      * @param changeVector Change vector

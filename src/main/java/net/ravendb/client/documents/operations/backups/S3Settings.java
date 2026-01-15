@@ -30,4 +30,12 @@ public class S3Settings extends AmazonSettings {
     public void setForcePathStyle(boolean forcePathStyle) {
         this.forcePathStyle = forcePathStyle;
     }
+
+    public boolean hasSettings() {
+        if (super.hasSettings()) {
+            return true;
+        }
+
+        return bucketName != null && !bucketName.trim().isEmpty();
+    }
 }

@@ -46,4 +46,13 @@ public class AzureSettings extends BackupSettings {
     public void setSasToken(String sasToken) {
         this.sasToken = sasToken;
     }
+
+    @Override
+    public boolean hasSettings() {
+        if (super.hasSettings()) {
+            return true;
+        }
+
+        return storageContainer != null && !storageContainer.trim().isEmpty();
+    }
 }

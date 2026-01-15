@@ -56,6 +56,8 @@ public class SessionInfo {
         _canUseLoadBalanceBehavior = _canUseLoadBalanceBehavior || _session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT;
     }
 
+    public String getDatabaseName() { return this._session.getDatabaseName(); }
+
     private void setContextInternal(String sessionKey) {
         if (_sessionIdUsed) {
             throw new IllegalStateException("Unable to set the session context after it has already been used. The session context can only be modified before it is utilized.");
