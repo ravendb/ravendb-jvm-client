@@ -15,33 +15,42 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
+import java.util.List;
 
 public class UpdateEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateEtlOperationResult> {
 
     private final long _taskId;
     private final EtlConfiguration<T> _configuration;
+    private final List<String> transformantionsToReset;
 
     public UpdateEtlOperation(long taskId, EtlConfiguration<T> configuration) {
+        this(taskId,configuration, null);
+    }
+
+    public UpdateEtlOperation(long taskId, EtlConfiguration<T> configuration, List<String> transformantionsToReset) {
         _taskId = taskId;
         _configuration = configuration;
+        this.transformantionsToReset = transformantionsToReset;
     }
 
     @Override
     public RavenCommand<UpdateEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdateEtlCommand<>(conventions, _taskId, _configuration);
+        return new UpdateEtlCommand<>(conventions, _taskId, _configuration, this.transformantionsToReset);
     }
 
-    private static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> implements IRaftCommand {
+    public static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> implements IRaftCommand {
 
         private final DocumentConventions _conventions;
         private final long _taskId;
         private final EtlConfiguration<T> _configuration;
+        private final List<String> transformationsToReset;
 
-        public UpdateEtlCommand(DocumentConventions conventions, long taskId, EtlConfiguration<T> configuration) {
+        public UpdateEtlCommand(DocumentConventions conventions, long taskId, EtlConfiguration<T> configuration, List<String> transformationsToReset) {
             super(UpdateEtlOperationResult.class);
             _conventions = conventions;
             _taskId = taskId;
             _configuration = configuration;
+            this.transformationsToReset = transformationsToReset;
         }
 
         @Override
@@ -52,6 +61,10 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
         @Override
         public HttpUriRequestBase createRequest(ServerNode node) {
             String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/etl?id=" + _taskId;
+
+            if (transformationsToReset != null) {
+                url += "&reset=" + String.join("&reset=", transformationsToReset);
+            }
 
             HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {

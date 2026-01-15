@@ -38,4 +38,12 @@ public class FtpSettings extends BackupSettings {
         this.certificateAsBase64 = certificateAsBase64;
     }
 
+    @Override
+    public boolean hasSettings() {
+        if (super.hasSettings()) {
+            return true;
+        }
+
+        return url != null && !url.trim().isEmpty();
+    }
 }

@@ -27,14 +27,14 @@ public class AiConversationTests extends RemoteTestBase {
                 Assertions.assertTrue(false, "Expected exception for missing agentId not thrown");
             } catch (Exception e) {
                 assertThat(e.getMessage())
-                        .contains("agentId is required");
+                        .contains("agentId cannot be null or empty");
             }
             try {
                 store.ai().conversation("agent/1", "",new AiConversationCreationOptions());
                 Assertions.assertTrue(false, "Expected exception for missing conversationId not thrown");
             } catch (Exception e) {
                 assertThat(e.getMessage())
-                        .contains("conversationId is required");
+                        .contains("conversationId cannot be null or empty");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

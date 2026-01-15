@@ -114,6 +114,7 @@ public class GetRevisionOperation {
         documentInfo.setDocument(document);
         documentInfo.setMetadata(metadata);
         documentInfo.setEntity(entity);
+        documentInfo.setIgnoreChanges(true);
         _session.documentsByEntity.put(entity, documentInfo);
 
         _session.onAfterConversionToEntityInvoke(id, document, entity);

@@ -6,7 +6,7 @@ import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 
 public class AiOperations {
-    private final IDocumentStore store;
+    IDocumentStore store;
     private final String databaseName;
     private final MaintenanceOperationExecutor executor;
 
@@ -24,6 +24,8 @@ public class AiOperations {
         this.databaseName = store.getDatabase();
         this.executor = this.store.maintenance().forDatabase(this.databaseName);
     }
+
+    public MaintenanceOperationExecutor getExecutor(){ return this.executor; }
 
     /**
      * Returns an AiOperations instance for a different database.
@@ -88,7 +90,7 @@ public class AiOperations {
      * Opens an AI conversation for an agent.
      */
     public AiConversation conversation(String agentId, String conversationId, AiConversationCreationOptions creationOptions) {
-        return new AiConversation(store, databaseName, agentId, conversationId, creationOptions, null);
+        return new AiConversation(this, agentId, conversationId, creationOptions, null);
     }
 
     /**
@@ -97,6 +99,6 @@ public class AiOperations {
     public AiConversation conversation(String agentId, String conversationId,
                                        AiConversationCreationOptions creationOptions,
                                        String changeVector) {
-        return new AiConversation(store, databaseName, agentId, conversationId, creationOptions, changeVector);
+        return new AiConversation(this, agentId, conversationId, creationOptions, changeVector);
     }
 }

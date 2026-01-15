@@ -11,6 +11,7 @@ import java.util.List;
 class ConversionRequestBody {
 
     private List<AiAgentActionResponse> actionResponses;
+    private List<AiAgentArtificialActionResponse> artificialActions;
     private List<ContentPart> userPrompt;
     private AiConversationCreationOptions creationOptions;
 
@@ -20,6 +21,13 @@ class ConversionRequestBody {
 
     public void setActionResponses(List<AiAgentActionResponse> actionResponses) {
         this.actionResponses = actionResponses;
+    }
+    public List<AiAgentArtificialActionResponse> getArtificialActions() {
+        return artificialActions;
+    }
+
+    public void setArtificialActions(List<AiAgentArtificialActionResponse> artificialActions) {
+        this.artificialActions = artificialActions;
     }
 
     public List<ContentPart> getUserPrompt() {

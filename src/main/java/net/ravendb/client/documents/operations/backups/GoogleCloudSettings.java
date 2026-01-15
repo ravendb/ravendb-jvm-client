@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations.backups;
 
-public class GoogleCloudSettings extends BackupStatus {
+public class GoogleCloudSettings extends BackupSettings {
     private String bucketName;
     private String remoteFolderName;
     private String googleCredentialsJson;
@@ -27,5 +27,14 @@ public class GoogleCloudSettings extends BackupStatus {
 
     public void setGoogleCredentialsJson(String googleCredentialsJson) {
         this.googleCredentialsJson = googleCredentialsJson;
+    }
+
+    @Override
+    public boolean hasSettings() {
+        if (super.hasSettings()) {
+            return true;
+        }
+
+        return bucketName != null && !bucketName.trim().isEmpty();
     }
 }

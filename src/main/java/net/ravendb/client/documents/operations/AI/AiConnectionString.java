@@ -39,6 +39,55 @@ public final class AiConnectionString extends ConnectionString {
             "vertexSettings"
     };
 
+    @Override
+    protected void validateImpl(List<String> errors) {
+
+        AbstractAiSettings[] allSettings = new AbstractAiSettings[] {
+                openAiSettings,
+                azureOpenAiSettings,
+                ollamaSettings,
+                embeddedSettings,
+                googleSettings,
+                huggingFaceSettings,
+                mistralAiSettings,
+                vertexSettings
+        };
+
+        // Filter non-null settings
+        List<AbstractAiSettings> configuredSettings = new ArrayList<>();
+        for (AbstractAiSettings s : allSettings) {
+            if (s != null) {
+                configuredSettings.add(s);
+            }
+        }
+
+        // Validate each configured setting
+        for (AbstractAiSettings setting : configuredSettings) {
+            setting.validateFields(errors);
+        }
+
+        int count = configuredSettings.size();
+
+        if (count == 0) {
+            // Collect all setting type names
+            List<String> names = new ArrayList<>();
+            for (AbstractAiSettings s : allSettings) {
+                if (s != null) {
+                    names.add(s.getClass().getSimpleName());
+                }
+            }
+            errors.add("At least one of the following settings must be set: " + String.join(", ", names));
+        }
+        else if (count > 1) {
+            // Collect configured setting type names
+            List<String> names = new ArrayList<>();
+            for (AbstractAiSettings s : configuredSettings) {
+                names.add(s.getClass().getSimpleName());
+            }
+            errors.add("Only one of the following settings can be set: " + String.join(", ", names));
+        }
+    }
+
     public List<String> validate() {
         List<String> errors = new ArrayList<>();
         List<AbstractAiSettings> allSettings = new ArrayList<>();

@@ -8,5 +8,8 @@ public enum EtlType {
     SQL,
     OLAP,
     ELASTIC_SEARCH,
-    QUEUE
+    QUEUE,
+    SNOWFLAKE,
+    EMBEDDINGS_GENERATION,
+    GEN_AI
 }

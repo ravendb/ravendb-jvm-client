@@ -19,4 +19,13 @@ public class LocalSettings extends BackupSettings {
     public void setShardNumber(Integer shardNumber) {
         this.shardNumber = shardNumber;
     }
+
+    @Override
+    public boolean hasSettings() {
+        if (super.hasSettings()) {
+            return true;
+        }
+
+        return folderPath != null && !folderPath.trim().isEmpty();
+    }
 }

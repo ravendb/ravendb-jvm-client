@@ -2,11 +2,11 @@ package net.ravendb.client.documents.AI;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.AI.agents.*;
 import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.extensions.expressionExtension;
 import net.ravendb.client.util.SerializableFunction;
+import net.ravendb.client.util.ValidationMethods;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,17 +18,18 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class AiConversation {
-    private final IDocumentStore store;
-    private final String databaseName;
-    private final String agentId;
-    private String conversationId;
+    private final AiOperations aiOperations;
     private final AiConversationCreationOptions options;
-    private String changeVector;
+    private final String agentId;
+
+    private String conversationId;
     private List<AiAgentActionRequest> actionRequests = null;
     private final List<AiAgentActionResponse> actionResponses = new ArrayList<>();
-    private final Map<String, IActionInvocation> invocations = new HashMap<>();
     private final List<ContentPart> promptParts = new ArrayList<>();
+    private final List<AiAgentArtificialActionResponse> artificialActions = new ArrayList<>();
+    private String changeVector;
 
+    private final Map<String, IActionInvocation> invocations = new HashMap<>();
     private Consumer<UnhandledActionEventArgs> onUnhandledAction;
 
     public List<AiAgentActionResponse> getActionResponses() { return actionResponses; }
@@ -45,20 +46,54 @@ public class AiConversation {
     }
     public List<AiAgentActionRequest> getActionRequests() {return actionRequests; }
 
-    public AiConversation(IDocumentStore store, String databaseName, String agentId, String conversationId,
+    public AiConversation(AiOperations aiOperations, String agentId, String conversationId,
                           AiConversationCreationOptions options, String changeVector) {
-        if (store == null) throw new IllegalArgumentException("store is required");
-        if (databaseName == null || databaseName.isEmpty()) throw new IllegalArgumentException("databaseName is required");
-        if (agentId == null || agentId.isEmpty()) throw new IllegalArgumentException("agentId is required");
-        if (conversationId == null || conversationId.isEmpty()) throw new IllegalArgumentException("conversationId is required");
+        ValidationMethods.assertNotNullOrEmpty(aiOperations,"aiOperations");
+        ValidationMethods.assertNotNullOrEmpty(agentId,"agentId");
+        ValidationMethods.assertNotNullOrEmpty(conversationId, "conversationId");
 
-        this.store = store;
-        this.databaseName = databaseName;
+        this.aiOperations = aiOperations;
         this.agentId = agentId;
         this.conversationId = conversationId;
         this.options = options;
         this.changeVector = changeVector;
     }
+
+    public void addArtificialActionWithResponse(String toolId, String actionResponse) {
+        ValidationMethods.assertNotNullOrEmpty(toolId, "toolId");
+        ValidationMethods.assertNotNullOrEmpty(actionResponse, "actionResponse");
+
+        artificialActions.add(new AiAgentArtificialActionResponse() {{
+            toolId = toolId;
+            content = actionResponse;
+        }});
+    }
+
+    public <TResponse> void addArtificialActionWithResponse(String toolId, TResponse actionResponse) {
+        ValidationMethods.assertNotNullOrEmpty(toolId, "toolId");
+
+        if (actionResponse == null) {
+            throw new IllegalArgumentException(
+                    "Action response for '" + toolId + "' cannot be null."
+            );
+        }
+
+        if (actionResponse instanceof String) {
+            addArtificialActionWithResponse(toolId, (String) actionResponse);
+            return;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(actionResponse);
+            addArtificialActionWithResponse(toolId, json);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to serialize action response for '" + toolId + "'", e
+            );
+        }
+    }
+
 
     public String getChangeVector() {
         return changeVector;
@@ -182,7 +217,7 @@ public class AiConversation {
     }
 
     public <TAnswer> CompletableFuture<AiAnswer<TAnswer>> stream(SerializableFunction<TAnswer, ?> streamProperty, AiStreamCallback streamCallback) {
-        return stream(expressionExtension.toPropertyPath(streamProperty,this.store.getConventions()), streamCallback);
+        return stream(expressionExtension.toPropertyPath(streamProperty,aiOperations.store.getConventions()), streamCallback);
     }
 
     public <TAnswer> CompletableFuture<AiAnswer<TAnswer>> stream(
@@ -311,15 +346,14 @@ public class AiConversation {
                     this.conversationId,
                     this.promptParts,
                     this.actionResponses,
+                    this.artificialActions,
                     this.options,
                     this.changeVector,
                     streamPropertyPath,
                     streamCallback
             );
 
-            ConversationResult<TAnswer> result = this.store.maintenance()
-                    .forDatabase(this.databaseName)
-                    .send(op);
+            ConversationResult<TAnswer> result = this.aiOperations.getExecutor().send(op);
             this.changeVector = result.getChangeVector();
             this.conversationId = result.getConversationId();
             this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
@@ -339,6 +373,7 @@ public class AiConversation {
         finally {
             this.promptParts.clear();
             this.actionResponses.clear();
+            this.artificialActions.clear();
         }
     }
 

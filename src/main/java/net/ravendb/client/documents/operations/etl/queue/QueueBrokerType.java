@@ -7,7 +7,9 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum QueueBrokerType {
     NONE,
     KAFKA,
-    RABBIT_MQ;
+    RABBIT_MQ,
+    AZURE_QUEUE_STORAGE,
+    AMAZON_SQS;
 
     @JsonCreator
     public static QueueBrokerType fromString(String value) {
@@ -27,6 +29,14 @@ public enum QueueBrokerType {
                 return NONE;
             case "None":
                 return NONE;
+            case "AZURE_QUEUE_STORAGE":
+                return AZURE_QUEUE_STORAGE;
+            case "AzureQueueStorage":
+                return AZURE_QUEUE_STORAGE;
+            case "AMAZON_SQS":
+                return AMAZON_SQS;
+            case "AmazonSqs":
+                return AMAZON_SQS;
             default:
                 throw new IllegalArgumentException("Unknown QueueBrokerType: " + value);
         }
