@@ -8,14 +8,26 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
+/**
+ * Retrieves detailed database statistics, providing in-depth information such as the count of compare exchange entries,
+ * compare exchange tombstones, and time series deleted ranges.
+ * It also includes base statistics like index information, storage sizes, and other relevant metrics.
+ */
 public class GetDetailedStatisticsOperation implements IMaintenanceOperation<DetailedDatabaseStatistics> {
 
     private final String _debugTag;
 
+    /**
+     * Inherits documentation from {@link GetDetailedStatisticsOperation}.
+     */
     public GetDetailedStatisticsOperation() {
         this(null);
     }
-
+    /**
+     * Inherits documentation from {@link GetDetailedStatisticsOperation}.
+     *
+     * @param debugTag An optional tag for enhanced logging or debugging purposes.
+     */
     public GetDetailedStatisticsOperation(String debugTag) {
         _debugTag = debugTag;
     }

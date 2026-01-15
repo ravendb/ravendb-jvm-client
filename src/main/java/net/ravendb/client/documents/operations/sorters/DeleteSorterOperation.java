@@ -9,9 +9,17 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Deletes a custom sorter from the RavenDB server using the {@code DeleteSorterOperation}.
+ * Once removed, the sorter will no longer be available for ordering query results in the associated database.
+ */
 public class DeleteSorterOperation implements IVoidMaintenanceOperation {
     private final String _sorterName;
-
+    /**
+     * Inherits documentation from {@link DeleteSorterOperation}.
+     *
+     * @param sorterName The name of the custom sorter to be deleted from the server.
+     */
     public DeleteSorterOperation(String sorterName) {
         if (sorterName == null) {
             throw new IllegalArgumentException("SorterName cannot be null");

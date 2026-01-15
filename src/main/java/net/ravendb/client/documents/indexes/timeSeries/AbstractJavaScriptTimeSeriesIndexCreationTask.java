@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes.timeSeries;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IndexFieldOptions;
 import net.ravendb.client.documents.indexes.IndexType;
@@ -106,6 +107,10 @@ public class AbstractJavaScriptTimeSeriesIndexCreationTask extends AbstractIndex
         _definition.setPriority(priority);
         _definition.setState(state);
         _definition.setDeploymentMode(deploymentMode);
+        _definition.setCompoundFields(compoundFieldsStrings);
+
+        if (getSearchEngineType() != null)
+            _definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, getSearchEngineType().toString());
         return _definition;
     }
 }

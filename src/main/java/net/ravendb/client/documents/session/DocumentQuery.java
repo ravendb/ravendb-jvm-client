@@ -880,6 +880,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IDocumentQuery<T> moreLikeThis(MoreLikeThisBase moreLikeThis) {
         try (MoreLikeThisScope mlt = _moreLikeThis()) {
@@ -893,6 +896,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder) {
@@ -912,15 +918,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion) {
         _suggestUsing(suggestion);
         return new SuggestionDocumentQuery<>(this);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder) {
-        SuggestionBuilder<T> f = new SuggestionBuilder<>();
+        SuggestionBuilder<T> f = new SuggestionBuilder<>(this.getConventions());
         builder.accept(f);
 
         suggestUsing(f.getSuggestion());
@@ -946,5 +957,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     public IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder) {
         _shardContext(builder);
         return this;
+    }
+
+    void load(List<LoadToken> list) {
+        if (loadTokens == null) {
+            loadTokens = new ArrayList<>();
+        }
+        loadTokens.addAll(list);
     }
 }

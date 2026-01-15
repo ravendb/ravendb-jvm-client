@@ -4,7 +4,10 @@ import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 
 import java.util.Date;
 
-public interface ISessionDocumentTypedIncrementalTimeSeries<TValues> extends ISessionDocumentDeleteTimeSeriesBase, ISessionDocumentTypedIncrementTimeSeriesBase<TValues> {
+public interface ISessionDocumentTypedIncrementalTimeSeries<TValues> extends
+        ITimeSeriesStreamingBase<TypedTimeSeriesEntry<TValues>>,
+        ISessionDocumentDeleteTimeSeriesBase,
+        ISessionDocumentTypedIncrementTimeSeriesBase<TValues> {
 
     /**
      * Return the time series values for the provided range

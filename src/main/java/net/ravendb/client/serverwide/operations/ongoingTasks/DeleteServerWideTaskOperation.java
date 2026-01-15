@@ -11,11 +11,21 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Operations for deleting server-wide ongoing task.
+ */
 public class DeleteServerWideTaskOperation implements IVoidServerOperation {
 
     private final String _name;
     private final OngoingTaskType _type;
 
+    /**
+     * {@inheritDoc}
+     * @see DeleteServerWideTaskOperation
+     * @param name Name of the ongoing task.
+     * @param type Specifies the type of the ongoing task.
+     * @throws IllegalArgumentException when {@code name} is null.
+     */
     public DeleteServerWideTaskOperation(String name, OngoingTaskType type) {
         if (name == null) {
             throw new IllegalArgumentException("Name cannot be null");

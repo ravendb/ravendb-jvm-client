@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
@@ -45,6 +46,9 @@ public class IndexCreation {
                         definition.setName(x.getIndexName());
                         definition.setPriority(ObjectUtils.firstNonNull(x.getPriority(), IndexPriority.NORMAL));
                         definition.setState(ObjectUtils.firstNonNull(x.getState(), IndexState.NORMAL));
+
+                        if (x.getSearchEngineType() != null)
+                            definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, x.getSearchEngineType().toString());
                         return definition;
                     } finally {
                         x.setConventions(oldConventions);

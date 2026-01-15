@@ -16,9 +16,19 @@ import org.apache.hc.core5.http.ContentType;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * <p>The Lucene indexing engine allows you to create custom sorters where you can define how query results will be ordered based on your specific requirements.</p>
+ * <p>Use {@code PutSortersOperation} to deploy a custom sorter to the RavenDB server.</p>
+ * <p>Once deployed, it can be used to sort query results for all queries made on the database scoped to your Document Store.</p>
+ */
 public class PutSortersOperation implements IVoidMaintenanceOperation {
     private final SorterDefinition[] _sortersToAdd;
 
+    /**
+     * Inherits documentation from {@link PutSortersOperation}.
+     *
+     * @param sortersToAdd An array of {@code SorterDefinition} objects representing the custom sorters to be deployed to the server.
+     */
     public PutSortersOperation(SorterDefinition... sortersToAdd) {
         if (sortersToAdd == null || sortersToAdd.length == 0) {
             throw new IllegalArgumentException("SortersToAdd cannot be null or empty");

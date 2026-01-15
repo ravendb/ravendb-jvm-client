@@ -12,12 +12,30 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
+/**
+ * Operation to retrieve a compare exchange value from a RavenDB database.
+ * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+ * that ensures a consistent state across the cluster.
+ * @param <T> The type of the value associated with the compare exchange key.
+ */
 public class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
     private final String _key;
     private final boolean _materializeMetadata;
     private final Class<T> _clazz;
 
+    /**
+     * Operation to retrieve a compare exchange value from a RavenDB database.
+     * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+     * that ensures a consistent state across the cluster.
+     * <p>
+     * Initializes a new instance of the {@link GetCompareExchangeValueOperation}&lt;T&gt; class
+     * and retrieves the compare exchange value for the specified key.
+     *
+     * @param clazz the type of the value associated with the compare exchange key
+     * @param key the key of the compare exchange value to retrieve
+     * @throws IllegalArgumentException if the {@code key} is null or empty
+     */
     public GetCompareExchangeValueOperation(Class<T> clazz, String key) {
         this(clazz, key, true);
     }

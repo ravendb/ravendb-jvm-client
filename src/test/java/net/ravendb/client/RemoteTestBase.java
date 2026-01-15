@@ -263,8 +263,8 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         databaseRecord.setDatabaseName(name);
 
         // force lucene on database level
-        databaseRecord.getSettings().put(Constants.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Lucene");
-        databaseRecord.getSettings().put(Constants.Indexes.INDEXING_AUTO_SEARCH_ENGINE_TYPE, "Lucene");
+        databaseRecord.getSettings().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Lucene");
+        databaseRecord.getSettings().put(Constants.Configuration.Indexes.INDEXING_AUTO_SEARCH_ENGINE_TYPE, "Lucene");
 
         customizeDbRecord(databaseRecord);
         if (customizeDatabaseRecord != null) {

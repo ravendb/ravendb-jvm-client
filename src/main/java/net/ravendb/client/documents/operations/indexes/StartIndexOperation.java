@@ -8,10 +8,20 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Resumes indexing for a specific index using the {@code StartIndexOperation}.
+ * This operation is typically used after an index has been paused with StopIndexOperation.
+ *
+ * <p><strong>Note:</strong> The index is resumed only on the preferred node, not across all database-group nodes.</p>
+ */
 public class StartIndexOperation implements IVoidMaintenanceOperation {
 
     private final String _indexName;
-
+    /**
+     * Inherits documentation from {@link StartIndexOperation}.
+     *
+     * @param indexName The name of the index to resume indexing for.
+     */
     public StartIndexOperation(String indexName) {
         if (indexName == null) {
             throw new IllegalArgumentException("Index name cannot be null");

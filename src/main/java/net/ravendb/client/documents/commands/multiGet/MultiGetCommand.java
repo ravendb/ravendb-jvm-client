@@ -156,7 +156,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
                 _cached = new Cached(_commands.size());
             }
 
-            _cached.values[i] = Tuple.create(cachedItem, cachedRef.value);
+            _cached.set(i,cachedItem,cachedRef.value);
         }
 
         if (readAllFromCache) {
@@ -164,9 +164,9 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
                 result = new ArrayList<>(_commands.size());
 
                 for (int i = 0; i < _commands.size(); i++) {
-                    Tuple<HttpCache.ReleaseCacheItem, String> itemAndCached = _cached.values[i];
+                    String cachedCommand = _cached.getItem(i);
                     GetResponse getResponse = new GetResponse();
-                    getResponse.setResult(itemAndCached.second);
+                    getResponse.setResult(cachedCommand);
                     getResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
 
                     result.add(getResponse);
@@ -206,7 +206,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
                     if (_cached != null && getResponse.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
                         GetResponse clonedResponse = new GetResponse();
-                        clonedResponse.setResult(_cached.values[i].second);
+                        clonedResponse.setResult(_cached.getItem(i));
                         clonedResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
                         result.add(clonedResponse);
                     } else {
@@ -326,7 +326,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         if (getResponse.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
             // if not modified - update age
             if (_cached != null) {
-                _cached.values[cachedIndex].first.notModified();
+                _cached.setNotModified(cachedIndex);
             }
             return;
         }
@@ -380,28 +380,43 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
     private static class Cached implements CleanCloseable {
         private final int _size;
-
-        public Tuple<HttpCache.ReleaseCacheItem, String>[] values;
+        private HttpCache.ReleaseCacheItem[] releaseCacheItems;
+        public String[] commands;
 
 
         public Cached(int size) {
             _size = size;
-            values = new Tuple[size];
+            releaseCacheItems = new HttpCache.ReleaseCacheItem[size];
+            commands = new String[size];
+        }
+
+        public void set(int index, HttpCache.ReleaseCacheItem item, String command) {
+            releaseCacheItems[index] = item;
+            commands[index] = command;
+        }
+
+        public String getItem(int index) {
+            return commands[index];
+        }
+
+        public void setNotModified(int index) {
+            releaseCacheItems[index].notModified();
         }
 
         @Override
         public void close() {
-            if (values == null) {
+            if (releaseCacheItems == null || commands == null) {
                 return;
             }
 
             for (int i = 0; i < _size; i++) {
-                if (values[i] != null) {
-                    values[i].first.close();
-                }
+                if (releaseCacheItems[i] != null)
+                    releaseCacheItems[i].close();
+                commands[i] = null;
             }
 
-            values = null;
+            releaseCacheItems = null;
+            commands = null;
         }
     }
 }

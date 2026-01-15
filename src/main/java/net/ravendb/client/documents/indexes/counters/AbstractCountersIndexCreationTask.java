@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes.counters;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
 public class AbstractCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
@@ -39,6 +40,8 @@ public class AbstractCountersIndexCreationTask extends AbstractGenericCountersIn
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
 
+        if (this.getSearchEngineType() != null)
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, this.getSearchEngineType().toString());
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }
 }

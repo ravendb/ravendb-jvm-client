@@ -21,10 +21,20 @@ import org.apache.hc.core5.http.HttpStatus;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Defines a Hub Access using the {@code RegisterReplicationHubAccessOperation},
+ * and configures it with the provided {@code ReplicationHubAccess} class.
+ */
 public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOperation {
     private final String _hubName;
     private final ReplicationHubAccess _access;
 
+    /**
+     * Inherits documentation from {@link RegisterReplicationHubAccessOperation}.
+     *
+     * @param hubName The name of the replication hub for which access is being defined.
+     * @param access  The {@code ReplicationHubAccess} object that contains the configuration for the hub access.
+     */
     public RegisterReplicationHubAccessOperation(String hubName, ReplicationHubAccess access) {
         if (StringUtils.isBlank(hubName)) {
             throw new IllegalArgumentException("HubName cannot be null or whitespace.");

@@ -12,9 +12,8 @@ public interface ILoaderWithInclude {
     //TBD expr overrides with expressions + maybe we TInclude, see:
 
     /**
-     * Includes the specified path.
-     * @param path Path to include
-     * @return Loader with includes
+     * {@inheritDoc}
+     * @see IDocumentIncludeBuilder#includeDocuments
      */
     ILoaderWithInclude include(String path);
 

@@ -1,10 +1,15 @@
 package net.ravendb.client.documents.queries.facets;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The facet definitions can be stored in a document. That document can then be used by a faceted search query.
+ * <p>
+ * @see DocumentationUrls.Session.Querying#AggregationQuerySetup
+ */
 public class FacetSetup {
 
     private String id;

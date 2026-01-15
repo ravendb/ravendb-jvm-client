@@ -9,10 +9,19 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
+/**
+ * Retrieves settings from the database record, including: Database topology, Ongoing task configurations, Index information, Revision settings,
+ * and other relevant database configurations.
+ */
 public class GetDatabaseSettingsOperation implements IMaintenanceOperation<DatabaseSettings> {
 
     private final String _databaseName;
 
+    /**
+     * {@inheritDoc}
+     * @see GetDatabaseSettingsOperation
+     * @param databaseName The name of the database whose settings will be retrieved. Cannot be null.
+     */
     public GetDatabaseSettingsOperation(String databaseName) {
         if (databaseName == null) {
             throw new IllegalArgumentException("DatabaseName cannot be null");

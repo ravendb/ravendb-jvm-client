@@ -9,11 +9,23 @@ import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Allows to delete a client certificate.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#DeleteCertificateOperation
+ */
 public class DeleteCertificateOperation implements IVoidServerOperation {
 
     private final String _thumbprint;
 
+    /**
+     * {@inheritDoc}
+     * @see DeleteCertificateOperation
+     * @param thumbprint Certificate thumbprint.
+     * @throws IllegalArgumentException if {@code thumbprint} is null.
+     */
     public DeleteCertificateOperation(String thumbprint) {
         if (thumbprint == null) {
             throw new IllegalArgumentException("Thumbprint cannot be null");

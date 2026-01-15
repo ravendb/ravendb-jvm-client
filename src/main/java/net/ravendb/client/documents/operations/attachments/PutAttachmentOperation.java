@@ -16,6 +16,12 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Represents an operation to upload an attachment to a document in the database.
+ *
+ * <p>This class implements the {@link IOperation<AttachmentDetails>} interface,
+ * enabling the addition of new attachments or updating existing ones for specified documents.</p>
+ */
 public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
     private final String _documentId;
     private final String _name;
@@ -31,6 +37,15 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         this(documentId, name, stream, contentType, null);
     }
 
+    /**
+     * Initializes a new instance of the {@link PutAttachmentOperation} class.
+     *
+     * @param documentId   The ID of the document to which the attachment will be added.
+     * @param name         The name of the attachment.
+     * @param stream       The stream containing the binary content of the attachment.
+     * @param contentType  The MIME type of the attachment (optional).
+     * @param changeVector An optional change vector for concurrency control.
+     */
     public PutAttachmentOperation(String documentId, String name, InputStream stream, String contentType, String changeVector) {
         _documentId = documentId;
         _name = name;

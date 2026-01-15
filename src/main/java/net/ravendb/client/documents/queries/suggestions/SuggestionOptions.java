@@ -11,7 +11,10 @@ public class SuggestionOptions {
     public static final StringDistanceTypes DEFAULT_DISTANCE = StringDistanceTypes.LEVENSHTEIN;
 
     public static final SuggestionSortMode DEFAULT_SORT_MODE = SuggestionSortMode.POPULARITY;
-
+    /**
+     * Maximum number of suggested terms that will be returned
+     * Default is 15
+     */
     private int pageSize;
 
     private StringDistanceTypes distance;

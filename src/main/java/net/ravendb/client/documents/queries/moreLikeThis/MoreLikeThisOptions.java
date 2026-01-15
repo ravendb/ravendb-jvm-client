@@ -1,5 +1,8 @@
 package net.ravendb.client.documents.queries.moreLikeThis;
 
+/**
+ * Configuration of MoreLikeThis query.
+ */
 public class MoreLikeThisOptions {
 
     public final static int DEFAULT_MAXIMUM_NUMBER_OF_TOKENS_PARSED = 5000;

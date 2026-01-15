@@ -170,6 +170,8 @@ public class BatchOperation {
                     break;
                 case BATCH_PATCH:
                     break;
+                case JSON_PATCH:
+                    break;
                 default:
                     throw new IllegalStateException("Command " + type + " is not supported");
             }

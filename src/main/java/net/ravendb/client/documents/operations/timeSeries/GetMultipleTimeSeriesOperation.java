@@ -38,6 +38,17 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         this(docId, ranges, start, pageSize, includes, false);
     }
 
+    /**
+     * Initializes a new instance of the {@link GetMultipleTimeSeriesOperation} class,
+     * retrieving entries from multiple time series associated with a document across specified ranges.
+     *
+     * @param docId             The ID of the document for which time series entries are requested.
+     * @param ranges            A collection of {@link TimeSeriesRange} objects, each specifying a time series name
+     *                          and a date range ({@code from} and {@code to}) to retrieve entries from.
+     * @param start             The start index for pagination of results.
+     * @param pageSize          The number of entries to retrieve. Defaults to {@code Integer.MAX_VALUE} for all entries.
+     * @param returnFullResults Whether to include detailed information for each entry. If {@code false}, retrieves only basic information.
+     */
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
         this(docId, start, pageSize, includes, returnFullResults);
 

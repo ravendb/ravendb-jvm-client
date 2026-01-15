@@ -15,12 +15,28 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
-public class EnforceRevisionsConfigurationOperation implements IOperation<OperationIdResult> {
+/**
+ * Operation to enforce the current revisions configuration on all existing revisions.
+ * This applies the current revision configuration (rules), which are usually applied when a document is modified,
+ * to all revisions at once.
+ */
+public final class EnforceRevisionsConfigurationOperation implements IOperation<OperationIdResult> {
 
     private final Parameters _parameters;
-
-    public static class Parameters {
+    /**
+     * Parameters for the {@link EnforceRevisionsConfigurationOperation},
+     * allowing specification of whether to include force-created revisions and target specific collections.
+     */
+    public final static class Parameters {
+        /**
+         * Gets or sets a value indicating whether to include force-created revisions.
+         * For more information, visit <a href="https://ravendb.net/docs/article-page/6.2/csharp/document-extensions/revisions/overview#force-revision-creation">here</a>.
+         */
         private boolean includeForceCreated;
+        /**
+         * Gets or sets the collections to which the enforcement should apply.
+         * If {@code null}, the operation will apply to all collections in the database.
+         */
         private String[] collections;
 
         public boolean isIncludeForceCreated() {
@@ -39,11 +55,24 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
             this.collections = collections;
         }
     }
-
+    /**
+     * Operation to enforce the current revisions configuration on all existing revisions.
+     * This applies the current revision configuration (rules), which are usually applied when a document is modified,
+     * to all revisions at once.
+     * Initializes a new instance of {@link EnforceRevisionsConfigurationOperation} with default parameters.
+     */
     public EnforceRevisionsConfigurationOperation() {
         this(new Parameters());
     }
-
+    /**
+     * Operation to enforce the current revisions configuration on all existing revisions.
+     * This applies the current revision configuration (rules), which are usually applied when a document is modified,
+     * to all revisions at once.
+     * Initializes a new instance of {@link EnforceRevisionsConfigurationOperation} with the specified parameters.
+     *
+     * @param parameters The parameters specifying whether to include force-created revisions and the target collections.
+     * @throws IllegalArgumentException Thrown when {@code parameters} is {@code null}.
+     */
     public EnforceRevisionsConfigurationOperation(Parameters parameters) {
         _parameters = parameters;
     }

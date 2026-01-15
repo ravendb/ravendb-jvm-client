@@ -30,16 +30,34 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
         this(docId, counters, false);
     }
 
+    /**
+     * Initializes a new instance of the {@link GetCountersOperation} class with a specific document ID,
+     * an array of counter names, and a flag indicating whether to include counter values from each node in the result.
+     *
+     * @param docId            The ID of the document for which to retrieve counters.
+     * @param counters         An array of counter names to retrieve.
+     * @param returnFullResults A value indicating whether the result should include counter values from each node.
+     */
     public GetCountersOperation(String docId, String[] counters, boolean returnFullResults) {
         _docId = docId;
         _counters = counters;
         _returnFullResults = returnFullResults;
     }
 
+
     public GetCountersOperation(String docId, String counter) {
         this(docId, counter, false);
     }
 
+    /**
+     * Initializes a new instance of the {@link GetCountersOperation} class with a specific document ID
+     * and a single counter name, along with a flag indicating whether to include counter values from each node in the result.
+     *
+     * @param docId   The ID of the document for which to retrieve counters.
+     * @param counter The name of the counter to retrieve.
+     * @param returnFullResults A value indicating whether the result should include counter values from each node.
+     * @see #GetCountersOperation(String, String[], boolean)
+     */
     public GetCountersOperation(String docId, String counter, boolean returnFullResults) {
         _docId = docId;
         _counters = new String[] { counter };
@@ -50,6 +68,15 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
         this(docId, false);
     }
 
+    /**
+     * Initializes a new instance of the {@link GetCountersOperation} class with a specific document ID
+     * and a flag indicating whether to include counter values from each node in the result.
+     * This operation retrieves all counters associated with the given document.
+     *
+     * @param docId The ID of the document for which to retrieve counters.
+     * @param returnFullResults A value indicating whether the result should include counter values from each node.
+     * @see #GetCountersOperation(String, String[], boolean)
+     */
     public GetCountersOperation(String docId, boolean returnFullResults) {
         _docId = docId;
         _counters = new String[0];

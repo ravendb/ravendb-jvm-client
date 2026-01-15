@@ -7,47 +7,47 @@ import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.primitives.Reference;
-
+import net.ravendb.client.DocumentationUrls;
 import java.util.function.Consumer;
 
 /**
- *  A query against a Raven index
+ *  Interface providing low-level querying capabilities.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Session.Querying#QueryVsDocumentQuery
  */
 public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>>
         extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf>, IPagingDocumentQueryBase<T, TSelf> {
 
     /**
-     * Adds an ordering for a specific field to the query
-     * @param fieldName Field name
-     * @param descending use descending order
-     * @return Query instance
+     * Orders query results by specified field.
+     * @param fieldName Name of the field to order the query results by.
+     * @param descending Specifies if order is descending. Default: false.
      */
     TSelf addOrder(String fieldName, boolean descending);
 
     /**
-     * Adds an ordering for a specific field to the query
-     * @param fieldName Field name
-     * @param descending use descending order
-     * @param ordering ordering type
-     * @return Query instance
+     * {@inheritDoc}
+     * @see #addOrder(String, boolean)
+     * @param ordering Ordering type. Default: OrderingType.String.
      */
     TSelf addOrder(String fieldName, boolean descending, OrderingType ordering);
 
     //TBD expr TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending = false, OrderingType ordering = OrderingType.String);
 
     /**
-     * Specifies a boost weight to the previous where clause.
-     * The higher the boost factor, the more relevant the term will be.
-     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     * @param boost Boost value
-     * @return Query instance
+     * Specifies boost weight for the preceding Where clause.
+     * The higher the boost weight, the more relevant the term will be.
+     * By default all terms have weight of 1.0.
+     * {@inheritDoc}
+     * @see DocumentationUrls.Session.Querying#BoostSearchResults
+     * @param boost Boost weight.
      */
     TSelf boost(double boost);
 
     /**
-     * Apply distinct operation to this query
-     * @return Query instance
+     * Removes duplicates from query results.
+     * {@inheritDoc}
+     * @see DocumentationUrls.Session.Querying#Distinct
      */
     TSelf distinct();
 
@@ -67,12 +67,12 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf includeExplanations(ExplanationOptions options, Reference<Explanations> explanations);
 
     /**
-     * Specifies a fuzziness factor to the single word term in the last where clause
-     * 0.0 to 1.0 where 1.0 means closer match
-     *
-     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Proximity%20Searches
-     * @param fuzzy Number of terms between the search terms
-     * @return Query instance
+     * Specifies a fuzziness factor for the preceding WhereEquals clause,
+     * making it match documents containing terms similar to searched one.
+     * The higher the factor, the more similar terms will be matched.
+     * {@inheritDoc}
+     * @see DocumentationUrls.Session.Querying#FuzzySearch
+     * @param fuzzy Decimal value between 0.0 and 1.0.
      */
     TSelf fuzzy(double fuzzy);
 

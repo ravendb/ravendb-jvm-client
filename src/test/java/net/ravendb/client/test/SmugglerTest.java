@@ -31,7 +31,7 @@ public class SmugglerTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
 
-            File exportFile = File.createTempFile("exported-db-", "." + Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+            File exportFile = File.createTempFile("exported-db-", Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
             exportFile.deleteOnExit();
 
             DatabaseSmugglerExportOptions options = new DatabaseSmugglerExportOptions();
@@ -47,7 +47,7 @@ public class SmugglerTest extends RemoteTestBase {
 
     @Test
     public void canImportExportedDatabase() throws Exception {
-        File exportFile = File.createTempFile("exported-db-", "." + Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+        File exportFile = File.createTempFile("exported-db-", Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
         exportFile.deleteOnExit();
 
         try (IDocumentStore store = getDocumentStore()) {
@@ -110,9 +110,9 @@ public class SmugglerTest extends RemoteTestBase {
                 .sorted(BackupUtils.COMPARATOR)
                 .collect(Collectors.toList());
 
-        assertThat(sortedFiles.get(0).getName())
-                .isEqualTo("2018-11-08-10-46.ravendb-full-backup");
         assertThat(sortedFiles.get(1).getName())
+                .isEqualTo("2018-11-08-10-46.ravendb-full-backup");
+        assertThat(sortedFiles.get(0).getName())
                 .isEqualTo("2018-11-08-10-46.ravendb-incremental-backup");
         assertThat(sortedFiles.get(2).getName())
                 .isEqualTo("2018-11-08-10-47.ravendb-incremental-backup");

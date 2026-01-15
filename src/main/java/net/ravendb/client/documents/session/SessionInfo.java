@@ -20,7 +20,7 @@ public class SessionInfo {
     private final int _loadBalancerContextSeed;
     private boolean _canUseLoadBalanceBehavior;
     private final InMemoryDocumentSessionOperations _session;
-
+    private String clusterTransactionId;
     private Long lastClusterTransactionIndex;
     private boolean noCaching;
 
@@ -54,6 +54,13 @@ public class SessionInfo {
         setContextInternal(sessionKey);
 
         _canUseLoadBalanceBehavior = _canUseLoadBalanceBehavior || _session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT;
+    }
+
+    public String getClusterTransactionId() {
+        return clusterTransactionId;
+    }
+    public void setClusterTransactionId(String clusterTransactionId) {
+        this.clusterTransactionId = clusterTransactionId;
     }
 
     private void setContextInternal(String sessionKey) {

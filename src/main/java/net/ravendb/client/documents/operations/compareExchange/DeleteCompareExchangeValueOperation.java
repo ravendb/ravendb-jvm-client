@@ -15,12 +15,29 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
+/**
+ * Operation to delete a compare exchange value.
+ * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+ * that ensures a consistent state across the cluster.
+ *
+ * @param <T> The type of the value associated with the compare exchange key.
+ */
 public class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private final Class<T> _clazz;
     private final String _key;
     private final long _index;
 
+    /**
+     * Operation to delete a compare exchange value.
+     * A compare exchange is a key-value pair and serves as a distributed coordination mechanism
+     * that ensures a consistent state across the cluster.
+     * Initializes a new instance of the {@link DeleteCompareExchangeValueOperation} class.
+     * @param clazz The type of the value associated with the compare exchange key.
+     * @param key The key of the compare exchange value to delete.
+     * @param index The index of the compare exchange value to delete.
+     *              The index is used for concurrency check; the operation will succeed only if it matches.
+     */
     public DeleteCompareExchangeValueOperation(Class<T> clazz, String key, long index) {
         _key = key;
         _index = index;

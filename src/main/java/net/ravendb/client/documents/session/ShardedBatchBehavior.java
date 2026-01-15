@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.primitives.UseSharpEnum;
+import net.ravendb.client.DocumentationUrls;
+import net.ravendb.client.exceptions.sharding.ShardedBatchBehaviorViolationException;
 
 @UseSharpEnum
 public enum ShardedBatchBehavior {
@@ -9,8 +11,10 @@ public enum ShardedBatchBehavior {
      */
     DEFAULT,
     /**
-     * Allow to perform batch commands only on a single bucket, commands will be performed on single shard with ACID transaction guarantees.
+     * Allow to perform batch commands only on a single bucket, commands will be performed on single shard with {@link TransactionMode#SINGLE_NODE} transaction guarantees.
      * A transaction that contains changes that belong to multiple buckets will be rejected by the server.
+     * and {@link ShardedBatchBehaviorViolationException} will be thrown.
+     * <p>Check how you can force documents being in the same bucket by anchoring them: {@link DocumentationUrls.Session.Sharding#Anchoring"}</p>
      */
     TRANSACTIONAL_SINGLE_BUCKET_ONLY,
 

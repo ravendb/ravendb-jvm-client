@@ -3,6 +3,7 @@ package net.ravendb.client.documents.bulkInsert;
 import net.ravendb.client.documents.BulkInsertOperation;
 
 import java.io.*;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -22,8 +23,8 @@ public abstract class BulkInsertWriterBase implements Closeable {
     private ByteArrayOutputStream _backgroundMemoryBuffer;
 
     private boolean _isInitialWrite = true;
-
-    public OutputStream _requestBodyStream;
+    private Instant lastFlushToStream;
+    private OutputStream _requestBodyStream;
 
     public final BulkInsertOperation.BulkInsertStreamExposerContent streamExposer;
 
@@ -38,6 +39,11 @@ public abstract class BulkInsertWriterBase implements Closeable {
         _backgroundWriteStream = new OutputStreamWriter(_backgroundMemoryBuffer);
 
         _asyncWrite = CompletableFuture.completedFuture(null);
+        updateFlushTime();
+    }
+
+    private void updateFlushTime() {
+        lastFlushToStream = Instant.now();
     }
 
     public void initialize() {
@@ -54,6 +60,14 @@ public abstract class BulkInsertWriterBase implements Closeable {
 
     public boolean flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
         return flushIfNeeded(false);
+    }
+
+    public Instant getLastFlushToStream() {
+        return lastFlushToStream;
+    }
+
+    public void setLastFlushToStream(Instant value) {
+        this.lastFlushToStream = value;
     }
 
     public boolean flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
@@ -91,7 +105,7 @@ public abstract class BulkInsertWriterBase implements Closeable {
                 dst.write(buffer);
 
                 if (forceFlush) {
-                    // send this chunk
+                    updateFlushTime();
                     _requestBodyStream.flush();
                 }
 

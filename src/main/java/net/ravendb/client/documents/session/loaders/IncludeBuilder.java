@@ -5,6 +5,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeType;
 import net.ravendb.client.primitives.TimeValue;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 
 public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilder {
@@ -87,6 +88,12 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     @Override
     public IIncludeBuilder includeAllTimeSeries(TimeSeriesRangeType type, int count) {
         _includeTimeSeriesByRangeTypeAndCount("", Constants.TimeSeries.ALL, type, count);
+        return this;
+    }
+
+    @Override
+    public IIncludeBuilder includeAllTimeSeries(@Nullable Date from, @Nullable Date to) {
+        _includeTimeSeriesFromTo("", Constants.TimeSeries.ALL, from, to);
         return this;
     }
 

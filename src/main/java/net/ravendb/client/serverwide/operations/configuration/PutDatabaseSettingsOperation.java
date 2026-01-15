@@ -15,11 +15,28 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.util.Map;
 
+/**
+ * Modifies the default database configuration using the {@code PutDatabaseSettingsOperation}.
+ *
+ * <p><strong>Notes:</strong></p>
+ * <ul>
+ *   <li>Only database-level settings can be customized with this operation.</li>
+ *   <li>For changes to take effect, the database must be reloaded. Reloading can be done by
+ *       disabling and enabling the database using the {@code ToggleDatabasesStateOperation}.</li>
+ * </ul>
+ */
 public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
 
     private final String _databaseName;
     private final Map<String, String> _configurationSettings;
-
+    /**
+     * {@inheritDoc}
+     * @see PutDatabaseSettingsOperation
+     * @param databaseName
+     *        The name of the database whose settings are being modified.
+     * @param configurationSettings
+     *        A map of configuration settings to apply to the specified database.
+     */
     public PutDatabaseSettingsOperation(String databaseName, Map<String, String> configurationSettings) {
         if (databaseName == null) {
             throw new IllegalArgumentException("DatabaseName cannot be null");

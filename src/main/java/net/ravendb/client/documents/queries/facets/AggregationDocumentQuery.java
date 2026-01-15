@@ -18,6 +18,9 @@ public class AggregationDocumentQuery<T> extends AggregationQueryBase implements
         _source = source;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IAggregationDocumentQuery<T> andAggregateBy(Consumer<IFacetBuilder<T>> builder) {
         FacetBuilder<T> f = new FacetBuilder<>();
@@ -26,6 +29,9 @@ public class AggregationDocumentQuery<T> extends AggregationQueryBase implements
         return andAggregateBy(f.getFacet());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IAggregationDocumentQuery<T> andAggregateBy(FacetBase facet) {
         _source._aggregateBy(facet);

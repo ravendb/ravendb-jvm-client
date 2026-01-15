@@ -9,9 +9,20 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Deletes an analyzer from a specific database using the {@link DeleteAnalyzerOperation}.
+ *
+ * <p><strong>Note:</strong> By default, this operation applies to the default database of the document store being used.
+ * To target a different database, use the {@code forDatabase()} method.</p>
+ */
+
 public class DeleteAnalyzerOperation implements IVoidMaintenanceOperation {
     private final String _analyzerName;
 
+    /**
+     * @see DeleteAnalyzerOperation
+     * @param analyzerName The name of the analyzer to be deleted.
+     */
     public DeleteAnalyzerOperation(String analyzerName) {
         if (analyzerName == null) {
             throw new IllegalArgumentException("AnalyzerName cannot be null");

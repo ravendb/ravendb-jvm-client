@@ -18,6 +18,9 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
+/**
+ * A class for creating operations that delete documents based on a given query.
+ */
 public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
     protected IndexQuery _queryToDelete;

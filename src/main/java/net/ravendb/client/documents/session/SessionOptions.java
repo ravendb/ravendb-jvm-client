@@ -1,14 +1,37 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Configure the session's behavior
+ */
 public class SessionOptions {
+    /**
+     * Specify session's database, default value is taken from {@link IDocumentStore#getDatabase()}
+     */
     private String database;
+    /**
+     * Disable tracking for all entities in the session
+     * <p>For more details visit: {@link DocumentationUrls.Session.Options#NoTracking}</p>
+     */
     private boolean noTracking;
+    /**
+     * Disable caching of HTTP responses for the session
+     * <p>For more details visit: {@link DocumentationUrls.Session.Options#NoCaching}</p>
+     */
     private boolean noCaching;
     private RequestExecutor requestExecutor;
+    /**
+     * Define the transaction mode of the session. Each {@link TransactionMode} offers a different isolation and consistency guarantees.
+     * <p>For more details visit: {@link DocumentationUrls.Session.Transactions#TransactionSupport}</p>
+     */
     private TransactionMode transactionMode;
     private Boolean disableAtomicDocumentWritesInClusterWideTransaction;
+    /**
+     * Define the consistency level for persisting changes in a sharded database.
+     */
     private ShardedBatchBehavior shardedBatchBehavior;
 
     public String getDatabase() {

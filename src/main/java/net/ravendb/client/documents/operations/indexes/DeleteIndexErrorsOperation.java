@@ -7,14 +7,28 @@ import net.ravendb.client.http.VoidRavenCommand;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Deletes indexing errors using the {@code DeleteIndexErrorsOperation}.
+ * This operation clears the errors associated with the index but does not change
+ * the index's state from 'Error' to 'Normal'.
+ *
+ * <p><strong>Note:</strong> This operation is executed only on the server node
+ * as defined by the current client configuration.</p>
+ */
 public class DeleteIndexErrorsOperation implements IVoidMaintenanceOperation {
 
     private final String[] _indexNames;
-
+    /**
+     * Inherits documentation from {@link DeleteIndexErrorsOperation}.
+     */
     public DeleteIndexErrorsOperation() {
         _indexNames = null;
     }
-
+    /**
+     * Inherits documentation from {@link DeleteIndexErrorsOperation}.
+     *
+     * @param indexNames An array of index names for which the errors should be deleted.
+     */
     public DeleteIndexErrorsOperation(String[] indexNames) {
         _indexNames = indexNames;
     }

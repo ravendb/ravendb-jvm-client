@@ -13,10 +13,21 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * Server-wide operation to send custom sorter definition to the server.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations.Sorters#CustomSorters
+ */
 public class PutServerWideSortersOperation implements IVoidServerOperation {
     private final SorterDefinition[] _sortersToAdd;
-
+    /**
+     * {@inheritDoc}
+     * @see PutServerWideSortersOperation
+     * @param sortersToAdd List of custom sorters definitions (as params)
+     * @throws IllegalArgumentException if {@code sortersToAdd} is null or empty.
+     */
     public PutServerWideSortersOperation(SorterDefinition... sortersToAdd) {
         if (sortersToAdd == null || sortersToAdd.length == 0) {
             throw new IllegalArgumentException("SortersToAdd cannot be null or empty");

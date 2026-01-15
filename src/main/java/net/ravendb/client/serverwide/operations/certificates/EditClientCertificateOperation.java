@@ -14,6 +14,9 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.util.Map;
 
+/**
+ * Allows to edit a client certificate.
+ */
 public class EditClientCertificateOperation implements IVoidServerOperation {
 
     private final String _thumbprint;
@@ -21,6 +24,12 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
     private final String _name;
     private final SecurityClearance _clearance;
 
+    /**
+     * {@inheritDoc}
+     * @see EditClientCertificateOperation
+     * @param parameters See {@link Parameters}
+     * @throws IllegalArgumentException if {@code parameters} is null, or any of its required properties are null.
+     */
     public EditClientCertificateOperation(Parameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");

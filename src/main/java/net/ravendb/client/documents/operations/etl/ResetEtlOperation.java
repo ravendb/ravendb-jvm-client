@@ -13,11 +13,23 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
+/**
+ * Resets an ETL process using the {@code ResetEtlOperation}.
+ * <p>
+ * ETL (Extract, Transform, Load) typically processes documents starting from where the last batch finished.
+ * By resetting the ETL, processing will start again from the very beginning.
+ */
 public class ResetEtlOperation implements IVoidMaintenanceOperation {
 
     private final String _configurationName;
     private final String _transformationName;
 
+    /**
+     * Inherits documentation from {@link ResetEtlOperation}.
+     *
+     * @param configurationName The name of the ETL configuration to reset.
+     * @param transformationName The name of the specific transformation within the ETL configuration to reset.
+     */
     public ResetEtlOperation(String configurationName, String transformationName) {
         if (configurationName == null) {
             throw new IllegalArgumentException("ConfigurationName cannot be null");

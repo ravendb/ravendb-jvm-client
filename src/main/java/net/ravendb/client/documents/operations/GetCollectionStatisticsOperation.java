@@ -8,7 +8,16 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
+/**
+ * Retrieves collection statistics, including the total count of documents and conflicts,
+ * as well as the number of documents in each collection.
+ */
 public class GetCollectionStatisticsOperation implements IMaintenanceOperation<CollectionStatistics> {
+    /**
+     * Inherits documentation from {@link GetCollectionStatisticsOperation}.
+     */
+    public GetCollectionStatisticsOperation() {
+    }
 
     @Override
     public RavenCommand<CollectionStatistics> getCommand(DocumentConventions conventions) {

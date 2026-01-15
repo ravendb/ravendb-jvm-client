@@ -2,19 +2,26 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.IdTypeAndName;
+import net.ravendb.client.documents.commands.StreamCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.commands.batches.IncrementalTimeSeriesBatchCommandData;
 import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
+import net.ravendb.client.documents.queries.timeSeries.TimeSeriesStreamIterator;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
+import net.ravendb.client.documents.session.operations.TimeSeriesStreamOperation;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -62,19 +69,31 @@ public class SessionTimeSeriesBase {
         this.name = name;
         this.session = session;
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double, String)
+     */
     public void append(Date timestamp, double value) {
         append(timestamp, value, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double, String)
+     */
     public void append(Date timestamp, double value, String tag) {
         append(timestamp, new double[] { value }, tag);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double[], String)
+     */
     public void append(Date timestamp, double[] values) {
         append(timestamp, values, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentAppendTimeSeriesBase#append(Date, double[], String)
+     */
     public void append(Date timestamp, double[] values, String tag) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -94,15 +113,24 @@ public class SessionTimeSeriesBase {
             session.defer(new TimeSeriesBatchCommandData(docId, name, appends, null));
         }
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete()
+     */
     public void delete() {
         delete(null, null);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete(Date)
+     */
     public void delete(Date at) {
         delete(at, at);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentDeleteTimeSeriesBase#delete(Date, Date)
+     */
     public void delete(Date from, Date to) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -141,7 +169,10 @@ public class SessionTimeSeriesBase {
             ranges.removeIf(range -> compare(leftDate(range.getFrom()), leftDate(from)) <= 0 && compare(rightDate(range.getTo()), rightDate(to)) >= 0);
         }
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(Date, double[])
+     */
     public void increment(Date timestamp, double[] values) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
@@ -163,14 +194,24 @@ public class SessionTimeSeriesBase {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(double[])
+     */
     public void increment(double[] values) {
         increment(new Date(), values);
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(Date, double)
+     */
     public void increment(Date timestamp, double value) {
         increment(timestamp, new double[] { value });
     }
-
+    /**
+     * {@inheritDoc}
+     * @see ISessionDocumentIncrementTimeSeriesBase#increment(double)
+     */
     public void increment(double value) {
         increment(new Date(), value);
     }
@@ -532,6 +573,15 @@ public class SessionTimeSeriesBase {
         return ranges.isEmpty()
                 || DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0
                 || DatesComparator.compare(rightDate(ranges.get(ranges.size() - 1).getTo()), leftDate(from)) < 0;
+    }
+
+    protected <TTValues> TimeSeriesStreamIterator<TTValues> getTimeSeriesStreamResult(Instant from, Instant to , Duration offset, Class clazz){
+        TimeSeriesStreamOperation streamOperation = new TimeSeriesStreamOperation(this.session, this.docId, this.name, from, to, offset);
+        StreamCommand command = streamOperation.createRequest();
+        this.session._requestExecutor.execute(command,this.session.sessionInfo);
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+
+        return new TimeSeriesStreamIterator<TTValues>(result, clazz);
     }
 
     private static class CachedEntryInfo {

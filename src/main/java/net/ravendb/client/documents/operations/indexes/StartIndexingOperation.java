@@ -7,6 +7,10 @@ import net.ravendb.client.http.VoidRavenCommand;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Resumes indexing for the entire database using the {@code StartIndexingOperation}.
+ * This operation is typically used after indexing has been paused or disabled.
+ */
 public class StartIndexingOperation implements IVoidMaintenanceOperation {
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {

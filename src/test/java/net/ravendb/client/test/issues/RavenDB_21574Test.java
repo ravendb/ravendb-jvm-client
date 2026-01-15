@@ -70,7 +70,7 @@ public class RavenDB_21574Test extends RemoteTestBase {
         IndexStats indexStats = store.maintenance().send(new GetIndexStatisticsOperation(index.getIndexName()));
 
         assertThat(indexDefinition.getConfiguration().get(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE))
-                .isEqualTo(SharpEnum.value(SearchEngineType.CORAX));
+                .isEqualTo(SharpEnum.value(SearchEngineType.CORAX).toUpperCase());
         assertThat(indexStats.getSearchEngineType())
                 .isEqualTo(SearchEngineType.CORAX);
 
@@ -83,7 +83,7 @@ public class RavenDB_21574Test extends RemoteTestBase {
         indexStats = store.maintenance().send(new GetIndexStatisticsOperation(index.getIndexName()));
 
         assertThat(indexDefinition.getConfiguration().get(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE))
-                .isEqualTo(SharpEnum.value(SearchEngineType.LUCENE));
+                .isEqualTo(SharpEnum.value(SearchEngineType.LUCENE).toUpperCase());
         assertThat(indexStats.getSearchEngineType())
                 .isEqualTo(SearchEngineType.LUCENE);
 

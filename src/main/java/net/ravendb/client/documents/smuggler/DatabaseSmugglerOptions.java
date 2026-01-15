@@ -21,7 +21,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseItemType.ATTACHMENTS,
             DatabaseItemType.COUNTER_GROUPS,
             DatabaseItemType.SUBSCRIPTIONS,
-            DatabaseItemType.TIME_SERIES);
+            DatabaseItemType.TIME_SERIES,
+            DatabaseItemType.TIME_SERIES_DELETED_RANGES);
 
     public final EnumSet<DatabaseRecordItemType> DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES = EnumSet.of(
             DatabaseRecordItemType.CLIENT,
@@ -52,7 +53,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.INDEXES_HISTORY,
             DatabaseRecordItemType.REFRESH,
             DatabaseRecordItemType.QUEUE_SINKS,
-            DatabaseRecordItemType.DATA_ARCHIVAL);
+            DatabaseRecordItemType.DATA_ARCHIVAL,
+            DatabaseRecordItemType.QUEUE_SINKS);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

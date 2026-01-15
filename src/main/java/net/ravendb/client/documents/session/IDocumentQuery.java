@@ -10,11 +10,11 @@ import net.ravendb.client.documents.queries.suggestions.ISuggestionDocumentQuery
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
-
 import java.util.function.Consumer;
 
 /**
- * A query against a Raven index
+ * {@inheritDoc}
+ * @see IDocumentQueryBase
  */
 public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {
 
@@ -101,10 +101,22 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      */
     <TResult> IDocumentQuery<TResult> ofType(Class<TResult> resultClass);
 
+    /**
+     * {@inheritDoc}
+     * @see IAbstractDocumentQuery#_groupBy(String, String...) 
+     */
     IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
-
+    /**
+     * {@inheritDoc}
+     * @see IAbstractDocumentQuery#_groupBy(GroupBy, GroupBy...)
+     */
     IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param builder Configure MoreLikeThis query by builder. See more at: {@link IMoreLikeThisBuilderForDocumentQuery}
+     */
     IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder);
 
     /**
@@ -134,8 +146,15 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId);
 
+    /**
+     * {@inheritDoc}
+     * @see ISuggestionDocumentQuery#andSuggestUsing(SuggestionBase) 
+     */
     ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion);
-
+    /**
+     * {@inheritDoc}
+     * @see ISuggestionDocumentQuery#andSuggestUsing(Consumer)
+     */
     ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder);
 
     IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder);

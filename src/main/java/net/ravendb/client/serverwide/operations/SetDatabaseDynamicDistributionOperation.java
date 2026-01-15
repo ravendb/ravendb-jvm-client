@@ -8,12 +8,26 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import net.ravendb.client.DocumentationUrls;
 
+/**
+ * In dynamic database distribution mode, if a database node is down, another cluster node is added to the database group to compensate.
+ * Use this operation to toggle dynamic distribution for a particular database group.
+ * {@inheritDoc}
+ * @see DocumentationUrls.Operations.ServerOperations#SetDatabaseDynamicDistributionOperation
+ */
 public class SetDatabaseDynamicDistributionOperation implements IVoidServerOperation {
 
     private final boolean _allowDynamicDistribution;
     private final String _databaseName;
 
+    /**
+     * {@inheritDoc}
+     * @see SetDatabaseDynamicDistributionOperation
+     * @param databaseName Name of database group
+     * @param allowDynamicDistribution Set to true to activate dynamic distribution mode.
+     * @throws IllegalArgumentException when {@code databaseName} is null or empty.
+     */
     public SetDatabaseDynamicDistributionOperation(String databaseName, boolean allowDynamicDistribution) {
         if (StringUtils.isEmpty(databaseName)) {
             throw new IllegalArgumentException("DatabaseNAme should not be null or empty");

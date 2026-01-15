@@ -14,20 +14,27 @@ public class MoreLikeThisBuilder<T> implements IMoreLikeThisOperations<T>, IMore
         return moreLikeThis;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IMoreLikeThisOperations<T> usingAnyDocument() {
         moreLikeThis = new MoreLikeThisUsingAnyDocument();
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IMoreLikeThisOperations<T> usingDocument(String documentJson) {
         moreLikeThis = new MoreLikeThisUsingDocument(documentJson);
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public IMoreLikeThisOperations<T> usingDocument(Consumer<IFilterDocumentQueryBase<T, IDocumentQuery<T>>> builder) {
@@ -36,7 +43,9 @@ public class MoreLikeThisBuilder<T> implements IMoreLikeThisOperations<T>, IMore
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IMoreLikeThisOperations<T> withOptions(MoreLikeThisOptions options) {
         moreLikeThis.setOptions(options);

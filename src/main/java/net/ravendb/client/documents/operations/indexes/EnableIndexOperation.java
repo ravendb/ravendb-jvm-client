@@ -10,15 +10,34 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Enables an index using the {@code EnableIndexOperation}. Once enabled, the index will begin indexing new data.
+ *
+ * <p><strong>Scope:</strong> The index can be enabled in two ways:</p>
+ * <ul>
+ *     <li>On a single node.</li>
+ *     <li>Cluster-wide, across all database-group nodes.</li>
+ * </ul>
+ */
 public class EnableIndexOperation implements IVoidMaintenanceOperation {
 
     private final String _indexName;
     private final boolean _clusterWide;
 
+    /**
+     * Inherits documentation from {@link EnableIndexOperation}.
+     *
+     * @param indexName The name of the index to be enabled.
+     */
     public EnableIndexOperation(String indexName) {
         this(indexName, false);
     }
-
+    /**
+     * Inherits documentation from {@link EnableIndexOperation}.
+     *
+     * @param indexName  The name of the index to be enabled.
+     * @param clusterWide A boolean value indicating whether the index should be enabled cluster-wide across all database-group nodes.
+     */
     public EnableIndexOperation(String indexName, boolean clusterWide) {
         if (indexName == null) {
             throw new IllegalArgumentException("IndexName cannot be null");

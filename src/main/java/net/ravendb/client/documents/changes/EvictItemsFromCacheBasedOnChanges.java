@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObserver<DatabaseChange> {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final String _databaseName;
     private final DatabaseChanges _changes;
     private CleanCloseable _documentsSubscription;
     private CleanCloseable _indexesSubscription;
@@ -20,9 +19,8 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
     private CleanCloseable _aggressiveCachingSubscription;
 
     public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName) {
-        _databaseName = databaseName;
         _requestExecutor = store.getRequestExecutor(databaseName);
-        _changes = new DatabaseChanges(_requestExecutor, databaseName, store.getExecutorService(), null, null);
+        _changes = new AggressiveCacheDatabaseChanges(_requestExecutor, databaseName, store.getExecutorService(), () -> store.getAggressiveCacheChanges().remove(databaseName));
 
         _taskConnected = CompletableFuture.runAsync(this::ensureConnectedInternal, store.getExecutorService());
     }
@@ -48,6 +46,7 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
 
     @Override
     public void onError(Exception error) {
+        _requestExecutor.getCache().generation.incrementAndGet();
     }
 
     @Override

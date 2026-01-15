@@ -11,10 +11,18 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
+/**
+ * Operation to remove a time series policy from a specific collection.
+ */
 public class RemoveTimeSeriesPolicyOperation implements IMaintenanceOperation<ConfigureTimeSeriesOperationResult> {
     private final String _collection;
     private final String _name;
-
+    /**
+     * Inherits documentation from {@link RemoveTimeSeriesPolicyOperation}.
+     *
+     * @param collection The name of the collection from which the time series policy will be removed. Cannot be {@code null}.
+     * @param name       The name of the time series policy to remove. Cannot be {@code null}.
+     */
     public RemoveTimeSeriesPolicyOperation(String collection, String name) {
         if (collection == null) {
             throw new IllegalArgumentException("Name cannot be null");

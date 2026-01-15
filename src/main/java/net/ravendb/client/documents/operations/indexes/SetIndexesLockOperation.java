@@ -16,10 +16,21 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.util.Arrays;
 
+/**
+ * Modifies the lock mode of one or more indexes using the {@code SetIndexesLockOperation}.
+ * The lock mode controls how index modifications are handled and can only be applied to static indexes, not auto-indexes.
+ *
+ * <p><strong>Note:</strong> The lock mode is updated on all nodes within the database group.</p>
+ */
 public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
 
     private final Parameters _parameters;
-
+    /**
+     * Inherits documentation from {@link SetIndexesLockOperation}.
+     *
+     * @param indexName The name of the index for which the lock mode is being modified.
+     * @param mode      The lock mode to be set for the index. Valid values are Unlock, LockedIgnore, and LockedError.
+     */
     public SetIndexesLockOperation(String indexName, IndexLockMode mode) {
         if (indexName == null) {
             throw new IllegalArgumentException("IndexName cannot be null");
@@ -32,6 +43,11 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
         filterAutoIndexes();
     }
 
+    /**
+     * Inherits documentation from {@link SetIndexesLockOperation}.
+     *
+     * @param parameters The Parameters object containing the list of index names and the lock mode to apply.
+     */
     public SetIndexesLockOperation(Parameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");
@@ -97,8 +113,18 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
         }
     }
 
+    /**
+     * Represents the parameters required to set the lock mode for multiple indexes.
+     * This class includes the list of index names and the lock mode to apply.
+     */
     public static class Parameters {
+        /**
+         * An array of index names for which the lock mode is being modified.
+         */
         private String[] indexNames;
+        /**
+         * The lock mode to be applied to the specified indexes. Valid values are Unlock, LockedIgnore, and LockedError.
+         */
         private IndexLockMode mode;
 
         public String[] getIndexNames() {

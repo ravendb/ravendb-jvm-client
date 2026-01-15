@@ -15,11 +15,19 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
+/**
+ * Configure a time series policy for a specific collection.
+ */
 public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation<ConfigureTimeSeriesOperationResult> {
 
     private final String _collection;
     private final TimeSeriesPolicy _config;
-
+    /**
+     * Inherits documentation from {@link ConfigureTimeSeriesPolicyOperation}.
+     *
+     * @param collection The name of the collection for which the time series policy is being configured.
+     * @param config     The time series policy configuration to apply to the collection.
+     */
     public ConfigureTimeSeriesPolicyOperation(String collection, TimeSeriesPolicy config) {
         _collection = collection;
         _config = config;

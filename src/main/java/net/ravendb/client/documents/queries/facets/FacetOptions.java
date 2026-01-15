@@ -2,7 +2,10 @@ package net.ravendb.client.documents.queries.facets;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FacetOptions {
+/**
+ * Optional configuration for facet query.
+ */
+public final class FacetOptions {
 
     static final FacetOptions defaultOptions = new FacetOptions();
 
@@ -12,12 +15,20 @@ public class FacetOptions {
     @JsonProperty("IncludeRemainingTerms")
     private boolean includeRemainingTerms;
 
+    /**
+     * The position from which to send items (how many to skip).
+     */
     @JsonProperty("Start")
     private int start;
-
+    /**
+     * Number of items to return. Default: {@code Integer.MAX_VALUE}.
+     */
     @JsonProperty("PageSize")
     private int pageSize;
 
+    /**
+     * Inherits documentation from {@link FacetOptions}.
+     */
     public FacetOptions() {
         pageSize = Integer.MAX_VALUE;
         termSortMode = FacetTermSortMode.VALUE_ASC;

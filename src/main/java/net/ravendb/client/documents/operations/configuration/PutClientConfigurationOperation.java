@@ -13,9 +13,24 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 
+/**
+ * Sets or modifies the client configuration on the server using the {@link PutClientConfigurationOperation}.
+ * The client configuration consists of various options that control client-server communication.
+ * <p>
+ * The initial configuration is set when creating the Document Store, but it can be dynamically modified
+ * by a database administrator using this operation.
+ * </p>
+ * <p>
+ * <strong>Note:</strong> The client will update its configuration the next time it sends a request to the database.
+ * </p>
+ */
 public class PutClientConfigurationOperation implements IVoidMaintenanceOperation {
     private final ClientConfiguration configuration;
 
+    /**
+     * @see PutClientConfigurationOperation
+     * @param configuration The {@link ClientConfiguration} object containing the configuration settings to be applied on the server.
+     */
     public PutClientConfigurationOperation(ClientConfiguration configuration) {
 
         if (configuration == null) {

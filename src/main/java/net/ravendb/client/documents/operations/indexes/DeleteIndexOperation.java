@@ -10,14 +10,23 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Removes an index from the database using the {@code DeleteIndexOperation}.
+ *
+ * <p><strong>Note:</strong> The index will be deleted from all database-group nodes.</p>
+ */
 public class DeleteIndexOperation implements IVoidMaintenanceOperation {
     private final String _indexName;
 
+    /**
+     * Inherits documentation from {@link DeleteIndexOperation}.
+     *
+     * @param indexName The name of the index to be deleted.
+     */
     public DeleteIndexOperation(String indexName) {
         if (indexName == null) {
             throw new IllegalArgumentException("Index name cannot be null");
         }
-
         _indexName = indexName;
     }
 

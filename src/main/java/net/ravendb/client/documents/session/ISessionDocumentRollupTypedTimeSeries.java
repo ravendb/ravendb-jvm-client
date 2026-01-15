@@ -5,7 +5,9 @@ import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntr
 import java.util.Date;
 
 public interface ISessionDocumentRollupTypedTimeSeries<TValues>
-        extends ISessionDocumentRollupTypedAppendTimeSeriesBase<TValues>,
+        extends
+        ITimeSeriesStreamingBase<TypedTimeSeriesRollupEntry<TValues>>,
+        ISessionDocumentRollupTypedAppendTimeSeriesBase<TValues>,
         ISessionDocumentDeleteTimeSeriesBase {
     TypedTimeSeriesRollupEntry<TValues>[] get();
     TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to);

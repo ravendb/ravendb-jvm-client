@@ -6,6 +6,10 @@ import net.ravendb.client.extensions.JsonExtensions;
 
 import java.util.function.Function;
 
+/**
+ * {@inheritDoc}
+ * @see MoreLikeThisBase
+ */
 public class MoreLikeThisScope implements AutoCloseable {
 
     private final MoreLikeThisToken _token;
@@ -25,6 +29,10 @@ public class MoreLikeThisScope implements AutoCloseable {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * @see MoreLikeThisOptions
+     */
     public void withOptions(MoreLikeThisOptions options) {
         if (options == null) {
             return;
@@ -35,6 +43,11 @@ public class MoreLikeThisScope implements AutoCloseable {
         _token.optionsParameterName = _addQueryParameter.apply(optionsAsJson);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see IMoreLikeThisOperations
+     * @param document Inline JSON document that will be used as a base for operation.
+     */
     public void withDocument(String document) {
         _token.documentParameterName = _addQueryParameter.apply(document);
     }

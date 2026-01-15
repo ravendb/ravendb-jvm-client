@@ -5,9 +5,27 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Represents counter operations for a specific document, such as increment or set operations on named counters.
+ */
 public class DocumentCountersOperation {
 
+    /**
+     * A list of counter operations to be performed on the specified document.
+     * Each operation in the list specifies an action, such as incrementing or deleting a counter.
+     *
+     * <p><strong>Remarks:</strong> The {@code operations} field is mandatory and must be populated
+     * before the batch operation is executed. If it is not set or is empty, an exception will be
+     * thrown during parsing or execution.</p>
+     */
     private List<CounterOperation> operations;
+    /**
+     * The ID of the document on which the counter operations are to be performed.
+     *
+     * <p><strong>Remarks:</strong> The {@code documentId} field is mandatory and identifies
+     * the target document for the counter operations. If it is not set, an exception will be
+     * thrown during parsing or execution.</p>
+     */
     private String documentId;
 
     public void serialize(JsonGenerator generator) throws IOException {

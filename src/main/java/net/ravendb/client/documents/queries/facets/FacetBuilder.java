@@ -44,6 +44,9 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> byField(String fieldName) {
         if (_default == null) {
@@ -59,6 +62,9 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> allResults() {
         if (_default == null) {
@@ -69,6 +75,9 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> withOptions(FacetOptions options) {
         FacetBase facet = getFacet();
@@ -77,18 +86,24 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
         }
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> withDisplayName(String displayName) {
         getFacet().setDisplayFieldName(displayName);
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> sumOn(String path) {
         return sumOn(path, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> sumOn(String path, String displayName) {
         Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
@@ -102,12 +117,16 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> minOn(String path) {
         return minOn(path, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> minOn(String path, String displayName) {
         Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
@@ -121,12 +140,16 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> maxOn(String path) {
         return maxOn(path, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> maxOn(String path, String displayName) {
         Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
@@ -140,12 +163,16 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
         return this;
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> averageOn(String path) {
         return averageOn(path, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IFacetOperations<T> averageOn(String path, String displayName) {
         Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();

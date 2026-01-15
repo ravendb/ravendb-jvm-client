@@ -5,7 +5,7 @@ import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.primitives.CleanCloseable;
-
+import net.ravendb.client.documents.session.loaders.IDocumentIncludeBuilder;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -72,10 +72,8 @@ public interface IDocumentSession extends CleanCloseable {
     void store(Object entity, String id);
 
     /**
-     * Begin a load while including the specified path
-     * Path in documents in which server should look for a 'referenced' documents.
-     * @param path Path to include
-     * @return Loader with includes
+     * {@inheritDoc}
+     * @see IDocumentIncludeBuilder#includeDocuments
      */
     ILoaderWithInclude include(String path);
 
@@ -137,8 +135,15 @@ public interface IDocumentSession extends CleanCloseable {
 
     <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz);
 
+    /**
+     * Advanced session API for counter operations on a specific document
+     * @param documentId The id of the document to operate on
+     */
     ISessionDocumentCounters countersFor(String documentId);
-
+    /**
+     * Advanced session API for counter operations on a specific document
+     * @param entity The entity to operate on
+     */
     ISessionDocumentCounters countersFor(Object entity);
 
     ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name);

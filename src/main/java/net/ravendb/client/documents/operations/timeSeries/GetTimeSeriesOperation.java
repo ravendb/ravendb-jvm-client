@@ -48,6 +48,19 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         this(docId, timeseries, from, to, start, pageSize, includes, false);
     }
 
+    /**
+     * Initializes a new instance of the {@link GetTimeSeriesOperation}&lt;TValues&gt; class,
+     * retrieving multiple entries from a time series associated with a document within a specified date range.
+     * @param docId            The ID of the document that holds the time series.
+     * @param timeseries       The name of the time series to retrieve.
+     * @param from             The start date of the range from which entries should be retrieved.
+     *                         If {@code null}, retrieval begins from the earliest entry.
+     * @param to               The end date of the range up to which entries should be retrieved.
+     *                         If {@code null}, retrieval continues to the latest entry.
+     * @param start            The start index for pagination of results.
+     * @param pageSize         The number of entries to retrieve. Defaults to {@code Integer.MAX_VALUE} for retrieving all entries within the specified range.
+     * @param returnFullResults Whether to include detailed information for each entry. If {@code false}, retrieves only basic information.
+     */
     public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");

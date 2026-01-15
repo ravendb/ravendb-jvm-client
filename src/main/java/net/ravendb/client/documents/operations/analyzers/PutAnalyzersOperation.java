@@ -14,10 +14,20 @@ import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
+/**
+ * Adds analyzers to a specific database using the {@link PutAnalyzersOperation}.
+ *
+ * <p><strong>Note:</strong> By default, this operation applies to the default database of the document store being used.
+ * To target a different database, use the {@code forDatabase()} method.</p>
+ */
 
 public class PutAnalyzersOperation implements IVoidMaintenanceOperation {
     private final AnalyzerDefinition[] _analyzersToAdd;
 
+    /**
+     * @see PutAnalyzersOperation
+     * @param analyzersToAdd An array of {@link AnalyzerDefinition} objects representing the analyzers to be added to the database.
+     */
     public PutAnalyzersOperation(AnalyzerDefinition... analyzersToAdd) {
         if (analyzersToAdd == null || analyzersToAdd.length == 0) {
             throw new IllegalArgumentException("AnalyzersToAdd cannot be null or empty");

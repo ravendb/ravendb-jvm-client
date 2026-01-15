@@ -11,10 +11,23 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
-public class StartTransactionsRecordingOperation implements IVoidMaintenanceOperation {
+/**
+ * Starts recording database transactions using the {@code StartTransactionsRecordingOperation}.
+ * <p>
+ * The recorded transactions will be saved to the specified file path.
+ * </p>
+ * <p>
+ * This operation is typically used for debugging or analysis purposes.
+ * </p>
+ */
+public final class StartTransactionsRecordingOperation implements IVoidMaintenanceOperation {
 
     private final String _filePath;
-
+    /**
+     * Inherits documentation from {@link StartTransactionsRecordingOperation}.
+     *
+     * @param filePath The file path where the transaction recordings will be saved.
+     */
     public StartTransactionsRecordingOperation(String filePath) {
         if (filePath == null) {
             throw new IllegalArgumentException("FilePath cannot be null");

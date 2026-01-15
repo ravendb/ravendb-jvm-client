@@ -10,15 +10,31 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Disables indexing for a specific index using the {@code DisableIndexOperation}.
+ * Querying a disabled index is still allowed, but results may be stale.
+ *
+ * <p><strong>Note:</strong> Unlike StopIndex or StopIndexing operations, disabling an index is a persistent operation,
+ * meaning the index remains disabled even after a server restart.</p>
+ */
 public class DisableIndexOperation implements IVoidMaintenanceOperation {
 
     private final String _indexName;
     private final boolean _clusterWide;
-
+    /**
+     * Inherits documentation from {@link DisableIndexOperation}.
+     *
+     * @param indexName The name of the index to be disabled.
+     */
     public DisableIndexOperation(String indexName) {
         this(indexName, false);
     }
-
+    /**
+     * Inherits documentation from {@link DisableIndexOperation}.
+     *
+     * @param indexName  The name of the index to be disabled.
+     * @param clusterWide A boolean value indicating whether the index should be disabled cluster-wide across all database-group nodes.
+     */
     public DisableIndexOperation(String indexName, boolean clusterWide) {
         if (indexName == null) {
             throw new IllegalArgumentException("IndexName cannot be null");

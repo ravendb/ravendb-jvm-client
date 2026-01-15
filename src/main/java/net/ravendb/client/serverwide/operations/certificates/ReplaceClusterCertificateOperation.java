@@ -13,11 +13,20 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.utils.Base64;
 import org.apache.hc.core5.http.ContentType;
 
+/**
+ * Allows to replace an existing cluster certificate with a new one.
+ */
 public class ReplaceClusterCertificateOperation implements IVoidServerOperation {
 
     private final byte[] _certBytes;
     private final boolean _replaceImmediately;
-
+    /**
+     * {@inheritDoc}
+     * @see ReplaceClusterCertificateOperation
+     * @param certBytes Raw bytes of new certificate.
+     * @param replaceImmediately Indicates whether certificate should be replaced immediately by the server.
+     * @throws IllegalArgumentException if {@code certBytes} is null.
+     */
     public ReplaceClusterCertificateOperation(byte[] certBytes, boolean replaceImmediately) {
         if (certBytes == null) {
             throw new IllegalArgumentException("CertBytes cannot be null");

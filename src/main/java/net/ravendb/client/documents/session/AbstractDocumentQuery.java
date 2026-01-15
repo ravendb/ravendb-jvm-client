@@ -101,7 +101,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected final FromToken fromToken;
     protected final List<DeclareToken> declareTokens;
-    protected final List<LoadToken> loadTokens;
+    protected List<LoadToken> loadTokens;
     protected FieldsToFetchToken fieldsToFetchToken;
 
     public boolean isProjectInto;
@@ -128,7 +128,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected Duration timeout;
 
     protected boolean theWaitForNonStaleResults;
-
+    /**
+     * Set of included document IDs for this query.
+     */
     protected Set<String> documentIncludes = new HashSet<>();
 
     /**
@@ -233,9 +235,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Instruct the query to wait for non stale result for the specified wait timeout.
-     * This shouldn't be used outside of unit tests unless you are well aware of the implications
-     * @param waitTimeout Wait timeout
+     * {@inheritDoc}
+     * @see IDocumentQueryCustomization#waitForNonStaleResults(Duration) 
      */
     @Override
     public void _waitForNonStaleResults(Duration waitTimeout) {
@@ -363,6 +364,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         queryParameters.put(name, value);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see IDocumentQuery#groupBy(String, String...)
+     */
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
         GroupBy[] mapping = Arrays.stream(fieldNames)
@@ -372,6 +377,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _groupBy(GroupBy.field(fieldName), mapping);
     }
 
+    /**
+     * {@inheritDoc}
+     * @see IAbstractDocumentQuery#_groupBy(GroupBy, GroupBy...) 
+     */
     @Override
     public void _groupBy(GroupBy field, GroupBy... fields) {
         if (!fromToken.isDynamic()) {
@@ -399,7 +408,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _groupByKey(String fieldName) {
         _groupByKey(fieldName, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("UnnecessaryLocalVariable")
     @Override
     public void _groupByKey(String fieldName, String projectedName) {
@@ -418,12 +429,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         selectTokens.add(GroupByKeyToken.create(fieldName, projectedName));
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void _groupBySum(String fieldName) {
         _groupBySum(fieldName, null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void _groupBySum(String fieldName, String projectedName) {
         assertNoRawQuery();
@@ -432,12 +447,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         fieldName = ensureValidFieldName(fieldName, false);
         selectTokens.add(GroupBySumToken.create(fieldName, projectedName));
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void _groupByCount() {
         _groupByCount(null);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void _groupByCount(String projectedName) {
         assertNoRawQuery();
@@ -467,8 +486,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Includes the specified path in the query, loading the document specified in that path
-     * @param path Path to include
+     * {@inheritDoc}
      */
     @Override
     public void _include(String path) {
@@ -479,7 +497,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     //TBD expr public void Include(Expression<Func<T, object>> path)
-
+    /**
+     * {@inheritDoc}
+     */
     public void _include(IncludeBuilderBase includes) {
         if (includes == null) {
             return;
@@ -1975,6 +1995,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected QueryTimings queryTimings;
 
+    /**
+     * {@inheritDoc}
+     * @see IDocumentQueryCustomization#timings
+     */
     public void _includeTimings(Reference<QueryTimings> timingsReference) {
         if (queryTimings != null) {
             timingsReference.value = queryTimings;

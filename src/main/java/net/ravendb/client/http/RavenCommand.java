@@ -206,7 +206,7 @@ public abstract class RavenCommand<TResult> {
                 // we intentionally don't dispose the reader here, we'll be using it
                 // in the command, any associated memory will be released on context reset
                 String json = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
-                if (cache != null) //precaution
+                if (cache != null && canCache) //precaution
                 {
                     cacheResponse(cache, url, response, json);
                 }

@@ -11,11 +11,22 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
+/**
+ * Operation for modifying the ongoing task on the server.
+ */
 public class ToggleServerWideTaskStateOperation implements IVoidServerOperation {
     private final String _name;
     private final OngoingTaskType _type;
     private final boolean _disable;
 
+    /**
+     * {@inheritDoc}
+     * @see ToggleServerWideTaskStateOperation
+     * @param name The name of the ongoing task.
+     * @param type The type of the ongoing task.
+     * @param disable Expected state of the ongoing state {@code (disabled = true/enabled = false)}
+     * @throws IllegalArgumentException when {@code name} is null.
+     */
     public ToggleServerWideTaskStateOperation(String name, OngoingTaskType type, boolean disable) {
         if (name == null) {
             throw new IllegalArgumentException("Name cannot be null");

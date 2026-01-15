@@ -17,19 +17,26 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import net.ravendb.client.DocumentationUrls;
+import net.ravendb.client.documents.session.loaders.IDocumentIncludeBuilder;
 
 /**
  * Mostly used by the linq provider
  */
 public interface IAbstractDocumentQuery<T> {
-
+    /**
+     * Get the queried index name.
+     */
     String getIndexName();
-
+    /**
+     * Get the queried collection name.
+     */
     String getCollectionName();
 
     /**
-     * Gets the document convention from the query session
-     * @return document conventions
+     * Get the document conventions used for this query.
+     * {@inheritDoc}
+     * @see DocumentationUrls.Session.Options#Conventions
      */
     DocumentConventions getConventions();
 
@@ -41,25 +48,25 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
-     * @param waitTimeout Wait timeout
+     * @param waitTimeout Maximum time in seconds to wait for index query results to become non-stale before exception is thrown. Default: 15 seconds.
      */
     void _waitForNonStaleResults(Duration waitTimeout);
 
     /**
-     * Gets the fields for projection
+     * Gets field names of query result projection.
      * @return list of projection fields
      */
     List<String> getProjectionFields();
 
     /**
-     * Order the search results randomly
+     * {@inheritDoc}
+     * @see IDocumentQueryCustomization#randomOrdering()
      */
     void _randomOrdering();
 
     /**
-     * Order the search results randomly using the specified seed
-     * this is useful if you want to have repeatable random queries
-     * @param seed Seed to use
+     * {@inheritDoc}
+     * @see IDocumentQueryCustomization#randomOrdering(String)
      */
     void _randomOrdering(String seed);
 
@@ -68,14 +75,14 @@ public interface IAbstractDocumentQuery<T> {
     //TBD 4.1 void _customSortUsing(String typeName, boolean descending);
 
     /**
-     * Includes the specified path in the query, loading the document specified in that path
-     * @param path include path
+     * {@inheritDoc}
+     * @see IDocumentIncludeBuilder#includeDocuments(String) 
      */
     void _include(String path);
 
     /**
-     * Includes the specified documents and/or counters in the query, specified by IncludeBuilder
-     * @param includes builder
+     * {@inheritDoc}
+     * @see IAbstractDocumentQuery#_include(String)
      */
     void _include(IncludeBuilderBase includes);
 
@@ -101,10 +108,10 @@ public interface IAbstractDocumentQuery<T> {
     void _whereEquals(String fieldName, Object value);
 
     /**
-     * Matches value
-     * @param fieldName Field name
-     * @param value Value to match
-     * @param exact Use exact matcher
+     * Matches documents with value in specified field equal to value provided in parameter.
+     * @param fieldName Field to take value from.
+     * @param value Value to compare with field.
+     * @param exact Default: false.
      */
     void _whereEquals(String fieldName, Object value, boolean exact);
 
