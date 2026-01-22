@@ -94,7 +94,6 @@ public class AiConversation {
         }
     }
 
-
     public String getChangeVector() {
         return changeVector;
     }

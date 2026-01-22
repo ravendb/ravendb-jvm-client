@@ -116,6 +116,12 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                     case QUEUE_SINK:
                         result = mapper.readValue(response, OngoingTaskQueueSink.class);
                         break;
+                    case EMBEDDINGS_GENERATION:
+                        result = mapper.readValue(response, OngoingTaskEmbeddingsGeneration.class);
+                        break;
+                    case GEN_AI:
+                        result = mapper.readValue(response, OngoingTaskGenAi.class);
+                        break;
                     default:
                         throw new IllegalStateException();
                 }

@@ -28,10 +28,16 @@ public class UpdateGenAiOperation implements IMaintenanceOperation<UpdateEtlOper
                                 boolean reset) {
         this.taskId = taskId;
         this.configuration = configuration;
-        this.startingPoint = (startingPoint != null)
-                ? startingPoint
-                : StartingPointChangeVector.DoNotChange;
+        this.startingPoint = startingPoint;
         this.reset = reset;
+    }
+
+    public UpdateGenAiOperation(long taskId, GenAiConfiguration configuration, StartingPointChangeVector startingPoint) {
+        this(taskId, configuration, startingPoint, false);
+    }
+
+    public UpdateGenAiOperation(long taskId, GenAiConfiguration configuration, boolean reset) {
+        this(taskId, configuration, null, reset);
     }
 
     public UpdateGenAiOperation(long taskId,
