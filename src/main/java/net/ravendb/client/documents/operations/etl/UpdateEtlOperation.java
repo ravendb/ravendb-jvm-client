@@ -17,7 +17,7 @@ import org.apache.hc.core5.http.ContentType;
 import java.io.IOException;
 import java.util.List;
 
-public class UpdateEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateEtlOperationResult> {
+public final class UpdateEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateEtlOperationResult> {
 
     private final long _taskId;
     private final EtlConfiguration<T> _configuration;
@@ -35,7 +35,7 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
 
     @Override
     public RavenCommand<UpdateEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdateEtlCommand<>(conventions, _taskId, _configuration, this.transformantionsToReset);
+        return new UpdateEtlCommand(conventions, _taskId, _configuration, this.transformantionsToReset);
     }
 
     public static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> implements IRaftCommand {

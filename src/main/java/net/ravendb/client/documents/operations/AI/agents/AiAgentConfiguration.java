@@ -15,10 +15,6 @@ public class AiAgentConfiguration {
     private List<AiAgentParameter> parameters;
     private AiAgentChatTrimmingConfiguration chatTrimming;
     private Integer maxModelIterationsPerCall;
-    /**
-     * Indicates whether the AI agent is disabled.
-     */
-    private boolean disabled;
 
     public AiAgentConfiguration() {
     }
@@ -37,14 +33,6 @@ public class AiAgentConfiguration {
         this.name = name;
         this.connectionStringName = connectionStringName;
         this.systemPrompt = systemPrompt;
-    }
-
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    public void setDisabled(boolean disabled) {
-        this.disabled = disabled;
     }
 
     public String getIdentifier() {

@@ -39,7 +39,7 @@ public class UpdateEmbeddingsGenerationOperation
             transformationsToReset.add(configuration.getTransformationName());
         }
 
-        return new UpdateEtlOperation.UpdateEtlCommand<>(
+        return new UpdateEtlOperation.UpdateEtlCommand(
                 conventions,
                 taskId,
                 configuration,

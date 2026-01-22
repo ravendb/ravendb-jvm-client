@@ -13,26 +13,6 @@ public class ElasticSearchConnectionString extends ConnectionString {
     private Authentication authentication;
 
     @Override
-    protected void validateImpl(List<String> errors) {
-
-        if (nodes == null || nodes.length == 0) {
-            errors.add("Nodes cannot be empty");
-        }
-        if (nodes == null) {
-            return;
-        }
-
-        for (int i = 0; i < nodes.length; i++) {
-            if (nodes[i] == null) {
-                errors.add("Url number " + (i + 1) + " in Nodes cannot be empty");
-                continue;
-            }
-
-            nodes[i] = nodes[i].trim();
-        }
-    }
-
-    @Override
     public ConnectionStringType getType() {
         return ConnectionStringType.ELASTIC_SEARCH;
     }

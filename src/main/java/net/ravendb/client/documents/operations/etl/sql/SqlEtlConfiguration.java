@@ -12,25 +12,6 @@ public class SqlEtlConfiguration extends EtlConfiguration<SqlConnectionString> {
     private Integer commandTimeout;
     private List<SqlEtlTable> sqlTables;
 
-    @Override
-    public String getDestination() {
-        return "";
-    }
-
-    @Override
-    public String getDefaultTaskName() {
-        return "";
-    }
-
-    @Override
-    public boolean usingEncryptedCommunicationChannel() {
-        return false;
-    }
-
-    public EtlType getEtlType() {
-        return EtlType.SQL;
-    }
-
     public boolean isParameterizeDeletes() {
         return parameterizeDeletes;
     }

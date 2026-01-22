@@ -2,8 +2,6 @@ package net.ravendb.client.documents.operations.etl.queue;
 
 public final class AmazonSqsConnectionSettings {
 
-    static final String EMULATOR_URL_ENVIRONMENT_VARIABLE = "RAVEN_AMAZON_SQS_EMULATOR_URL";
-
     private AmazonSqsCredentials basic;
     private boolean passwordless;
     private boolean useEmulator;
@@ -30,39 +28,6 @@ public final class AmazonSqsConnectionSettings {
 
     void setUseEmulator(boolean useEmulator) {
         this.useEmulator = useEmulator;
-    }
-
-    public boolean isValidConnection() {
-        if (!isOnlyOneConnectionProvided()) {
-            return false;
-        }
-
-        if (basic != null && !basic.isValid()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean isOnlyOneConnectionProvided() {
-        int count = 0;
-
-        if (basic != null)
-            count++;
-
-        if (passwordless)
-            count++;
-
-        if (useEmulator)
-            count++;
-
-        return count == 1;
-    }
-
-    public String getQueueUrl() {
-        return useEmulator
-                ? System.getenv(EMULATOR_URL_ENVIRONMENT_VARIABLE)
-                : "https://queue.amazonaws.com/";
     }
 }
 
@@ -94,15 +59,5 @@ final class AmazonSqsCredentials {
 
     public void setRegionName(String regionName) {
         this.regionName = regionName;
-    }
-
-    public boolean isValid() {
-        return isNotBlank(accessKey)
-                && isNotBlank(secretKey)
-                && isNotBlank(regionName);
-    }
-
-    private boolean isNotBlank(String value) {
-        return value != null && !value.trim().isEmpty();
     }
 }
