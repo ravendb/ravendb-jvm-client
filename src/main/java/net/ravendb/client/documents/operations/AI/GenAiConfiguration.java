@@ -33,6 +33,7 @@ public class GenAiConfiguration extends AbstractAiIntegrationConfiguration{
 
     final String transformationName = "GenAi-transform-script";
 
+    @Override
     public EtlType getEtlType() { return EtlType.GEN_AI; }
 
     public String getIdentifier() {

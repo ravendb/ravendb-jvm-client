@@ -11,4 +11,7 @@ public class RavenEtlConfiguration extends EtlConfiguration<RavenConnectionStrin
     public void setLoadRequestTimeoutInSec(Integer loadRequestTimeoutInSec) {
         this.loadRequestTimeoutInSec = loadRequestTimeoutInSec;
     }
+
+    @Override
+    public EtlType getEtlType() { return EtlType.RAVEN; }
 }

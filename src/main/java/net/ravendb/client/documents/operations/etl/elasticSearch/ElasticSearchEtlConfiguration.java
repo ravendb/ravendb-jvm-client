@@ -9,7 +9,6 @@ import java.util.List;
 public class ElasticSearchEtlConfiguration extends EtlConfiguration<ElasticSearchConnectionString> {
 
     private List<ElasticSearchIndex> elasticIndexes;
-    private String destination;
 
     public ElasticSearchEtlConfiguration() {
         elasticIndexes = new ArrayList<>();
@@ -23,5 +22,6 @@ public class ElasticSearchEtlConfiguration extends EtlConfiguration<ElasticSearc
         this.elasticIndexes = elasticIndexes;
     }
 
+    @Override
     public EtlType getEtlType() { return EtlType.ELASTIC_SEARCH; }
 }

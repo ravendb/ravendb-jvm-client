@@ -51,4 +51,7 @@ public class SqlEtlConfiguration extends EtlConfiguration<SqlConnectionString> {
     public void setSqlTables(List<SqlEtlTable> sqlTables) {
         this.sqlTables = sqlTables;
     }
+
+    @Override
+    public EtlType getEtlType() { return EtlType.SQL; }
 }

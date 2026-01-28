@@ -28,6 +28,7 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
     private static final String PATHS_TRANSFORMATION_NAME = "embeddings-from-paths";
     private static final String SCRIPT_TRANSFORMATION_NAME = "embeddings-transform-script";
 
+    @Override
     public EtlType getEtlType() { return EtlType.EMBEDDINGS_GENERATION; }
 
     @JsonIgnore

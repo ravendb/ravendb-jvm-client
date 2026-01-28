@@ -34,6 +34,7 @@ public class OlapEtlConfiguration extends EtlConfiguration<OlapConnectionString>
         this.customPartitionValue = customPartitionValue;
     }
 
+    @Override
     public EtlType getEtlType() { return EtlType.OLAP; }
 
     public List<OlapEtlTable> getOlapTables() {
