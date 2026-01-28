@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations.etl.elasticSearch;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchConnectionString extends ConnectionString {

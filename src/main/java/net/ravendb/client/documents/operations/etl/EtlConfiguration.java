@@ -1,7 +1,8 @@
 package net.ravendb.client.documents.operations.etl;
 
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class EtlConfiguration<T extends ConnectionString> {
     private long taskId;
@@ -16,6 +17,8 @@ public abstract class EtlConfiguration<T extends ConnectionString> {
     public long getTaskId() {
         return taskId;
     }
+
+    public abstract EtlType getEtlType();
 
     public void setTaskId(long taskId) {
         this.taskId = taskId;

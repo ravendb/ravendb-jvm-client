@@ -41,5 +41,6 @@ public class QueueEtlConfiguration extends EtlConfiguration<QueueConnectionStrin
         this.skipAutomaticQueueDeclaration = skipAutomaticQueueDeclaration;
     }
 
+    @Override
     public EtlType getEtlType() { return EtlType.QUEUE; }
 }
