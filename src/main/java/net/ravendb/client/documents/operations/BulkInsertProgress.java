@@ -65,4 +65,19 @@ public class BulkInsertProgress implements IOperationProgress {
     public void setTimeSeriesProcessed(long timeSeriesProcessed) {
         this.timeSeriesProcessed = timeSeriesProcessed;
     }
+
+    @Override
+    public IOperationProgress clone() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean canMerge() {
+        return false;
+    }
+
+    @Override
+    public void mergeWith(IOperationProgress progress) {
+        throw new UnsupportedOperationException();
+    }
 }

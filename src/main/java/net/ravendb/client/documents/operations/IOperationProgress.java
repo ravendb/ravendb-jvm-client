@@ -1,5 +1,10 @@
 package net.ravendb.client.documents.operations;
 
 public interface IOperationProgress {
-    // empty by design
+
+    IOperationProgress clone();
+
+    boolean canMerge();
+
+    void mergeWith(IOperationProgress progress);
 }

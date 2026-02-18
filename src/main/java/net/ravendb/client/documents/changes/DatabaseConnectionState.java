@@ -1,12 +1,10 @@
 package net.ravendb.client.documents.changes;
 
-import net.ravendb.client.primitives.EventHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DatabaseConnectionState extends AbstractDatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
+public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState implements IChangesConnectionState<T> {
 
     private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
@@ -26,76 +24,76 @@ public class DatabaseConnectionState extends AbstractDatabaseConnectionState imp
     }
 
     public void send(DocumentChange documentChange) {
-        EventHelper.invoke(onDocumentChangeNotification, documentChange);
+        callEventInternal(onDocumentChangeNotification, documentChange);
     }
 
     public void send(IndexChange indexChange) {
-        EventHelper.invoke(onIndexChangeNotification, indexChange);
+        callEventInternal(onIndexChangeNotification, indexChange);
     }
 
     public void send(OperationStatusChange operationStatusChange) {
-        EventHelper.invoke(onOperationStatusChangeNotification, operationStatusChange);
+        callEventInternal(onOperationStatusChangeNotification, operationStatusChange);
     }
 
     public void send(CounterChange counterChange) {
-        EventHelper.invoke(onCounterChangeNotification, counterChange);
+        callEventInternal(onCounterChangeNotification, counterChange);
     }
 
     public void send(TimeSeriesChange timeSeriesChange) {
-        EventHelper.invoke(onTimeSeriesChangeNotification, timeSeriesChange);
+        callEventInternal(onTimeSeriesChangeNotification, timeSeriesChange);
     }
 
     public void send(AggressiveCacheChange change) {
-        EventHelper.invoke(onAggressiveChangeChangeNotification, change);
+        callEventInternal(onAggressiveChangeChangeNotification, change);
     }
 
-
-
+    @Override
     @SuppressWarnings("unchecked")
-    public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
+    public void addOnChangeNotification(ChangesType type, Consumer<T> handler, Consumer<Exception> onError) {
         switch (type) {
             case AGGRESSIVE_CACHE:
-                this.onAggressiveChangeChangeNotification.add((Consumer<AggressiveCacheChange>)(Consumer<?>) handler);
+                registerEventsInternal(onAggressiveChangeChangeNotification, (Consumer<AggressiveCacheChange>)(Consumer<?>) handler, onError);
                 break;
             case DOCUMENT:
-                this.onDocumentChangeNotification.add((Consumer<DocumentChange>)(Consumer<?>) handler);
+                registerEventsInternal(onDocumentChangeNotification, (Consumer<DocumentChange>)(Consumer<?>) handler, onError);
                 break;
             case INDEX:
-                this.onIndexChangeNotification.add((Consumer<IndexChange>)(Consumer<?>) handler);
+                registerEventsInternal(onIndexChangeNotification, (Consumer<IndexChange>)(Consumer<?>) handler, onError);
                 break;
             case OPERATION:
-                this.onOperationStatusChangeNotification.add((Consumer<OperationStatusChange>)(Consumer<?>) handler);
+                registerEventsInternal(onOperationStatusChangeNotification, (Consumer<OperationStatusChange>)(Consumer<?>) handler, onError);
                 break;
             case COUNTER:
-                this.onCounterChangeNotification.add((Consumer<CounterChange>)(Consumer<?>) handler);
+                registerEventsInternal(onCounterChangeNotification, (Consumer<CounterChange>)(Consumer<?>) handler, onError);
                 break;
             case TIME_SERIES:
-                this.onTimeSeriesChangeNotification.add((Consumer<TimeSeriesChange>)(Consumer<?>) handler);
+                registerEventsInternal(onTimeSeriesChangeNotification, (Consumer<TimeSeriesChange>)(Consumer<?>) handler, onError);
                 break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
     }
 
-    public void removeOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
+    @Override
+    public void removeOnChangeNotification(ChangesType type, Consumer handler, Consumer onError) {
         switch (type) {
             case AGGRESSIVE_CACHE:
-                this.onAggressiveChangeChangeNotification.remove(handler);
+                unregisterEventsInternal(onAggressiveChangeChangeNotification, (Consumer<AggressiveCacheChange>)(Consumer<?>) handler, onError);
                 break;
             case DOCUMENT:
-                this.onDocumentChangeNotification.remove(handler);
+                unregisterEventsInternal(onDocumentChangeNotification, (Consumer<DocumentChange>)(Consumer<?>) handler, onError);
                 break;
             case INDEX:
-                this.onIndexChangeNotification.remove(handler);
+                unregisterEventsInternal(onIndexChangeNotification, (Consumer<IndexChange>)(Consumer<?>) handler, onError);
                 break;
             case OPERATION:
-                this.onOperationStatusChangeNotification.remove(handler);
+                unregisterEventsInternal(onOperationStatusChangeNotification, (Consumer<OperationStatusChange>)(Consumer<?>) handler, onError);
                 break;
             case COUNTER:
-                this.onCounterChangeNotification.remove(handler);
+                unregisterEventsInternal(onCounterChangeNotification, (Consumer<CounterChange>)(Consumer<?>) handler, onError);
                 break;
             case TIME_SERIES:
-                this.onTimeSeriesChangeNotification.remove(handler);
+                unregisterEventsInternal(onTimeSeriesChangeNotification, (Consumer<TimeSeriesChange>)(Consumer<?>) handler, onError);
                 break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
@@ -104,13 +102,14 @@ public class DatabaseConnectionState extends AbstractDatabaseConnectionState imp
 
     @Override
     public void close() {
+        synchronized (eventLock){
+            onDocumentChangeNotification.clear();
+            onIndexChangeNotification.clear();
+            onOperationStatusChangeNotification.clear();
+            onCounterChangeNotification.clear();
+            onTimeSeriesChangeNotification.clear();
+            onAggressiveChangeChangeNotification.clear();
+        }
         super.close();
-
-        onDocumentChangeNotification.clear();
-        onIndexChangeNotification.clear();
-        onOperationStatusChangeNotification.clear();
-        onCounterChangeNotification.clear();
-        onTimeSeriesChangeNotification.clear();
-        onAggressiveChangeChangeNotification.clear();
     }
 }

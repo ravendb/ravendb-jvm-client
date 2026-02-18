@@ -1,47 +1,62 @@
 package net.ravendb.client.documents.operations.attachments;
 
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
+import net.ravendb.client.util.TimeUtils;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.time.ZonedDateTime;
 
 public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
     private final String _documentId;
     private final String _name;
     private final InputStream _stream;
     private final String _contentType;
+    private final RemoteAttachmentParameters remoteParameters;
     private final String _changeVector;
 
     public PutAttachmentOperation(String documentId, String name, InputStream stream) {
-        this(documentId, name, stream, null, null);
+        this(documentId, name, stream, null, null, null);
     }
 
     public PutAttachmentOperation(String documentId, String name, InputStream stream, String contentType) {
-        this(documentId, name, stream, contentType, null);
+        this(documentId, name, stream, contentType, null, null);
     }
 
-    public PutAttachmentOperation(String documentId, String name, InputStream stream, String contentType, String changeVector) {
+    public PutAttachmentOperation(String documentId, String name, InputStream stream, String contentType, RemoteAttachmentParameters remoteParameters, String changeVector) {
         _documentId = documentId;
         _name = name;
         _stream = stream;
         _contentType = contentType;
         _changeVector = changeVector;
+        this.remoteParameters = remoteParameters;
+    }
+
+    public PutAttachmentOperation(String documentId, StoreAttachmentParameters parameters) {
+        _documentId = documentId;
+        _name = parameters.getName();
+        _stream = parameters.getStream();
+        _contentType = parameters.getContentType();
+        this.remoteParameters = parameters.getRemoteParameters();
+        _changeVector = parameters.getChangeVector();
     }
 
     @Override
     public RavenCommand<AttachmentDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new PutAttachmentCommand(conventions, _documentId, _name, _stream, _contentType, _changeVector);
+        return new PutAttachmentCommand(conventions,_documentId, _name, _stream, _contentType, _changeVector, this.remoteParameters);
     }
 
     private static class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
@@ -50,25 +65,36 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         private final String _name;
         private final InputStream _stream;
         private final String _contentType;
+        private final RemoteAttachmentParameters remoteParameters;
         private final String _changeVector;
+        private final boolean validateStream;
 
-        public PutAttachmentCommand(DocumentConventions conventions, String documentId, String name, InputStream stream, String contentType, String changeVector) {
+        public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters) {
+            this(conventions,documentId, name, stream, contentType, changeVector, remoteParameters, true);
+        }
+
+        public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters, boolean validateStream) {
             super(AttachmentDetails.class);
 
-            if (StringUtils.isBlank(documentId)) {
-                throw new IllegalArgumentException("documentId cannot be null");
+            if (documentId == null || documentId.trim().isEmpty()) {
+                throw new IllegalArgumentException("documentId");
+            }
+            if (name == null || name.trim().isEmpty()) {
+                throw new IllegalArgumentException("name");
             }
 
-            if (StringUtils.isBlank(name)) {
-                throw new IllegalArgumentException("name cannot be null");
-            }
+            this._conventions = conventions;
+            this._documentId = documentId;
+            this._name = name;
+            this._stream = stream;
+            this._contentType = contentType;
+            this.remoteParameters = remoteParameters;
+            this._changeVector = changeVector;
+            this.validateStream = validateStream;
 
-            _conventions = conventions;
-            _documentId = documentId;
-            _name = name;
-            _stream = stream;
-            _contentType = contentType;
-            _changeVector = changeVector;
+            if (validateStream) {
+                PutAttachmentCommandHelper.tryValidateStream(stream, null);
+            }
         }
 
         @Override
@@ -77,6 +103,22 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
 
             if (StringUtils.isNotEmpty(_contentType)) {
                 url += "&contentType=" + UrlUtils.escapeDataString(_contentType);
+            }
+
+            if (remoteParameters != null) {
+                ZonedDateTime at = TimeUtils.toZonedDateTime(remoteParameters.getAt());
+                try{
+                    url += "&remoteAt=" + URLEncoder.encode(TimeUtils.getDefaultRavenFormat(at),
+                            "UTF-8"
+                    );
+
+                    url += "&remoteIdentifier=" + URLEncoder.encode(
+                            remoteParameters.getIdentifier(),
+                            "UTF-8"
+                    );
+                }catch (UnsupportedEncodingException ex){
+                    throw new RuntimeException("Failed to encode remote attachment parameters.", ex);
+                }
             }
 
             HttpPut request = new HttpPut(url);

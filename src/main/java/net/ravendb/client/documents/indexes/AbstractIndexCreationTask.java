@@ -9,7 +9,7 @@ import org.apache.commons.collections4.MapUtils;
  * Base class for creating indexes
  */
 @SuppressWarnings("SameParameterValue")
-public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCreationTask {
+public abstract class AbstractIndexCreationTask<U, R> extends AbstractGenericIndexCreationTask {
 
     protected String map;
 

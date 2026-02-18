@@ -6,6 +6,20 @@ public class DetailedDatabaseStatistics extends DatabaseStatistics {
     private long countOfCompareExchange;
     private long countOfCompareExchangeTombstones;
     private long countOfTimeSeriesDeletedRanges;
+    private long countOfRemoteAttachments;
+
+    /**
+     * @return Total number of Remote Attachments values in database.
+     */
+    public long getCountOfRemoteAttachments() {
+        return countOfRemoteAttachments;
+    }
+
+    /**
+     * Sets total number of Remote Attachments values in database.
+     * @param countOfRemoteAttachments
+     */
+    public void setCountOfRemoteAttachments(long countOfRemoteAttachments) { this.countOfRemoteAttachments = countOfRemoteAttachments; }
 
     /**
      * @return Total number of identities in database.
