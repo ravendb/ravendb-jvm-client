@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations.backups;
 
-public class S3Settings extends AmazonSettings {
+public class S3Settings extends AmazonSettings implements IS3Settings {
 
     private String bucketName;
     private String customServerUrl;
@@ -29,6 +29,16 @@ public class S3Settings extends AmazonSettings {
 
     public void setForcePathStyle(boolean forcePathStyle) {
         this.forcePathStyle = forcePathStyle;
+    }
+
+    @Override
+    public S3StorageClass getStorageClass() {
+        return null;
+    }
+
+    @Override
+    public void setStorageClass(S3StorageClass storageClass) {
+
     }
 
     public boolean hasSettings() {

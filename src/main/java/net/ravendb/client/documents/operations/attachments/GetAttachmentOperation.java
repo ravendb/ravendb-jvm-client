@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.operations.attachments;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.attachments.AttachmentType;
+import net.ravendb.client.documents.attachments.RemoteAttachmentFlags;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.extensions.HttpExtensions;
@@ -16,6 +18,13 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
@@ -94,16 +103,65 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
         public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
             String contentType = response.getEntity().getContentType();
             String changeVector = HttpExtensions.getEtagHeader(response);
-            String hash = response.getFirstHeader("Attachment-Hash").getValue();
+            String hash = response.getFirstHeader(Constants.Headers.ATTACHMENT_HASH).getValue();
             long size = 0;
 
-            Header sizeHeader = response.getFirstHeader("Attachment-Size");
+            Header sizeHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_SIZE);
             if (sizeHeader != null) {
                 size = Long.parseLong(sizeHeader.getValue());
             }
 
+            String remoteIdentifier = null;
+            try {
+                Header idHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER);
+                if (idHeader != null) {
+                    remoteIdentifier = URLDecoder.decode(idHeader.getValue(), "UTF-8");
+                }
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Failed to decode remote identifier from response header: " + e.getMessage());
+            }
+
+            RemoteAttachmentParameters remoteParameters = null;
+
+            if (remoteIdentifier != null && !remoteIdentifier.isEmpty()) {
+
+                Header atHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT);
+                if (atHeader == null) {
+                    throwOnMissingHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT);
+                }
+
+                String atValue = atHeader.getValue();
+                Date attachmentRemoteAt;
+                try {
+                    Instant instant = Instant.parse(atValue);
+                    attachmentRemoteAt = Date.from(instant);
+                } catch (Exception e) {
+                    throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT, atValue);
+                    return null; // unreachable, but keeps compiler happy
+                }
+
+                Header flagsHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_FLAGS);
+                if (flagsHeader == null) {
+                    throwOnMissingHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_FLAGS);
+                }
+
+                String flagsValue = flagsHeader.getValue();
+                RemoteAttachmentFlags attachmentFlags;
+                try {
+                    attachmentFlags = RemoteAttachmentFlags.valueOf(flagsValue);
+                } catch (Exception e) {
+                    throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_FLAGS, flagsValue);
+                    return null;
+                }
+
+                remoteParameters = new RemoteAttachmentParameters(remoteIdentifier, attachmentRemoteAt);
+                remoteParameters.setFlags(attachmentFlags);
+            }
+
+
             AttachmentDetails attachmentDetails = new AttachmentDetails();
             attachmentDetails.setContentType(contentType);
+            attachmentDetails.setRemoteParameters(remoteParameters);
             attachmentDetails.setName(_name);
             attachmentDetails.setHash(hash);
             attachmentDetails.setSize(size);
@@ -120,5 +178,21 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
             return true;
         }
 
+        private void throwOnMissingHeader(String header) {
+            throw new IllegalStateException(
+                    "Attachment remote parameters header '" + header +
+                            "' is missing for attachment '" + _name +
+                            "' on document '" + _documentId + "'."
+            );
+        }
+
+        private void throwOnBadHeader(String header, String value) {
+            throw new IllegalStateException(
+                    "Attachment remote parameters header '" + header +
+                            "' has invalid value '" + value +
+                            "' for attachment '" + _name +
+                            "' on document '" + _documentId + "'."
+            );
+        }
     }
 }

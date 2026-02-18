@@ -22,13 +22,14 @@ import org.apache.hc.core5.http.HttpEntity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements CleanCloseable {
     private Boolean _supportsAtomicWrites;
-    private Set<InputStream> _attachmentStreams;
+    private LinkedHashSet<InputStream> uniqueAttachmentStreams;
     private final DocumentConventions _conventions;
     private final List<ICommandData> _commands;
     private final BatchOptions _options;
@@ -58,21 +59,28 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             throw new IllegalArgumentException("commands cannot be null");
         }
 
-        for (int i = 0; i < commands.size(); i++) {
-            ICommandData command = commands.get(i);
+        for (ICommandData command : commands) {
+            handlePutAttachmentCommandData(command);
+        }
+    }
 
-            if (command instanceof PutAttachmentCommandData) {
-                PutAttachmentCommandData putAttachmentCommandData = (PutAttachmentCommandData) command;
+    private void handlePutAttachmentCommandData(ICommandData command) {
+        if (!(command instanceof PutAttachmentCommandData)) {
+            return;
+        }
+        PutAttachmentCommandData putAttachmentCommandData = (PutAttachmentCommandData) command;
 
-                if (_attachmentStreams == null) {
-                    _attachmentStreams = new LinkedHashSet<>();
-                }
+        if (!PutAttachmentCommandHelper.tryValidateStream(putAttachmentCommandData.getStream(), putAttachmentCommandData.getRemoteParameters())) {
+            return;
+        }
 
-                InputStream stream = putAttachmentCommandData.getStream();
-                if (!_attachmentStreams.add(stream)) {
-                    PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
-                }
-            }
+        if (uniqueAttachmentStreams == null) {
+            uniqueAttachmentStreams = new LinkedHashSet<>();
+        }
+
+        InputStream stream = putAttachmentCommandData.getStream();
+        if (!uniqueAttachmentStreams.add(stream)) {
+            PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
         }
     }
 
@@ -123,7 +131,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         }, ContentType.APPLICATION_JSON, _conventions));
 
 
-        if (_attachmentStreams != null && !_attachmentStreams.isEmpty()) {
+        if (uniqueAttachmentStreams != null && !uniqueAttachmentStreams.isEmpty()) {
             MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
             HttpEntity entity = request.getEntity();
@@ -146,7 +154,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
 
             int nameCounter = 1;
 
-            for (InputStream stream : _attachmentStreams) {
+            for (InputStream stream : uniqueAttachmentStreams) {
                 InputStreamBody inputStreamBody = new InputStreamBody(stream, (String) null);
                 FormBodyPart part = FormBodyPartBuilder.create("attachment" + nameCounter++, inputStreamBody)
                         .addField("Command-Type", "AttachmentStream")
@@ -210,7 +218,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             }
         }
     }
-
 
     @Override
     public boolean isReadRequest() {

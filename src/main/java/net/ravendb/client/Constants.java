@@ -144,6 +144,57 @@ public class Constants {
 
         public static final String ATTACHMENT_HASH = "Attachment-Hash";
 
+        /**
+         * HTTP header name for the scheduled remote attachment upload time.
+         *
+         * <p>
+         * This header contains the UTC timestamp indicating when an attachment should be uploaded
+         * to remote cloud storage.
+         * </p>
+         *
+         * <p>
+         * It is used together with {@link #ATTACHMENT_REMOTE_PARAMETERS_FLAGS} and
+         * {@link #ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER} to configure automatic offloading of
+         * attachments to cloud storage providers such as Amazon S3 or Azure Blob Storage.
+         * </p>
+         */
+        public static final String ATTACHMENT_REMOTE_PARAMETERS_AT = "Attachment-RemoteParameters-At";
+
+        /**
+         * HTTP header name for remote attachment configuration flags.
+         *
+         * <p>
+         * This header contains flags that control remote attachment behavior, such as whether
+         * the attachment should be uploaded immediately or at a scheduled time.
+         * </p>
+         *
+         * <p>
+         * It is used together with {@link #ATTACHMENT_REMOTE_PARAMETERS_AT} and
+         * {@link #ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER} to specify the complete remote storage
+         * configuration. The flags correspond to the values of the
+         * {@link net.ravendb.client.documents.attachments.RemoteAttachmentFlags} enum.
+         * </p>
+         */
+        public static final String ATTACHMENT_REMOTE_PARAMETERS_FLAGS = "Attachment-RemoteParameters-Flags";
+
+        /**
+         * HTTP header name for the remote attachment storage destination identifier.
+         *
+         * <p>
+         * This header contains the unique identifier of the remote storage destination
+         * configuration where the attachment should be uploaded. The identifier refers to a
+         * configured remote attachment destination (for example, a specific S3 bucket or Azure
+         * Blob Storage container) defined in the database's remote attachments configuration.
+         * </p>
+         *
+         * <p>
+         * It is used together with {@link #ATTACHMENT_REMOTE_PARAMETERS_AT} and
+         * {@link #ATTACHMENT_REMOTE_PARAMETERS_FLAGS} to specify the complete remote storage
+         * parameters for an attachment.
+         * </p>
+         */
+        public static final String ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER = "Attachment-RemoteParameters-Identifier";
+
         public static final String ATTACHMENT_SIZE = "Attachment-Size";
 
         public static final String DATABASE_MISSING = "Database-Missing";

@@ -29,6 +29,15 @@ public class IndexDefinition extends IndexDefinitionBase {
     private String patternForOutputReduceToCollectionReferences;
     private String patternReferencesCollectionName;
     private IndexDeploymentMode deploymentMode;
+    private IndexSchemaDefinitions schemaDefinitions;
+
+    public IndexSchemaDefinitions getSchemaDefinitions() {
+        return schemaDefinitions;
+    }
+
+    public void setSchemaDefinitions(IndexSchemaDefinitions schemaDefinitions) {
+        this.schemaDefinitions = schemaDefinitions;
+    }
 
     /**
      * Index lock mode:

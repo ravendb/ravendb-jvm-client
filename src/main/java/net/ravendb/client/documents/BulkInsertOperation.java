@@ -11,11 +11,13 @@ import net.ravendb.client.documents.bulkInsert.BulkInsertWriter;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.BulkInsertObserver;
 import net.ravendb.client.documents.operations.BulkInsertProgress;
 import net.ravendb.client.documents.operations.GetOperationStateOperation;
+import net.ravendb.client.documents.operations.attachments.StoreAttachmentParameters;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
@@ -58,6 +60,12 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private final BulkInsertOptions _options;
     private final String _database;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
+
+    public AttachmentsBulkInsertOperation getAttachmentsOperation() {
+        return attachmentsOperation;
+    }
+
+    private final AttachmentsBulkInsertOperation attachmentsOperation;
 
     public static class BulkInsertStreamExposerContent extends StreamExposerContent {
        public void done() {
@@ -184,6 +192,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
         this.useCompression = options != null ? options.isUseCompression() : false;
 
+        this.attachmentsOperation = new AttachmentsBulkInsertOperation(this);
         _options = ObjectUtils.firstNonNull(options, new BulkInsertOptions());
         _database = database;
         _requestExecutor = store.getRequestExecutor(database);
@@ -929,21 +938,80 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
     }
 
+    /**
+     * Provides a convenient API for bulk inserting attachments for a specific document.
+     * This type is returned by {@link BulkInsertOperation#attachmentsFor(String)} and exposes
+     * methods for efficiently storing attachments as part of a bulk insert operation.
+     * Attachments are streamed directly to the server for optimal performance.
+     */
     public static class AttachmentsBulkInsert {
         private final BulkInsertOperation _operation;
         private final String _id;
 
+        /**
+         * Initializes a new instance of the AttachmentsBulkInsert helper.
+         *
+         * @param operation the parent bulk insert operation
+         * @param id the document ID to which attachments will be added
+         */
         public AttachmentsBulkInsert(BulkInsertOperation operation, String id) {
             _operation = operation;
             _id = id;
         }
 
-        public void store(String name, byte[] bytes) {
-            store(name, bytes, null);
+        /**
+         * Stores an attachment synchronously for the associated document.
+         *
+         * @param name the name of the attachment
+         * @param stream the input stream containing the attachment data; the stream must be seekable and have a known length*
+         * <p>The stream must support seeking and length queries. Its position will be reset to the beginning
+         * before uploading. The stream is not closed by this method.</p>
+         */
+        public void store(String name, InputStream stream) {
+            store(name, stream, null);
         }
 
-        public void store(String name, byte[] bytes, String contentType) {
-            _operation._attachmentsOperation.store(_id, name, bytes, contentType);
+        public void store(String name, byte[] stream) {
+            InputStream input = new ByteArrayInputStream(stream);
+            store(name, input);
+        }
+
+        /**
+         * Stores an attachment synchronously for the associated document.
+         *
+         * @param name the name of the attachment
+         * @param stream the input stream containing the attachment data; the stream must be seekable and have a known length
+         * @param contentType optional MIME content type of the attachment (e.g., "image/jpeg", "application/pdf")
+         *
+         * <p>The stream must support seeking and length queries. Its position will be reset to the beginning
+         * before uploading. The stream is not closed by this method.</p>
+         */
+        public void store(String name, InputStream stream, String contentType) {
+            store(new StoreAttachmentParameters(name,stream, contentType));
+        }
+
+        /**
+         * Stores an attachment synchronously with advanced parameters for the associated document.
+         *
+         * @param parameters
+         *        The parameters defining the attachment, including name, stream, content type,
+         *        and optional remote storage settings.
+         *
+         * <p>
+         * Use this overload when you need to specify remote attachment parameters for cloud
+         * storage (Amazon S3 or Azure Blob Storage) via
+         * {@link StoreAttachmentParameters#getRemoteParameters()}.
+         * </p>
+         *
+         * @throws IllegalArgumentException
+         *         Thrown when the stream in {@code parameters} is not seekable or does not have
+         *         a known length.
+         *
+         * @throws BulkInsertAbortedException
+         *         Thrown when the bulk insert operation is aborted due to server errors.
+         */
+        public void store(StoreAttachmentParameters parameters) {
+           _operation.getAttachmentsOperation().store(_id, parameters);
         }
     }
 
@@ -954,11 +1022,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _operation = operation;
         }
 
-        public void store(String id, String name, byte[] bytes) {
-            store(id, name, bytes, null);
-        }
-
-        public void store(String id, String name, byte[] bytes, String contentType) {
+        public void store(String id, StoreAttachmentParameters parameters) {
+            PutAttachmentCommandHelper.tryValidateStream(parameters.getStream(), null);
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 _operation.endPreviousCommandIfNeeded();
 
@@ -972,15 +1037,27 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     _operation._writer.write("{\"Id\":\"");
                     _operation.writeString(id);
                     _operation._writer.write("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
-                    _operation.writeString(name);
+                    _operation.writeString(parameters.getName());
 
+                    String contentType = parameters.getContentType();
                     if (contentType != null) {
                         _operation._writer.write("\",\"ContentType\":\"");
                         _operation.writeString(contentType);
                     }
-
+                    InputStream stream = parameters.getStream();
+                    byte[] bytes = PutAttachmentCommandHelper.toByteArray(stream);
                     _operation._writer.write("\",\"ContentLength\":");
                     _operation._writer.write(String.valueOf(bytes.length));
+
+                    if (parameters.getRemoteParameters() != null) {
+                        _operation._writer.write(",\"RemoteParameters\":");
+                        _operation._writer.flush();
+
+                        ObjectMapper mapper = new ObjectMapper();
+                        String json = mapper.writeValueAsString(parameters.getRemoteParameters());
+                        _operation._writer.write(json);
+                    }
+
                     _operation._writer.write("}");
                     _operation.flushIfNeeded(false);
 

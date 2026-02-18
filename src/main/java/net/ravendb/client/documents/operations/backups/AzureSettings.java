@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations.backups;
 
-public class AzureSettings extends BackupSettings {
+public class AzureSettings extends BackupSettings implements IAzureSettings, ICloudBackupSettings {
     private String storageContainer;
     private String remoteFolderName;
     private String accountName;
