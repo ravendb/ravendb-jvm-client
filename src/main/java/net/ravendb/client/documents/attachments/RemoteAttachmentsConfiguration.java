@@ -7,8 +7,6 @@ import java.util.*;
  */
 public final class RemoteAttachmentsConfiguration {
 
-    static final Comparator<String> KEY_COMPARER = String.CASE_INSENSITIVE_ORDER;
-
     /**
      * Dictionary of remote attachment destinations, keyed by destination name (case‑insensitive).
      */

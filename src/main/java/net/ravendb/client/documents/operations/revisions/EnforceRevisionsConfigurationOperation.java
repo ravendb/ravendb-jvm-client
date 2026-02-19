@@ -20,12 +20,12 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
     private final Parameters _parameters;
 
     public static class Parameters {
+
         /**
          * Indicates whether force-created revisions should be included.
          * For more information, see
          * <a href="https://ravendb.net/docs/article-page/7.2/csharp/document-extensions/revisions/overview#force-revision-creation">the documentation</a>.
          */
-
         private boolean includeForceCreated;
         private String[] collections;
 

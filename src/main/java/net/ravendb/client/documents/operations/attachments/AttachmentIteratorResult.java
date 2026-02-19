@@ -2,8 +2,8 @@ package net.ravendb.client.documents.operations.attachments;
 
 import java.io.InputStream;
 
-public class AttachmentIteratorResult {
-    private final InputStream _stream;
+public class AttachmentIteratorResult implements AutoCloseable{
+    private InputStream _stream;
     private final AttachmentDetails _details;
 
     public InputStream getStream() {
@@ -17,5 +17,11 @@ public class AttachmentIteratorResult {
     public AttachmentIteratorResult(AttachmentDetails details, InputStream stream) {
         _details = details;
         _stream = stream;
+    }
+
+    @Override
+    public void close() throws Exception {
+        _stream.close();
+        _stream = null;
     }
 }

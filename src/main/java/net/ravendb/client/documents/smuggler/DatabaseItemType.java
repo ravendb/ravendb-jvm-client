@@ -5,7 +5,6 @@ import net.ravendb.client.primitives.UseSharpEnum;
 @UseSharpEnum
 public enum DatabaseItemType {
     NONE,
-
     DOCUMENTS,
     REVISION_DOCUMENTS,
     INDEXES,

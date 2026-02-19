@@ -8,6 +8,7 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
@@ -84,7 +85,6 @@ public class ConfigureSchemaValidationOperation
             return request;
         }
 
-
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             if (response == null) {
@@ -96,8 +96,7 @@ public class ConfigureSchemaValidationOperation
 
         @Override
         public String getRaftUniqueRequestId() {
-            return "";
+            return RaftIdGenerator.newId();
         }
     }
 }
-

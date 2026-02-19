@@ -20,7 +20,7 @@ implementation 'net.ravendb:ravendb:7.2.0'
 
 ## Documentation
 
-Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/5.4/java) page.
+Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/7.2/java) page.
 
 ## Bug tracker
 

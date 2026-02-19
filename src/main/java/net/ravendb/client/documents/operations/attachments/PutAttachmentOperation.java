@@ -75,7 +75,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
 
         public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters, boolean validateStream) {
             super(AttachmentDetails.class);
-
+//TODO: Check if statement replactement with StringUtils.isBlank()
             if (documentId == null || documentId.trim().isEmpty()) {
                 throw new IllegalArgumentException("documentId");
             }
@@ -104,7 +104,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
             if (StringUtils.isNotEmpty(_contentType)) {
                 url += "&contentType=" + UrlUtils.escapeDataString(_contentType);
             }
-
+//TODO: Ensure UTC
             if (remoteParameters != null) {
                 ZonedDateTime at = TimeUtils.toZonedDateTime(remoteParameters.getAt());
                 try{

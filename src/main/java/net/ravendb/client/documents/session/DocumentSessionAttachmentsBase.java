@@ -5,6 +5,8 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.operations.attachments.AttachmentName;
+import net.ravendb.client.documents.operations.attachments.RemoteAttachmentParameters;
+import net.ravendb.client.documents.operations.attachments.StoreAttachmentParameters;
 import net.ravendb.client.extensions.JsonExtensions;
 import org.apache.commons.lang3.StringUtils;
 
@@ -43,11 +45,15 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         return results;
     }
 
-    public void store(String documentId, String name, InputStream stream) {
-        store(documentId, name, stream, null);
+    public void store(String documentId, String name, InputStream stream, String contentType) {
+        store(documentId, name, stream, contentType, null);
     }
 
-    public void store(String documentId, String name, InputStream stream, String contentType) {
+    public void store(String documentId, String name, InputStream stream) {
+        store(documentId, name, stream, null, null);
+    }
+
+    public void store(String documentId, String name, InputStream stream, String contentType, RemoteAttachmentParameters remoteParameters) {
         if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
@@ -77,7 +83,28 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwDocumentAlreadyDeleted(documentId, name, "store", null, documentId);
         }
 
-        defer(new PutAttachmentCommandData(documentId, name, stream, contentType, null));
+        defer(new PutAttachmentCommandData(documentId, name, stream, contentType, null, remoteParameters));
+    }
+
+    /**
+     * Stores attachment to be sent in the session using the provided parameters
+     *
+     * @param documentId The document identifier
+     * @param parameters The attachment storage parameters containing name, stream,
+     *                   content type, change vector, and remote upload settings
+     *
+     * @remarks
+     * This overload provides a convenient way to store an attachment using a
+     * {@link StoreAttachmentParameters} object, which encapsulates all attachment
+     * properties including optional settings like
+     * {@link StoreAttachmentParameters#getContentType()},
+     * {@link StoreAttachmentParameters#getChangeVector()} for concurrency control, and
+     * {@link StoreAttachmentParameters#getRemoteParameters()} for scheduling remote cloud
+     * storage uploads. The attachment will be sent to the server when
+     * {@link IDocumentSession#saveChanges()} is called.
+     */
+    public void store(String documentId, StoreAttachmentParameters parameters) {
+        store(documentId, parameters.getName(), parameters.getStream(), parameters.getContentType(), parameters.getRemoteParameters());
     }
 
     public void store(Object entity, String name, InputStream stream) {

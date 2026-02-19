@@ -103,6 +103,7 @@ public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState 
     @Override
     public void close() {
         synchronized (eventLock){
+            super.close();
             onDocumentChangeNotification.clear();
             onIndexChangeNotification.clear();
             onOperationStatusChangeNotification.clear();
@@ -110,6 +111,5 @@ public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState 
             onTimeSeriesChangeNotification.clear();
             onAggressiveChangeChangeNotification.clear();
         }
-        super.close();
     }
 }

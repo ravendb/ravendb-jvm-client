@@ -13,14 +13,34 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
-
 import java.io.IOException;
 
+/**
+ * Represents a maintenance operation for configuring the remote attachments
+ * feature in RavenDB.
+ *
+ * <p>
+ * This operation enables the setup of automatic uploading of attachments to
+ * remote storage destinations.
+ * </p>
+ */
 public final class ConfigureRemoteAttachmentsOperation
         implements IMaintenanceOperation<ConfigureRemoteAttachmentsOperationResult> {
 
     private final RemoteAttachmentsConfiguration configuration;
 
+    /**
+     * Initializes a new instance of the {@code ConfigureRemoteAttachmentsOperation} class.
+     *
+     * <p>
+     * This constructor accepts the configuration settings for the remote attachments
+     * feature. The configuration cannot be {@code null}.
+     * </p>
+     *
+     * @param configuration The configuration settings for remote attachments. Must not be {@code null}.
+     * @throws NullPointerException If {@code configuration} is {@code null}.
+     * @throws IllegalStateException If the configuration validation fails.
+     */
     public ConfigureRemoteAttachmentsOperation(RemoteAttachmentsConfiguration configuration) {
         if (configuration == null) {
             throw new IllegalArgumentException("configuration cannot be null");
@@ -30,6 +50,12 @@ public final class ConfigureRemoteAttachmentsOperation
         this.configuration = configuration;
     }
 
+    /**
+     * Returns the command that will be executed to configure remote attachments.
+     *
+     * @param conventions The document conventions to use for the request.
+     * @return A {@link RavenCommand} that configures remote attachments and returns the operation result.
+     */
     @Override
     public RavenCommand<ConfigureRemoteAttachmentsOperationResult> getCommand(
             DocumentConventions conventions) {

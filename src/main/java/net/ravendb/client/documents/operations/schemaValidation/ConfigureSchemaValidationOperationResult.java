@@ -12,4 +12,3 @@ public class ConfigureSchemaValidationOperationResult {
         this.raftCommandIndex = raftCommandIndex;
     }
 }
-

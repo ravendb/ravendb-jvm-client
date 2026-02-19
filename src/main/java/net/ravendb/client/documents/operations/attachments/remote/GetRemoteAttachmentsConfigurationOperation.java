@@ -7,12 +7,26 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-
 import java.io.IOException;
 
+/**
+ * Represents a maintenance operation for retrieving the current remote
+ * attachments configuration from RavenDB.
+ * <p>
+ * This operation allows you to fetch the settings used for automatically
+ * uploading attachments to remote storage destinations.
+ * </p>
+ */
 public final class GetRemoteAttachmentsConfigurationOperation
         implements IMaintenanceOperation<RemoteAttachmentsConfiguration> {
 
+    /**
+     * Returns the command that will be executed to retrieve the remote
+     * attachments configuration.
+     *
+     * @param conventions The document conventions to use for the request.
+     * @return A {@link RavenCommand} that retrieves the remote attachments configuration.
+     */
     @Override
     public RavenCommand<RemoteAttachmentsConfiguration> getCommand(DocumentConventions conventions) {
         return new GetRemoteAttachmentsConfigurationCommand();
