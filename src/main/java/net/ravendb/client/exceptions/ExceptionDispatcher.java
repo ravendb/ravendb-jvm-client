@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static java.lang.System.out;
+
 public class ExceptionDispatcher {
 
     public static RavenException get(ExceptionSchema schema, int code) {
@@ -97,6 +99,33 @@ public class ExceptionDispatcher {
     }
 
     private static void fillException(Exception exception, ObjectNode json) {
+        if (exception instanceof RateLimitException){
+            RateLimitException rateLimitException = (RateLimitException) exception;
+            rateLimitException.setStatusCode(429);
+
+        }
+
+        if (exception instanceof UnsuccessfulAiRequestException){
+            UnsuccessfulAiRequestException unsuccessfulAiRequestException = (UnsuccessfulAiRequestException) exception;
+//            JsonNode statusCodeNode = json.get("StatusCode");
+//            if (statusCodeNode != null) {
+//                unsuccessfulAiRequestException.setStatusCode(statusCodeNode.asInt());
+//            }
+        }
+
+        if (exception instanceof RefusedToAnswerException){
+            RefusedToAnswerException refusedToAnswerException = (RefusedToAnswerException) exception;
+//            JsonNode refusalNode = json.get("Refusal");
+//            if (refusalNode != null) {
+//                refusedToAnswerException.refusal = refusalNode.asText();
+//            }
+//
+//            JsonNode finishReasonNode = json.get("FinishReason");
+//            if (finishReasonNode != null) {
+//                refusedToAnswerException.finishReason = finishReasonNode.asText();
+//            }
+        }
+
         if (exception instanceof IndexCompilationException) {
             IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
             JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");

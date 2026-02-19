@@ -18,12 +18,9 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
@@ -101,14 +98,23 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
 
         @Override
         public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
-            String contentType = response.getEntity().getContentType();
-            String changeVector = HttpExtensions.getEtagHeader(response);
-            String hash = response.getFirstHeader(Constants.Headers.ATTACHMENT_HASH).getValue();
-            long size = 0;
+            String contentType = null;
+            Header ct = response.getFirstHeader(Constants.Headers.CONTENT_TYPE);
+            if (ct != null) {
+                contentType = ct.getValue();
+            }
 
+            String changeVector = HttpExtensions.getEtagHeader(response);
+            Header hashHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_HASH);
+            String hash = hashHeader != null ? hashHeader.getValue() : null;
+
+            long size = 0;
             Header sizeHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_SIZE);
             if (sizeHeader != null) {
-                size = Long.parseLong(sizeHeader.getValue());
+                try {
+                    size = Long.parseLong(sizeHeader.getValue());
+                } catch (NumberFormatException e) {
+                }
             }
 
             String remoteIdentifier = null;
@@ -137,7 +143,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                     attachmentRemoteAt = Date.from(instant);
                 } catch (Exception e) {
                     throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT, atValue);
-                    return null; // unreachable, but keeps compiler happy
+                    return null;
                 }
 
                 Header flagsHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_FLAGS);
@@ -148,7 +154,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 String flagsValue = flagsHeader.getValue();
                 RemoteAttachmentFlags attachmentFlags;
                 try {
-                    attachmentFlags = RemoteAttachmentFlags.valueOf(flagsValue);
+                    attachmentFlags = RemoteAttachmentFlags.valueOf(flagsValue.toUpperCase());
                 } catch (Exception e) {
                     throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_FLAGS, flagsValue);
                     return null;
@@ -157,7 +163,6 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 remoteParameters = new RemoteAttachmentParameters(remoteIdentifier, attachmentRemoteAt);
                 remoteParameters.setFlags(attachmentFlags);
             }
-
 
             AttachmentDetails attachmentDetails = new AttachmentDetails();
             attachmentDetails.setContentType(contentType);

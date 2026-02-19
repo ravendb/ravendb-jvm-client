@@ -4,7 +4,7 @@ public class S3Settings extends AmazonSettings implements IS3Settings {
 
     private String bucketName;
     private String customServerUrl;
-
+    private S3StorageClass storageClass;
     private boolean forcePathStyle;
 
     public String getBucketName() {
@@ -33,12 +33,12 @@ public class S3Settings extends AmazonSettings implements IS3Settings {
 
     @Override
     public S3StorageClass getStorageClass() {
-        return null;
+        return storageClass;
     }
 
     @Override
     public void setStorageClass(S3StorageClass storageClass) {
-
+        this.storageClass = storageClass;
     }
 
     public boolean hasSettings() {

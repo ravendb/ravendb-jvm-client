@@ -33,4 +33,3 @@ public final class SchemaValidationConfiguration {
         this.validatorsPerCollection = map;
     }
 }
-

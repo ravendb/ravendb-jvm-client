@@ -83,7 +83,7 @@ public final class DeleteAttachmentsOperation implements IVoidOperation {
                     generator.writeStartObject();
                     generator.writeFieldName("Attachments");
                     generator.writeStartArray();
-
+//TODO: check here the json creation
                     for (AttachmentRequest attachment : attachments) {
                         generator.writeStartObject();
                         generator.writeStringField("DocumentId", attachment.getDocumentId());

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
-import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.documents.operations.OperationIdResultGeneric;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
@@ -16,17 +15,48 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 import java.io.IOException;
 
+/**
+ * Starts a background operation that validates documents in the specified
+ * collection against the provided JSON schema.
+ * Optional limits (if omitted server defaults are used): MaxErrorMessages=1024,
+ * MaxDocumentsToValidate=unlimited.
+ * You may also provide a starting Etag to continue validation from a point in
+ * the collection; by default validation starts from the first document.
+ */
 public final class StartSchemaValidationOperation
         implements IMaintenanceOperation<OperationIdResultGeneric<StartValidateSchemaOperationResult>> {
 
     private final Parameters parameters;
 
+    /**
+     * Parameters for schema validation. Schema and Collection are required; other
+     * values are optional.
+     */
     public static final class Parameters {
 
+        /**
+         * JSON schema definition. (Required)
+         */
         private String schemaDefinition;
+
+        /**
+         * Target collection to validate. (Required)
+         */
         private String collection;
+
+        /**
+         * Maximum collected validation error messages. (Optional, default 1024, must be >= 0 when specified)
+         */
         private Integer maxErrorMessages;
+
+        /**
+         * Maximum number of documents to validate (Optional, default: unlimited, must be > 0 when specified).
+         */
         private Long maxDocumentsToValidate;
+
+        /**
+         * Starting document etag to begin validation from. (Optional, default: start from the first document)
+         */
         private Long startEtag;
 
         public String getSchemaDefinition() {
@@ -70,6 +100,10 @@ public final class StartSchemaValidationOperation
         }
     }
 
+    /**
+     * Create the operation.
+     * @param parameters {@link Parameters}
+     */
     public StartSchemaValidationOperation(Parameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("parameters cannot be null");

@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.operations.attachments.AttachmentName;
+import net.ravendb.client.documents.operations.attachments.StoreAttachmentParameters;
 
 import java.io.InputStream;
 
@@ -46,6 +47,15 @@ public interface IAttachmentsSessionOperationsBase {
      * @param contentType Content type
      */
     void store(Object entity, String name, InputStream stream, String contentType);
+
+    /**
+     * Stores attachment to be sent in the session.
+     *
+     * @param documentId The ID of the document to which the attachment will be added.
+     * @param parameters The parameters for the attachment, including name, stream,
+     *                   content type, and optional change vector.
+     */
+    void store(String documentId, StoreAttachmentParameters parameters);
 
     /**
      * Marks the specified document's attachment for deletion. The attachment will be deleted when

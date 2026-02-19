@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide;
 
+import net.ravendb.client.documents.attachments.RemoteAttachmentsConfiguration;
 import net.ravendb.client.documents.indexes.AutoIndexDefinition;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.RollingIndex;
@@ -27,6 +28,7 @@ import net.ravendb.client.documents.operations.replication.PullReplicationAsSink
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
+import net.ravendb.client.documents.operations.schemaValidation.SchemaValidationConfiguration;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
@@ -60,6 +62,8 @@ public class DatabaseRecord {
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
     private RefreshConfiguration refresh;
+    private SchemaValidationConfiguration schemaValidation;
+    private RemoteAttachmentsConfiguration remoteAttachments;
 
     private DataArchivalConfiguration dataArchival;
     private IntegrationConfigurations integrations;
@@ -377,6 +381,22 @@ public class DatabaseRecord {
 
     public RefreshConfiguration getRefresh() {
         return refresh;
+    }
+
+    public SchemaValidationConfiguration getSchemaValidation() {
+        return schemaValidation;
+    }
+
+    public void setSchemaValidation(SchemaValidationConfiguration schemaValidation) {
+        this.schemaValidation = schemaValidation;
+    }
+
+    public RemoteAttachmentsConfiguration getRemoteAttachments() {
+        return remoteAttachments;
+    }
+
+    public void setRemoteAttachments(RemoteAttachmentsConfiguration remoteAttachments) {
+        this.remoteAttachments = remoteAttachments;
     }
 
     public void setRefresh(RefreshConfiguration refresh) {
