@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
@@ -75,11 +76,11 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
 
         public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters, boolean validateStream) {
             super(AttachmentDetails.class);
-//TODO: Check if statement replactement with StringUtils.isBlank()
-            if (documentId == null || documentId.trim().isEmpty()) {
+
+            if (StringUtils.isBlank(documentId)) {
                 throw new IllegalArgumentException("documentId");
             }
-            if (name == null || name.trim().isEmpty()) {
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException("name");
             }
 
@@ -104,13 +105,11 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
             if (StringUtils.isNotEmpty(_contentType)) {
                 url += "&contentType=" + UrlUtils.escapeDataString(_contentType);
             }
-//TODO: Ensure UTC
+
             if (remoteParameters != null) {
-                ZonedDateTime at = TimeUtils.toZonedDateTime(remoteParameters.getAt());
+                ZonedDateTime at = remoteParameters.getAt().toInstant().atZone(ZoneOffset.UTC);
                 try{
-                    url += "&remoteAt=" + URLEncoder.encode(TimeUtils.getDefaultRavenFormat(at),
-                            "UTF-8"
-                    );
+                    url += "&remoteAt=" + URLEncoder.encode(at.format(TimeUtils.RAVEN_FORMAT), "UTF-8");
 
                     url += "&remoteIdentifier=" + URLEncoder.encode(
                             remoteParameters.getIdentifier(),

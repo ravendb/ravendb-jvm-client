@@ -11,42 +11,12 @@ import java.time.temporal.ChronoField;
 import java.util.Date;
 
 public class TimeUtils {
-    public static void validateDate(ZonedDateTime dt, boolean isUtc) {
-        boolean dateIsUtc = dt.getZone().equals(ZoneOffset.UTC);
-
-        if (dateIsUtc && !isUtc) {
-            throw new IllegalStateException("Date is in UTC, but will not be formatted into UTC");
-        }
-
-        if (!dateIsUtc && isUtc) {
-            throw new IllegalStateException("Date is not in UTC, but will be formatted into UTC");
-        }
-    }
-
-    public static String getDefaultRavenFormat(ZonedDateTime dt, boolean isUtc) {
-        validateDate(dt, isUtc);
-
-        ZonedDateTime utc = isUtc
-                ? dt
-                : dt.withZoneSameInstant(ZoneOffset.UTC);
-
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
-                .appendFraction(ChronoField.NANO_OF_SECOND, 7, 7, true)
-                .appendLiteral('Z')
-                .toFormatter();
-
-        return utc.format(formatter);
-    }
-
-    public static ZonedDateTime toZonedDateTime(Date date) { return ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC); }
-
-
-    public static String getDefaultRavenFormat(ZonedDateTime dt) {
-        boolean isUtc = dt.getZone().equals(ZoneOffset.UTC);
-        return getDefaultRavenFormat(dt, isUtc);
-    }
-
+    public static final DateTimeFormatter RAVEN_FORMAT =
+            new DateTimeFormatterBuilder()
+                    .appendPattern("yyyy-MM-dd'T'HH:mm:ss.")
+                    .appendFraction(ChronoField.NANO_OF_SECOND, 7, 7, false)
+                    .appendLiteral('Z')
+                    .toFormatter();
 
     private static Duration parseMiddlePart(String input) {
         String[] tokens = input.split(":");

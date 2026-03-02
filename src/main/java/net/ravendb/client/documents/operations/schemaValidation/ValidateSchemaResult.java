@@ -4,7 +4,6 @@ import java.util.Map;
 import net.ravendb.client.documents.operations.IOperationResult;
 
 public class ValidateSchemaResult extends ValidateSchemaProgress implements IOperationResult {
-    //TODO: check interface inheritance
     private Map<String, String> errors;
     private long lastEtag;
 
@@ -23,6 +22,8 @@ public class ValidateSchemaResult extends ValidateSchemaProgress implements IOpe
     public void setLastEtag(long lastEtag) {
         this.lastEtag = lastEtag;
     }
+
+    public boolean shouldPersist() { return false; }
 
     @Override
     public String getMessage() {
