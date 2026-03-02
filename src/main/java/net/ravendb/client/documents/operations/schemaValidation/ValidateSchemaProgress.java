@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.schemaValidation;
 
 public class ValidateSchemaProgress {
-//TODO: check if should inherit IOperationProgress
     private long errorCount;
     private long validatedCount;
 

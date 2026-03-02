@@ -10,12 +10,10 @@ import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
-import static java.lang.System.out;
+import java.time.Duration;
 
 public class ExceptionDispatcher {
 
@@ -102,28 +100,39 @@ public class ExceptionDispatcher {
         if (exception instanceof RateLimitException){
             RateLimitException rateLimitException = (RateLimitException) exception;
             rateLimitException.setStatusCode(429);
+            JsonNode retryAfterNode = json.get("RetryAfter");
+            if (retryAfterNode != null && retryAfterNode.isTextual()){
+                String retryAfter = retryAfterNode.asText();
+                try {
+                    String[] parts = retryAfter.split(":"); // We need to know how to parse the timespan string.
+                    Duration duration = Duration.ofHours(Long.parseLong(parts[0]))
+                            .plusMinutes(Long.parseLong(parts[1]))
+                            .plusSeconds(Long.parseLong(parts[2]));
 
+                    rateLimitException.setRetryAfter(duration);
+                } catch (Exception ignored) {}
+            }
         }
 
         if (exception instanceof UnsuccessfulAiRequestException){
             UnsuccessfulAiRequestException unsuccessfulAiRequestException = (UnsuccessfulAiRequestException) exception;
-//            JsonNode statusCodeNode = json.get("StatusCode");
-//            if (statusCodeNode != null) {
-//                unsuccessfulAiRequestException.setStatusCode(statusCodeNode.asInt());
-//            }
+            JsonNode statusCodeNode = json.get("StatusCode");
+            if (statusCodeNode != null) {
+                unsuccessfulAiRequestException.setStatusCode(statusCodeNode.asInt());
+            }
         }
 
         if (exception instanceof RefusedToAnswerException){
             RefusedToAnswerException refusedToAnswerException = (RefusedToAnswerException) exception;
-//            JsonNode refusalNode = json.get("Refusal");
-//            if (refusalNode != null) {
-//                refusedToAnswerException.refusal = refusalNode.asText();
-//            }
-//
-//            JsonNode finishReasonNode = json.get("FinishReason");
-//            if (finishReasonNode != null) {
-//                refusedToAnswerException.finishReason = finishReasonNode.asText();
-//            }
+            JsonNode refusalNode = json.get("Refusal");
+            if (refusalNode != null) {
+                refusedToAnswerException.refusal = refusalNode.asText();
+            }
+
+            JsonNode finishReasonNode = json.get("FinishReason");
+            if (finishReasonNode != null) {
+                refusedToAnswerException.finishReason = finishReasonNode.asText();
+            }
         }
 
         if (exception instanceof IndexCompilationException) {
