@@ -203,8 +203,6 @@ public class PutAttachmentCommandData implements ICommandData {
         this.remoteParameters = remoteAttachmentParameters;
         this.hash = hash;
         this.sizeInBytes = size;
-
-        PutAttachmentCommandHelper.tryValidateStream(stream, remoteParameters);
     }
 
     /**

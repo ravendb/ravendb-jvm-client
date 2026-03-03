@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState implements IChangesConnectionState<T> {
+public class DatabaseConnectionState extends AbstractDatabaseConnectionState implements IChangesConnectionState<DatabaseChanges> {
 
     private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
@@ -48,33 +48,6 @@ public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState 
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void addOnChangeNotification(ChangesType type, Consumer<T> handler, Consumer<Exception> onError) {
-        switch (type) {
-            case AGGRESSIVE_CACHE:
-                registerEventsInternal(onAggressiveChangeChangeNotification, (Consumer<AggressiveCacheChange>)(Consumer<?>) handler, onError);
-                break;
-            case DOCUMENT:
-                registerEventsInternal(onDocumentChangeNotification, (Consumer<DocumentChange>)(Consumer<?>) handler, onError);
-                break;
-            case INDEX:
-                registerEventsInternal(onIndexChangeNotification, (Consumer<IndexChange>)(Consumer<?>) handler, onError);
-                break;
-            case OPERATION:
-                registerEventsInternal(onOperationStatusChangeNotification, (Consumer<OperationStatusChange>)(Consumer<?>) handler, onError);
-                break;
-            case COUNTER:
-                registerEventsInternal(onCounterChangeNotification, (Consumer<CounterChange>)(Consumer<?>) handler, onError);
-                break;
-            case TIME_SERIES:
-                registerEventsInternal(onTimeSeriesChangeNotification, (Consumer<TimeSeriesChange>)(Consumer<?>) handler, onError);
-                break;
-            default:
-                throw new IllegalStateException("ChangeType: " + type + " is not supported");
-        }
-    }
-
-    @Override
     public void removeOnChangeNotification(ChangesType type, Consumer handler, Consumer onError) {
         switch (type) {
             case AGGRESSIVE_CACHE:
@@ -110,6 +83,32 @@ public class DatabaseConnectionState<T> extends AbstractDatabaseConnectionState 
             onCounterChangeNotification.clear();
             onTimeSeriesChangeNotification.clear();
             onAggressiveChangeChangeNotification.clear();
+        }
+    }
+
+    @Override
+    public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChanges> handler, Consumer<Exception> onError) {
+        switch (type) {
+            case AGGRESSIVE_CACHE:
+                registerEventsInternal(onAggressiveChangeChangeNotification, (Consumer<AggressiveCacheChange>)(Consumer<?>) handler, onError);
+                break;
+            case DOCUMENT:
+                registerEventsInternal(onDocumentChangeNotification, (Consumer<DocumentChange>)(Consumer<?>) handler, onError);
+                break;
+            case INDEX:
+                registerEventsInternal(onIndexChangeNotification, (Consumer<IndexChange>)(Consumer<?>) handler, onError);
+                break;
+            case OPERATION:
+                registerEventsInternal(onOperationStatusChangeNotification, (Consumer<OperationStatusChange>)(Consumer<?>) handler, onError);
+                break;
+            case COUNTER:
+                registerEventsInternal(onCounterChangeNotification, (Consumer<CounterChange>)(Consumer<?>) handler, onError);
+                break;
+            case TIME_SERIES:
+                registerEventsInternal(onTimeSeriesChangeNotification, (Consumer<TimeSeriesChange>)(Consumer<?>) handler, onError);
+                break;
+            default:
+                throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
     }
 }

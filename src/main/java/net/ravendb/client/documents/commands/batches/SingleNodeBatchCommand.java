@@ -22,10 +22,8 @@ import org.apache.hc.core5.http.HttpEntity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements CleanCloseable {
     private Boolean _supportsAtomicWrites;
@@ -69,10 +67,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             return;
         }
         PutAttachmentCommandData putAttachmentCommandData = (PutAttachmentCommandData) command;
-
-        if (!PutAttachmentCommandHelper.tryValidateStream(putAttachmentCommandData.getStream(), putAttachmentCommandData.getRemoteParameters())) {
-            return;
-        }
 
         if (uniqueAttachmentStreams == null) {
             uniqueAttachmentStreams = new LinkedHashSet<>();
