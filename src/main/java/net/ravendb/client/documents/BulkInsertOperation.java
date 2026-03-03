@@ -971,8 +971,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             store(name, stream, null);
         }
 
-        public void store(String name, byte[] stream) {
-            InputStream input = new ByteArrayInputStream(stream);
+        public void store(String name, byte[] bytes) {
+            InputStream input = new ByteArrayInputStream(bytes);
             store(name, input);
         }
 
@@ -988,6 +988,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          */
         public void store(String name, InputStream stream, String contentType) {
             store(new StoreAttachmentParameters(name,stream, contentType));
+        }
+
+        public void store(String name, byte[] bytes, String contentType) {
+            InputStream input = new ByteArrayInputStream(bytes);
+            store(new StoreAttachmentParameters(name, input, contentType));
         }
 
         /**
@@ -1023,7 +1028,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         public void store(String id, StoreAttachmentParameters parameters) {
-            PutAttachmentCommandHelper.tryValidateStream(parameters.getStream(), null);
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 _operation.endPreviousCommandIfNeeded();
 

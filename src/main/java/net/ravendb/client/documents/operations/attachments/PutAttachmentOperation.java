@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.attachments;
 
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.http.HttpCache;
@@ -68,13 +67,8 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         private final String _contentType;
         private final RemoteAttachmentParameters remoteParameters;
         private final String _changeVector;
-        private final boolean validateStream;
 
         public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters) {
-            this(conventions,documentId, name, stream, contentType, changeVector, remoteParameters, true);
-        }
-
-        public PutAttachmentCommand(DocumentConventions conventions,String documentId, String name, InputStream stream, String contentType, String changeVector, RemoteAttachmentParameters remoteParameters, boolean validateStream) {
             super(AttachmentDetails.class);
 
             if (StringUtils.isBlank(documentId)) {
@@ -91,11 +85,6 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
             this._contentType = contentType;
             this.remoteParameters = remoteParameters;
             this._changeVector = changeVector;
-            this.validateStream = validateStream;
-
-            if (validateStream) {
-                PutAttachmentCommandHelper.tryValidateStream(stream, null);
-            }
         }
 
         @Override
