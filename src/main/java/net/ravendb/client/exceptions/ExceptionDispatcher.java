@@ -13,7 +13,6 @@ import org.apache.hc.core5.http.HttpStatus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 
 public class ExceptionDispatcher {
 
@@ -97,23 +96,6 @@ public class ExceptionDispatcher {
     }
 
     private static void fillException(Exception exception, ObjectNode json) {
-        if (exception instanceof RateLimitException){
-            RateLimitException rateLimitException = (RateLimitException) exception;
-            rateLimitException.setStatusCode(429);
-            JsonNode retryAfterNode = json.get("RetryAfter");
-            if (retryAfterNode != null && retryAfterNode.isTextual()){
-                String retryAfter = retryAfterNode.asText();
-                try {
-                    String[] parts = retryAfter.split(":"); // We need to know how to parse the timespan string.
-                    Duration duration = Duration.ofHours(Long.parseLong(parts[0]))
-                            .plusMinutes(Long.parseLong(parts[1]))
-                            .plusSeconds(Long.parseLong(parts[2]));
-
-                    rateLimitException.setRetryAfter(duration);
-                } catch (Exception ignored) {}
-            }
-        }
-
         if (exception instanceof UnsuccessfulAiRequestException){
             UnsuccessfulAiRequestException unsuccessfulAiRequestException = (UnsuccessfulAiRequestException) exception;
             JsonNode statusCodeNode = json.get("StatusCode");

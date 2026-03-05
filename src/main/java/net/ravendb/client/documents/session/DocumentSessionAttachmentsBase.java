@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.attachments.StoreAttachmentParame
 import net.ravendb.client.extensions.JsonExtensions;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExtensionBase {
@@ -104,7 +105,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
      * {@link IDocumentSession#saveChanges()} is called.
      */
     public void store(String documentId, StoreAttachmentParameters parameters) {
-        store(documentId, parameters.getName(), parameters.getStream(), parameters.getContentType(), parameters.getRemoteParameters());
+        store(documentId, parameters.getName(), new ByteArrayInputStream(parameters.getBytes()), parameters.getContentType(), parameters.getRemoteParameters());
     }
 
     public void store(Object entity, String name, InputStream stream) {

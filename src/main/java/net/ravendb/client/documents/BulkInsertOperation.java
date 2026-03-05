@@ -11,7 +11,6 @@ import net.ravendb.client.documents.bulkInsert.BulkInsertWriter;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
-import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.BulkInsertObserver;
@@ -963,36 +962,26 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          * Stores an attachment synchronously for the associated document.
          *
          * @param name the name of the attachment
-         * @param stream the input stream containing the attachment data; the stream must be seekable and have a known length*
+         * @param bytes the bytes array containing the attachment data;
          * <p>The stream must support seeking and length queries. Its position will be reset to the beginning
          * before uploading. The stream is not closed by this method.</p>
          */
-        public void store(String name, InputStream stream) {
-            store(name, stream, null);
-        }
-
         public void store(String name, byte[] bytes) {
-            InputStream input = new ByteArrayInputStream(bytes);
-            store(name, input);
+            store(name, bytes);
         }
 
         /**
          * Stores an attachment synchronously for the associated document.
          *
          * @param name the name of the attachment
-         * @param stream the input stream containing the attachment data; the stream must be seekable and have a known length
+         * @param bytes the bytes array containing the attachment data
          * @param contentType optional MIME content type of the attachment (e.g., "image/jpeg", "application/pdf")
          *
          * <p>The stream must support seeking and length queries. Its position will be reset to the beginning
          * before uploading. The stream is not closed by this method.</p>
          */
-        public void store(String name, InputStream stream, String contentType) {
-            store(new StoreAttachmentParameters(name,stream, contentType));
-        }
-
         public void store(String name, byte[] bytes, String contentType) {
-            InputStream input = new ByteArrayInputStream(bytes);
-            store(new StoreAttachmentParameters(name, input, contentType));
+            store(new StoreAttachmentParameters(name, bytes, contentType));
         }
 
         /**
@@ -1048,8 +1037,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                         _operation._writer.write("\",\"ContentType\":\"");
                         _operation.writeString(contentType);
                     }
-                    InputStream stream = parameters.getStream();
-                    byte[] bytes = PutAttachmentCommandHelper.toByteArray(stream);
+
+                    byte[] bytes = parameters.getBytes();
                     _operation._writer.write("\",\"ContentLength\":");
                     _operation._writer.write(String.valueOf(bytes.length));
 

@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.operations.attachments;
 
-import java.io.InputStream;
-
 /**
  * The parameters for storing an attachment in the database.
  */
@@ -15,7 +13,7 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
     /**
      * {@inheritDoc}
      */
-    private InputStream stream;
+    private byte[] bytes;
 
     /**
      * {@inheritDoc}
@@ -38,7 +36,7 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
      * @param name
      *     The name of the attachment to store. Cannot be null or whitespace.
      *
-     * @param stream
+     * @param bytes
      *     The stream containing the attachment data. Cannot be null.
      *
      * @throws IllegalArgumentException
@@ -51,21 +49,21 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
      * attachment storage behavior.
      * </p>
      */
-    public StoreAttachmentParameters(String name, InputStream stream, String contentType) {
+    public StoreAttachmentParameters(String name, byte[] bytes, String contentType) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Attachment name cannot be null or whitespace.");
         }
-        if (stream == null) {
-            throw new IllegalArgumentException("Attachment stream cannot be null.");
+        if (bytes == null) {
+            throw new IllegalArgumentException("Attachment stream represented in bytes array cannot be null.");
         }
 
         this.name = name;
-        this.stream = stream;
+        this.bytes = bytes;
         this.contentType = contentType;
     }
 
-    public StoreAttachmentParameters(String name , InputStream stream) {
-        this(name, stream, null);
+    public StoreAttachmentParameters(String name , byte[] bytes) {
+        this(name, bytes, null);
     }
 
     /**
@@ -81,8 +79,8 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
     }
 
     @Override
-    public InputStream getStream() {
-        return stream;
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @Override

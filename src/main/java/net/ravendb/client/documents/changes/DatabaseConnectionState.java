@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DatabaseConnectionState extends AbstractDatabaseConnectionState implements IChangesConnectionState<DatabaseChanges> {
+public class DatabaseConnectionState extends AbstractDatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
 
     private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
@@ -87,7 +87,7 @@ public class DatabaseConnectionState extends AbstractDatabaseConnectionState imp
     }
 
     @Override
-    public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChanges> handler, Consumer<Exception> onError) {
+    public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler, Consumer<Exception> onError) {
         switch (type) {
             case AGGRESSIVE_CACHE:
                 registerEventsInternal(onAggressiveChangeChangeNotification, (Consumer<AggressiveCacheChange>)(Consumer<?>) handler, onError);

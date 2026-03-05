@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.operations.attachments;
 
-import java.io.InputStream;
-
 /**
  * Defines the contract for parameters used when storing an attachment in the database.
  *
@@ -24,14 +22,14 @@ public interface IStoreAttachmentParameters {
     String getName();
 
     /**
-     * Gets the stream containing the attachment data.
+     * Gets the bytes array containing the attachment data.
      *
      * <p>
-     * The stream provides the binary content of the attachment to be stored in the database.
+     * The bytes[] provides the binary content of the attachment to be stored in the database.
      * This property is required and cannot be null. The caller is responsible for managing the stream's lifetime.
      * </p>
      */
-    InputStream getStream();
+    byte[] getBytes();
 
     /**
      * Gets or sets the change vector of the attachment for optimistic concurrency control.
