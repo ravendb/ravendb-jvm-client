@@ -21,7 +21,7 @@ public final class GetSchemaValidationConfiguration
     public static final class GetSchemaValidationCommand
             extends RavenCommand<SchemaValidationConfiguration> {
 
-        public GetSchemaValidationCommand(){ super(SchemaValidationConfiguration.class); };
+        public GetSchemaValidationCommand(){ super(SchemaValidationConfiguration.class); }
 
         @Override
         public boolean isReadRequest() {
