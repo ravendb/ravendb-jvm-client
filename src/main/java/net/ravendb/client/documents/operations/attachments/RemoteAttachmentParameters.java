@@ -1,8 +1,7 @@
 package net.ravendb.client.documents.operations.attachments;
 
 import net.ravendb.client.documents.attachments.RemoteAttachmentFlags;
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.Instant;
 
 /**
  * Represents the scheduling parameters for uploading an attachment to remote storage in RavenDB.
@@ -15,7 +14,7 @@ import java.util.Date;
  * <pre>
  * Example:
  * RemoteAttachmentParameters p =
- *     new RemoteAttachmentParameters("s3-storage", LocalDateTime.now(Clock.systemUTC()).plusMinutes(5));
+ *     new RemoteAttachmentParameters("s3-storage", Instant.now().plusSeconds(5));
  * </pre>
  */
 public class RemoteAttachmentParameters {
@@ -37,15 +36,15 @@ public class RemoteAttachmentParameters {
      *
      * @param at
      *     The (usually UTC) date and time at which the remote upload should be executed.
-     *     Must not be the default {@link Date} value.
+     *     Must not be the default {@link Instant} value.
      *
      * @throws IllegalArgumentException
      *     If {@code identifier} is null or blank.
      *
      * @throws IllegalArgumentException
-     *     If {@code at} is the default {@link Date} value.
+     *     If {@code at} is the default {@link Instant} value.
      */
-    public RemoteAttachmentParameters(String identifier, Date at) {
+    public RemoteAttachmentParameters(String identifier, Instant at) {
         if (identifier == null || identifier.trim().isEmpty()) {
             throw new IllegalArgumentException("Attachment identifier cannot be null or whitespace.");
         }
@@ -61,13 +60,13 @@ public class RemoteAttachmentParameters {
      * Gets or sets the scheduled (preferably UTC) date and time when the attachment should be uploaded
      * to the remote destination.
      */
-    private Date at;
+    private Instant at;
 
-    public Date getAt() {
+    public Instant getAt() {
         return at;
     }
 
-    public void setAt(Date at) {
+    public void setAt(Instant at) {
         this.at = at;
     }
 

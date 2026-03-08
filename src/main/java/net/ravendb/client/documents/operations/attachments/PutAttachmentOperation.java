@@ -98,7 +98,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
             }
 
             if (remoteParameters != null) {
-                ZonedDateTime at = remoteParameters.getAt().toInstant().atZone(ZoneOffset.UTC);
+                ZonedDateTime at = remoteParameters.getAt().atZone(ZoneOffset.UTC);
                 try{
                     url += "&remoteAt=" + URLEncoder.encode(at.format(TimeUtils.RAVEN_FORMAT), "UTF-8");
 
