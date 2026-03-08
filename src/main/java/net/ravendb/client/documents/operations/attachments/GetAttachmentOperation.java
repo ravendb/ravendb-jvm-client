@@ -21,7 +21,6 @@ import org.apache.hc.core5.http.Header;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.time.Instant;
-import java.util.Date;
 
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
@@ -137,10 +136,9 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 }
 
                 String atValue = atHeader.getValue();
-                Date attachmentRemoteAt;
+                Instant attachmentRemoteAt;
                 try {
-                    Instant instant = Instant.parse(atValue);
-                    attachmentRemoteAt = Date.from(instant);
+                    attachmentRemoteAt = Instant.parse(atValue);
                 } catch (Exception e) {
                     throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT, atValue);
                     return null;

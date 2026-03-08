@@ -967,7 +967,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          * before uploading. The stream is not closed by this method.</p>
          */
         public void store(String name, byte[] bytes) {
-            store(name, bytes);
+            store(name, bytes, null);
         }
 
         /**
