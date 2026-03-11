@@ -18,8 +18,6 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.time.Instant;
 
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
@@ -115,15 +113,11 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 } catch (NumberFormatException e) {
                 }
             }
-
+            Header idHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER);
             String remoteIdentifier = null;
-            try {
-                Header idHeader = response.getFirstHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER);
-                if (idHeader != null) {
-                    remoteIdentifier = URLDecoder.decode(idHeader.getValue(), "UTF-8");
-                }
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("Failed to decode remote identifier from response header: " + e.getMessage());
+
+            if (idHeader != null) {
+                remoteIdentifier = UrlUtils.unescapeDataString(idHeader.getValue());
             }
 
             RemoteAttachmentParameters remoteParameters = null;

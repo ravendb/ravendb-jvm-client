@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.attachments;
 
+import java.io.InputStream;
+
 /**
  * The parameters for storing an attachment in the database.
  */
@@ -13,7 +15,7 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
     /**
      * {@inheritDoc}
      */
-    private byte[] bytes;
+    private InputStream stream;
 
     /**
      * {@inheritDoc}
@@ -49,21 +51,21 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
      * attachment storage behavior.
      * </p>
      */
-    public StoreAttachmentParameters(String name, byte[] bytes, String contentType) {
+    public StoreAttachmentParameters(String name, InputStream stream, String contentType) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Attachment name cannot be null or whitespace.");
         }
-        if (bytes == null) {
+        if (stream == null) {
             throw new IllegalArgumentException("Attachment stream represented in bytes array cannot be null.");
         }
 
         this.name = name;
-        this.bytes = bytes;
+        this.stream = stream;
         this.contentType = contentType;
     }
 
-    public StoreAttachmentParameters(String name , byte[] bytes) {
-        this(name, bytes, null);
+    public StoreAttachmentParameters(String name , InputStream stream) {
+        this(name, stream, null);
     }
 
     /**
@@ -79,8 +81,8 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
     }
 
     @Override
-    public byte[] getBytes() {
-        return bytes;
+    public InputStream getStream() {
+        return stream;
     }
 
     @Override
