@@ -13,8 +13,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -50,7 +48,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
     public PutAttachmentOperation(String documentId, StoreAttachmentParameters parameters) {
         _documentId = documentId;
         _name = parameters.getName();
-        _stream = new ByteArrayInputStream(parameters.getBytes());
+        _stream = parameters.getStream();
         _contentType = parameters.getContentType();
         this.remoteParameters = parameters.getRemoteParameters();
         _changeVector = parameters.getChangeVector();

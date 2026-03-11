@@ -16,6 +16,7 @@ import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.BulkInsertObserver;
 import net.ravendb.client.documents.operations.BulkInsertProgress;
 import net.ravendb.client.documents.operations.GetOperationStateOperation;
+import net.ravendb.client.documents.operations.attachments.RemoteAttachmentParameters;
 import net.ravendb.client.documents.operations.attachments.StoreAttachmentParameters;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
@@ -981,20 +982,18 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          * before uploading. The stream is not closed by this method.</p>
          */
         public void store(String name, byte[] bytes, String contentType) {
-            store(new StoreAttachmentParameters(name, bytes, contentType));
+            this.store(name, bytes, contentType, null);
         }
 
         /**
          * Stores an attachment synchronously with advanced parameters for the associated document.
-         *
-         * @param parameters
-         *        The parameters defining the attachment, including name, stream, content type,
-         *        and optional remote storage settings.
-         *
-         * <p>
          * Use this overload when you need to specify remote attachment parameters for cloud
          * storage (Amazon S3 or Azure Blob Storage) via
          * {@link StoreAttachmentParameters#getRemoteParameters()}.
+         * @param name the name of the attachment
+         * @param bytes the bytes array containing the attachment data
+         * @param contentType optional MIME content type of the attachment (e.g., "image/jpeg", "application/pdf")
+         * @param remoteParameters the remote attachments parameters object
          * </p>
          *
          * @throws IllegalArgumentException
@@ -1004,8 +1003,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          * @throws BulkInsertAbortedException
          *         Thrown when the bulk insert operation is aborted due to server errors.
          */
-        public void store(StoreAttachmentParameters parameters) {
-           _operation.getAttachmentsOperation().store(_id, parameters);
+        public void store(String name, byte[] bytes, String contentType, RemoteAttachmentParameters remoteParameters) {
+           _operation.getAttachmentsOperation().store(_id, name, bytes, contentType, remoteParameters);
         }
     }
 
@@ -1016,7 +1015,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _operation = operation;
         }
 
-        public void store(String id, StoreAttachmentParameters parameters) {
+        public void store(String id, String name, byte[] bytes, String contentType){
+            this.store(id, name, bytes, contentType, null);
+        }
+
+        public void store(String id, String name, byte[] bytes, String contentType, RemoteAttachmentParameters remoteParameters) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 _operation.endPreviousCommandIfNeeded();
 
@@ -1030,24 +1033,22 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     _operation._writer.write("{\"Id\":\"");
                     _operation.writeString(id);
                     _operation._writer.write("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
-                    _operation.writeString(parameters.getName());
+                    _operation.writeString(name);
 
-                    String contentType = parameters.getContentType();
                     if (contentType != null) {
                         _operation._writer.write("\",\"ContentType\":\"");
                         _operation.writeString(contentType);
                     }
 
-                    byte[] bytes = parameters.getBytes();
                     _operation._writer.write("\",\"ContentLength\":");
                     _operation._writer.write(String.valueOf(bytes.length));
 
-                    if (parameters.getRemoteParameters() != null) {
+                    if (remoteParameters != null) {
                         _operation._writer.write(",\"RemoteParameters\":");
                         _operation._writer.flush();
 
                         ObjectMapper mapper = new ObjectMapper();
-                        String json = mapper.writeValueAsString(parameters.getRemoteParameters());
+                        String json = mapper.writeValueAsString(remoteParameters);
                         _operation._writer.write(json);
                     }
 
