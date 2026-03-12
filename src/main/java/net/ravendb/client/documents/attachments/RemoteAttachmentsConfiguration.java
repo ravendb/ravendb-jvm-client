@@ -6,12 +6,14 @@ import java.util.*;
  * Configuration for remote attachments functionality, including destinations, frequency, and upload settings.
  */
 public final class RemoteAttachmentsConfiguration {
+    static final Comparator<String> KEY_COMPARER =
+            Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER);
 
     /**
      * Dictionary of remote attachment destinations, keyed by destination name (case‑insensitive).
      */
     private Map<String, RemoteAttachmentsDestinationConfiguration> destinations =
-            new LinkedHashMap<>();
+            new TreeMap<>(KEY_COMPARER);
 
     /**
      * Frequency (in seconds) at which the remote attachments process checks for new items to upload.
@@ -38,10 +40,7 @@ public final class RemoteAttachmentsConfiguration {
     }
 
     public void setDestinations(Map<String, RemoteAttachmentsDestinationConfiguration> destinations) {
-        this.destinations = new LinkedHashMap<>();
-        if (destinations != null) {
-            this.destinations.putAll(destinations);
-        }
+        this.destinations = destinations;
     }
 
     public Long getCheckFrequencyInSec() {
