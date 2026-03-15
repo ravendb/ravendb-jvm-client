@@ -6,6 +6,7 @@ import net.ravendb.client.documents.attachments.*;
 import net.ravendb.client.documents.operations.attachments.remote.ConfigureRemoteAttachmentsOperation;
 import net.ravendb.client.documents.operations.attachments.remote.GetRemoteAttachmentsConfigurationOperation;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@EnableOnServer(thresholdVersion = "7.2")
 public class RemoteAttachmentsBasicTests extends RemoteTestBase {
 
     @DisabledOnPullRequest
