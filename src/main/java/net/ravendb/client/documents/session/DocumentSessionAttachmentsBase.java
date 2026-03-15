@@ -87,12 +87,9 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     /**
      * Stores attachment to be sent in the session using the provided parameters
-     *
      * @param documentId The document identifier
      * @param parameters The attachment storage parameters containing name, stream,
      *                   content type, change vector, and remote upload settings
-     *
-     * @remarks
      * This overload provides a convenient way to store an attachment using a
      * {@link StoreAttachmentParameters} object, which encapsulates all attachment
      * properties including optional settings like

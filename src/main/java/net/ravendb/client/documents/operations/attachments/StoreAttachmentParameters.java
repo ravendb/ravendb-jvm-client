@@ -38,7 +38,7 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
      * @param name
      *     The name of the attachment to store. Cannot be null or whitespace.
      *
-     * @param bytes
+     * @param stream
      *     The stream containing the attachment data. Cannot be null.
      *
      * @throws IllegalArgumentException

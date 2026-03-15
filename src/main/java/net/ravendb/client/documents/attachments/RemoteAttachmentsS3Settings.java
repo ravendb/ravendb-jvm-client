@@ -315,7 +315,7 @@ public final class RemoteAttachmentsS3Settings implements IS3Settings, IRemoteAt
     }
 
      /**
-     * @return The S3 storage class for attachments, or <c>null</c> to use the default STANDARD storage class.
+     * @return The S3 storage class for attachments, or {@code null} to use the default STANDARD storage class.
      */
     public S3StorageClass getStorageClass() {
         return storageClass;

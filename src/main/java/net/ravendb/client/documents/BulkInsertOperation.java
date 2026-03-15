@@ -994,8 +994,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
          * @param bytes the bytes array containing the attachment data
          * @param contentType optional MIME content type of the attachment (e.g., "image/jpeg", "application/pdf")
          * @param remoteParameters the remote attachments parameters object
-         * </p>
-         *
          * @throws IllegalArgumentException
          *         Thrown when the stream in {@code parameters} is not seekable or does not have
          *         a known length.
