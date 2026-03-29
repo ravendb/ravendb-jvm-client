@@ -10,6 +10,7 @@ import net.ravendb.client.util.ValidationMethods;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +25,7 @@ public class AiConversation {
 
     private String conversationId;
     private List<AiAgentActionRequest> actionRequests = null;
-    private final List<AiAgentActionResponse> actionResponses = new ArrayList<>();
+    private final Map<String, AiAgentActionResponse> actionResponses = new LinkedHashMap<>();
     private final List<ContentPart> promptParts = new ArrayList<>();
     private final List<AiAgentArtificialActionResponse> artificialActions = new ArrayList<>();
     private String changeVector;
@@ -32,8 +33,15 @@ public class AiConversation {
     private final Map<String, IActionInvocation> invocations = new HashMap<>();
     private Consumer<UnhandledActionEventArgs> onUnhandledAction;
 
-    public List<AiAgentActionResponse> getActionResponses() { return actionResponses; }
-    public void setActionResponses(List<AiAgentActionResponse> actionResponses) { this.actionResponses.addAll(actionResponses); }
+    public List<AiAgentActionResponse> getActionResponses() {
+        return new ArrayList<>(actionResponses.values());
+    }
+
+    public void setActionResponses(List<AiAgentActionResponse> actionResponses) {
+        for (AiAgentActionResponse r : actionResponses) {
+            this.actionResponses.put(r.getToolId(), r);
+        }
+    }
 
     public Map<String, IActionInvocation> getInvocations() { return invocations; }
     public void setInvocations(Map<String, IActionInvocation> invocations) { this.invocations.putAll(invocations); }
@@ -116,11 +124,15 @@ public class AiConversation {
         if (toolId == null || toolId.isEmpty()) throw new IllegalArgumentException("toolId cannot be empty");
         if (actionResponse == null) throw new IllegalArgumentException("Action response cannot be null");
 
+        if (actionResponses.containsKey(toolId)) {
+            throw new IllegalStateException("An action response for tool-id '" + toolId + "' was already added.");
+        }
+
         String content = (actionResponse instanceof String)
                 ? (String) actionResponse
                 : new ObjectMapper().writeValueAsString(actionResponse);
 
-        actionResponses.add(new AiAgentActionResponse(toolId, content));
+        actionResponses.put(toolId, new AiAgentActionResponse(toolId, content));
     }
 
     public void setUserPrompt(String userPrompt) {
@@ -143,14 +155,14 @@ public class AiConversation {
         handle(actionName, handler, AiHandleErrorStrategy.SendErrorsToModel);
     }
 
-    public <TArgs> void handle(String actionName,
-                               BiFunction<AiAgentActionRequest, TArgs, Object> handler) {
+    public <TArgs, TResult> void handle(String actionName,
+                                        BiFunction<AiAgentActionRequest, TArgs, TResult> handler) {
         handle(actionName, handler, AiHandleErrorStrategy.SendErrorsToModel);
     }
 
-    public <TArgs> void handle(String actionName,
-                               BiFunction<AiAgentActionRequest, TArgs, Object> handler,
-                               AiHandleErrorStrategy strategy) {
+    public <TArgs, TResult> void handle(String actionName,
+                                        BiFunction<AiAgentActionRequest, TArgs, TResult> handler,
+                                        AiHandleErrorStrategy strategy) {
 
         BiFunction<AiAgentActionRequest, TArgs, CompletableFuture<Object>> wrappedAction =
                 (req, args) -> toFuture(handler.apply(req, args));
@@ -344,7 +356,7 @@ public class AiConversation {
                     this.agentId,
                     this.conversationId,
                     this.promptParts,
-                    this.actionResponses,
+                    new ArrayList<>(this.actionResponses.values()),
                     this.artificialActions,
                     this.options,
                     this.changeVector,
