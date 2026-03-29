@@ -375,6 +375,35 @@ public class AiConversationTests extends RemoteTestBase {
     }
 
     @Test
+    public void addActionResponse_shouldThrowOnDuplicateToolId() {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/17|", new AiConversationCreationOptions());
+
+            // First response for tool-1 should succeed
+            conv.addActionResponse("tool-1", "response1");
+
+            // Second response for same tool-1 should throw
+            try {
+                conv.addActionResponse("tool-1", "response2");
+                Assertions.fail("Expected IllegalStateException for duplicate tool-id not thrown");
+            } catch (IllegalStateException e) {
+                assertThat(e.getMessage())
+                        .contains("already added")
+                        .contains("tool-1");
+            }
+
+            // Different tool-id should still work
+            conv.addActionResponse("tool-2", "response3");
+
+            // Verify we have exactly 2 responses (tool-1 and tool-2)
+            assertThat(conv.getActionResponses()).hasSize(2);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     public void handleMethod_arityDetection_worksCorrectly() {
         try (IDocumentStore store = getDocumentStore()) {
             AiConversation conv = store.ai().conversation("agents/1-A", "conversations/16|",new AiConversationCreationOptions());
