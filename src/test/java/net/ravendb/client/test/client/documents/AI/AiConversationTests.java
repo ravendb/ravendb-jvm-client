@@ -107,6 +107,31 @@ public class AiConversationTests extends RemoteTestBase {
     }
 
     @Test
+    public void addActionResponseShouldRejectDuplicateToolId() {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/5|",new AiConversationCreationOptions());
+
+            conv.addActionResponse("tool1", "first response");
+
+            try {
+                conv.addActionResponse("tool1", "second response");
+                Assertions.assertTrue(false, "Expected exception for duplicate toolId not thrown");
+            } catch (IllegalStateException e) {
+                assertThat(e.getMessage())
+                        .contains("An action response for tool-id 'tool1' was already added");
+            }
+
+            conv.addActionResponse("tool2", "other response");
+            assertThat(conv.getActionResponses())
+                    .hasSize(2);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     public void receiveShouldRejectDuplicateActionNames() {
         try (IDocumentStore store = getDocumentStore()) {
 
