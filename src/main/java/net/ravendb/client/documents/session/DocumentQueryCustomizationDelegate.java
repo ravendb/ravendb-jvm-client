@@ -71,6 +71,12 @@ public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomi
     }
 
     @Override
+    public IDocumentQueryCustomization withTag(String tag) {
+        query._withTag(tag);
+        return this;
+    }
+
+    @Override
     public IDocumentQueryCustomization noTracking() {
         query._noTracking();
         return this;

@@ -62,6 +62,12 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     }
 
     @Override
+    public IRawDocumentQuery<T> withTag(String tag) {
+        _withTag(tag);
+        return this;
+    }
+
+    @Override
     public IRawDocumentQuery<T> usingDefaultOperator(QueryOperator queryOperator) {
         _usingDefaultOperator(queryOperator);
         return this;

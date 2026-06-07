@@ -76,6 +76,13 @@ public interface IDocumentQueryCustomization {
     IDocumentQueryCustomization noCaching();
 
     /**
+     * Sets a user-defined tag on the query request.
+     * @param tag User-defined query tag
+     * @return customization object
+     */
+    IDocumentQueryCustomization withTag(String tag);
+
+    /**
      * Disables tracking for queried entities by Raven's Unit of Work.
      * Usage of this option will prevent holding query results in memory.
      * @return customization object

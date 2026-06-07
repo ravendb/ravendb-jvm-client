@@ -6,6 +6,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     private String query;
     private T queryParameters;
+    private String tag;
     private ProjectionBehavior projectionBehavior;
     private boolean waitForNonStaleResults;
     private Duration waitForNonStaleResultsTimeout;
@@ -32,6 +33,20 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     public void setQueryParameters(T queryParameters) {
         this.queryParameters = queryParameters;
+    }
+
+    /**
+     * User-defined query tag.
+     * Sent to the server as the {@code tag} query-string parameter.
+     *
+     * @return the query tag
+     */
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public ProjectionBehavior getProjectionBehavior() {

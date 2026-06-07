@@ -3,6 +3,8 @@ package net.ravendb.client.documents.commands;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.HttpEntity;
@@ -12,12 +14,14 @@ public abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
     private final boolean _metadataOnly;
     private final boolean _indexEntriesOnly;
     private final boolean _ignoreLimit;
+    private final String _tag;
 
     public AbstractQueryCommand(Class<TResult> queryResultClass, IndexQuery indexQuery, boolean canCache, boolean metadataOnly, boolean indexEntriesOnly, boolean ignoreLimit) {
         super(queryResultClass);
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
         _ignoreLimit = ignoreLimit;
+        _tag = indexQuery.getTag();
 
         this.canCache = canCache;
 
@@ -54,6 +58,10 @@ public abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
 
         if (_ignoreLimit) {
             path.append("&ignoreLimit=true");
+        }
+
+        if (StringUtils.isNotBlank(_tag)) {
+            path.append("&tag=").append(UrlUtils.escapeDataString(_tag));
         }
 
         String url = path.toString();

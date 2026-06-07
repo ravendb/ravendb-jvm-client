@@ -146,6 +146,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected boolean disableCaching;
 
+    protected String queryTag;
+
     protected ProjectionBehavior projectionBehavior;
 
     private String parameterPrefix = "p";
@@ -1253,6 +1255,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
+        indexQuery.setTag(queryTag);
         indexQuery.setProjectionBehavior(projectionBehavior);
         indexQuery.setSkipStatistics(!queryStats.isRequestedByUser());
         return indexQuery;
@@ -2007,6 +2010,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public void _noCaching() {
         disableCaching = true;
+    }
+
+    /**
+     * Sets a user-defined tag on the query request.
+     * @param tag User-defined query tag
+     */
+    public void _withTag(String tag) {
+        if (StringUtils.isBlank(tag)) {
+            throw new IllegalArgumentException("Query tag cannot be null or whitespace.");
+        }
+
+        queryTag = tag;
     }
 
     protected QueryTimings queryTimings;
