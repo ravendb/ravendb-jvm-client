@@ -6,6 +6,8 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
+import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ClassicHttpResponse;
@@ -38,6 +40,9 @@ public class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
     @Override
     public HttpUriRequestBase createRequest(ServerNode node) {
         String url = node.getUrl() + "/databases/" + node.getDatabase() + "/streams/queries";
+        if (StringUtils.isNotBlank(_indexQuery.getTag())) {
+            url += "?tag=" + UrlUtils.escapeDataString(_indexQuery.getTag());
+        }
         HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {

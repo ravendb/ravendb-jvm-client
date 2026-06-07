@@ -7,6 +7,8 @@ import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.FacetResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,6 +36,11 @@ public class LazyAggregationQueryOperation implements ILazyOperation {
         request.setMethod("POST");
         request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions().getEntityMapper()));
         request.setContent(new IndexQueryContent(_session.getConventions(), _indexQuery));
+
+        if (StringUtils.isNotBlank(_indexQuery.getTag())) {
+            request.setQuery(request.getQuery() + "&tag=" + UrlUtils.escapeDataString(_indexQuery.getTag()));
+        }
+
         return request;
     }
 

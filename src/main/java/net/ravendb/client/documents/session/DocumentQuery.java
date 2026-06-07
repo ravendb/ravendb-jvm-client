@@ -283,6 +283,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
+    public IDocumentQuery<T> withTag(String tag) {
+        _withTag(tag);
+        return this;
+    }
+
+    @Override
     public IDocumentQuery<T> include(String path) {
         _include(path);
         return this;
@@ -694,6 +700,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.queryHighlightings = queryHighlightings;
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
+        query.queryTag = queryTag;
         query.projectionBehavior = ObjectUtils.firstNonNull(queryData != null ? queryData.getProjectionBehavior() : null, projectionBehavior);
         query.queryTimings = queryTimings;
         query.explanations = explanations;
