@@ -91,11 +91,28 @@ public interface IAdvancedDocumentSessionOperations {
     String storeIdentifier();
 
     /**
+     * Gets the optimistic concurrency mode for the session.
+     * Cannot be mixed with the deprecated {@code useOptimisticConcurrency} property in the same session.
+     * @return optimistic concurrency mode
+     */
+    OptimisticConcurrencyMode getOptimisticConcurrencyMode();
+
+    /**
+     * Sets the optimistic concurrency mode for the session.
+     * Cannot be mixed with the deprecated {@code useOptimisticConcurrency} property in the same session.
+     * @param optimisticConcurrencyMode Sets the optimistic concurrency mode
+     */
+    void setOptimisticConcurrencyMode(OptimisticConcurrencyMode optimisticConcurrencyMode);
+
+    /**
      * Gets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
      * @return true if optimistic concurrency should be used
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
      */
+    @Deprecated
     boolean isUseOptimisticConcurrency();
 
     /**
@@ -103,7 +120,10 @@ public interface IAdvancedDocumentSessionOperations {
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
      * @param useOptimisticConcurrency Sets the optimistic concurrency
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
      */
+    @Deprecated
     void setUseOptimisticConcurrency(boolean useOptimisticConcurrency);
 
     /**

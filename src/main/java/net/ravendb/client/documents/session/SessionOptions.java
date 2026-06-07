@@ -10,6 +10,7 @@ public class SessionOptions {
     private TransactionMode transactionMode;
     private Boolean disableAtomicDocumentWritesInClusterWideTransaction;
     private ShardedBatchBehavior shardedBatchBehavior;
+    private OptimisticConcurrencyMode optimisticConcurrencyMode;
 
     public String getDatabase() {
         return database;
@@ -32,7 +33,42 @@ public class SessionOptions {
     }
 
     public void setNoTracking(boolean noTracking) {
+        if (noTracking && optimisticConcurrencyMode != null && optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE) {
+            throw new IllegalStateException("noTracking cannot be set to true when optimisticConcurrencyMode is " + optimisticConcurrencyMode + ".");
+        }
+
         this.noTracking = noTracking;
+    }
+
+    /**
+     * Configure optimistic concurrency mode for the session.
+     * When set, overrides the default from {@code DocumentConventions.optimisticConcurrencyMode}.
+     * When {@code null} (default), the session inherits the value from conventions.
+     * @return optimistic concurrency mode
+     */
+    public OptimisticConcurrencyMode getOptimisticConcurrencyMode() {
+        return optimisticConcurrencyMode;
+    }
+
+    /**
+     * Configure optimistic concurrency mode for the session.
+     * When set, overrides the default from {@code DocumentConventions.optimisticConcurrencyMode}.
+     * When {@code null} (default), the session inherits the value from conventions.
+     * @param optimisticConcurrencyMode value to set
+     */
+    public void setOptimisticConcurrencyMode(OptimisticConcurrencyMode optimisticConcurrencyMode) {
+        if (optimisticConcurrencyMode != null && optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE
+                && transactionMode == TransactionMode.CLUSTER_WIDE) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set to " + optimisticConcurrencyMode
+                    + " when transactionMode is " + TransactionMode.CLUSTER_WIDE + ".");
+        }
+
+        if (optimisticConcurrencyMode != null && optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE && noTracking) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set to " + optimisticConcurrencyMode
+                    + " when noTracking is true.");
+        }
+
+        this.optimisticConcurrencyMode = optimisticConcurrencyMode;
     }
 
     public boolean isNoCaching() {
@@ -48,6 +84,12 @@ public class SessionOptions {
     }
 
     public void setTransactionMode(TransactionMode transactionMode) {
+        if (transactionMode == TransactionMode.CLUSTER_WIDE
+                && optimisticConcurrencyMode != null && optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set to " + optimisticConcurrencyMode
+                    + " when transactionMode is " + TransactionMode.CLUSTER_WIDE + ".");
+        }
+
         this.transactionMode = transactionMode;
     }
 

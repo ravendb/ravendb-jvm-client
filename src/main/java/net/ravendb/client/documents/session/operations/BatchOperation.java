@@ -96,6 +96,8 @@ public class BatchOperation {
             }
         }
 
+        int skip = 0;
+
         for (int i = 0; i < _sessionCommandsCount; i++) {
             ObjectNode batchResult = (ObjectNode) result.getResults().get(i);
             if (batchResult == null) {
@@ -106,7 +108,7 @@ public class BatchOperation {
 
             switch (type) {
                 case PUT:
-                    handlePut(i, batchResult, false);
+                    handlePut(i - skip, batchResult, false);
                     break;
                 case FORCE_REVISION_CREATION:
                     handleForceRevisionCreation(batchResult);
@@ -119,6 +121,9 @@ public class BatchOperation {
                     break;
                 case COMPARE_EXCHANGE_DELETE:
                     handleCompareExchangeDelete(batchResult);
+                    break;
+                case BATCH_TRACK_CHANGES:
+                    skip++;
                     break;
                 default:
                     throw new IllegalStateException("Command " + type + " is not supported");
@@ -169,6 +174,8 @@ public class BatchOperation {
                 case TIME_SERIES_COPY:
                     break;
                 case BATCH_PATCH:
+                    break;
+                case BATCH_TRACK_CHANGES:
                     break;
                 default:
                     throw new IllegalStateException("Command " + type + " is not supported");
@@ -389,6 +396,7 @@ public class BatchOperation {
         }
 
         _session.documentsById.remove(id);
+        _session.getTrackedEntitiesHolder().tryRemove(id);
 
         if (documentInfo.getEntity() != null) {
             _session.documentsByEntity.remove(documentInfo.getEntity());
@@ -474,6 +482,8 @@ public class BatchOperation {
 
         documentInfo.setId(id);
         documentInfo.setChangeVector(changeVector);
+
+        _session.getTrackedEntitiesHolder().tryUpdate(id, changeVector);
 
         applyMetadataModifications(id, documentInfo);
     }
