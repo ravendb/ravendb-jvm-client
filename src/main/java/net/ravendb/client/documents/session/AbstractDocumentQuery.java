@@ -627,6 +627,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(whereToken);
     }
 
+    private static WhereParams createMethodWhereParams(String fieldName, Object value, boolean exact) {
+        WhereParams whereParams = new WhereParams();
+        whereParams.setFieldName(fieldName);
+        whereParams.setValue(value);
+        whereParams.setExact(exact);
+        return whereParams;
+    }
+
     private boolean ifValueIsMethod(WhereOperator op, WhereParams whereParams, List<QueryToken> tokens) {
         if (whereParams.getValue() instanceof MethodCall) {
             MethodCall mc = (MethodCall) whereParams.getValue();
@@ -640,6 +648,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             Class<? extends MethodCall> type = mc.getClass();
             if (CmpXchg.class.equals(type)) {
                 token = WhereToken.create(op, whereParams.getFieldName(), null, new WhereToken.WhereOptions(WhereToken.MethodsType.CMP_X_CHG, args, mc.accessPath, whereParams.isExact()));
+            } else if (RavenDocumentQuery.Time.class.equals(type)) {
+                RavenDocumentQuery.Time time = (RavenDocumentQuery.Time) mc;
+                token = WhereToken.create(op, whereParams.getFieldName(), null, new WhereToken.WhereOptions(time.getMethodType(), args, mc.accessPath, whereParams.isExact()));
             } else {
                 throw new IllegalArgumentException("Unknown method " + type);
             }
@@ -836,6 +847,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
+
+        if (ifValueIsMethod(WhereOperator.GREATER_THAN, createMethodWhereParams(fieldName, value, exact), tokens)) {
+            return;
+        }
+
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
@@ -861,6 +877,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
+
+        if (ifValueIsMethod(WhereOperator.GREATER_THAN_OR_EQUAL, createMethodWhereParams(fieldName, value, exact), tokens)) {
+            return;
+        }
+
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
@@ -881,6 +902,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
+        if (ifValueIsMethod(WhereOperator.LESS_THAN, createMethodWhereParams(fieldName, value, exact), tokens)) {
+            return;
+        }
+
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
@@ -900,6 +925,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
+
+        if (ifValueIsMethod(WhereOperator.LESS_THAN_OR_EQUAL, createMethodWhereParams(fieldName, value, exact), tokens)) {
+            return;
+        }
 
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);

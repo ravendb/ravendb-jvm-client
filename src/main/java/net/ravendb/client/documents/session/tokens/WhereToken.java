@@ -13,7 +13,9 @@ public class WhereToken extends QueryToken {
 
     @UseSharpEnum
     public enum MethodsType {
-        CMP_X_CHG
+        CMP_X_CHG,
+        NOW,
+        TODAY
     }
 
     public static class WhereMethodCall {
@@ -231,6 +233,17 @@ public class WhereToken extends QueryToken {
                 case CMP_X_CHG:
                     writer.append("cmpxchg(");
                     break;
+                case NOW:
+                    writer.append("now(");
+                    if (options.getMethod().parameters != null && options.getMethod().parameters.length > 0) {
+                        writer.append("$");
+                        writer.append(options.getMethod().parameters[0]);
+                    }
+                    writer.append(")");
+                    return true;
+                case TODAY:
+                    writer.append("today()");
+                    return true;
                 default:
                     throw new IllegalArgumentException("Unsupported method: " + options.getMethod().methodType);
             }
