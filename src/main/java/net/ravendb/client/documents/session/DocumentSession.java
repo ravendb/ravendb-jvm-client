@@ -136,6 +136,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
      */
     @Override
     public void saveChanges() {
+        assertNotDisposed();
         BatchOperation saveChangeOperation = new BatchOperation(this);
 
         try (SingleNodeBatchCommand command = saveChangeOperation.createRequest()) {

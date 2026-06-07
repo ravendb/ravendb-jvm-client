@@ -459,6 +459,10 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public <TResult> void execute(RavenCommand<TResult> command, SessionInfo sessionInfo) {
+        if (!InMemoryDocumentSessionOperations.DISABLE_DISPOSE_CHECKS && _disposed) {
+            throwObjectDisposed();
+        }
+
         CompletableFuture<Void> topologyUpdate = _firstTopologyUpdate;
         if (topologyUpdate != null &&
                 (topologyUpdate.isDone() && !topologyUpdate.isCompletedExceptionally() && !topologyUpdate.isCancelled())) {
@@ -467,6 +471,10 @@ public class RequestExecutor implements CleanCloseable {
         } else {
             unlikelyExecute(command, topologyUpdate, sessionInfo);
         }
+    }
+
+    private static void throwObjectDisposed() {
+        throw new IllegalStateException("The request executor has already been disposed and cannot be used");
     }
 
     public <TResult> CurrentIndexAndNode chooseNodeForRequest(RavenCommand<TResult> cmd, SessionInfo sessionInfo) {

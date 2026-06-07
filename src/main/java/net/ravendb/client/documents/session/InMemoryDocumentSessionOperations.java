@@ -58,6 +58,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<>();
     protected final Map<ILazyOperation, Consumer<Object>> onEvaluateLazy = new HashMap<>();
 
+    public static final boolean DISABLE_DISPOSE_CHECKS = "true".equalsIgnoreCase(System.getenv("RAVEN_DISABLE_DISPOSE_CHECKS"));
+
     private static final AtomicInteger _instancesCounter = new AtomicInteger();
 
     private final int _hash = _instancesCounter.incrementAndGet();
@@ -1554,6 +1556,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 !CommandType.TIME_SERIES_WITH_INCREMENTS.equals(command.getType()) &&
                 !CommandType.TIME_SERIES_COPY.equals(command.getType())) {
             deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
+        }
+    }
+
+    public void assertNotDisposed() {
+        if (_isDisposed) {
+            throw new IllegalStateException("The session has already been disposed and cannot be used");
+        }
+
+        if (!DISABLE_DISPOSE_CHECKS && _documentStore.isDisposed()) {
+            throw new IllegalStateException("The document store has already been disposed and cannot be used");
         }
     }
 
