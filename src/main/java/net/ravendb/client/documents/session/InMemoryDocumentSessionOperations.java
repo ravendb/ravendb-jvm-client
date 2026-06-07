@@ -169,7 +169,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
-    protected final Set<String> _knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    protected final KnownMissingIdsHolder _knownMissingIds;
+
+    final TrackedEntitiesHolder trackedEntities;
+
+    public TrackedEntitiesHolder getTrackedEntitiesHolder() {
+        return trackedEntities;
+    }
 
     private Map<String, Object> externalState;
 
@@ -327,7 +333,34 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
-    private boolean useOptimisticConcurrency;
+    private OptimisticConcurrencyMode _optimisticConcurrencyMode;
+    private boolean _useOptimisticConcurrencyWasSet;
+    private boolean _optimisticConcurrencyModeWasSet;
+
+    /**
+     * Gets the optimistic concurrency mode for the session.
+     *
+     * @return optimistic concurrency mode
+     */
+    public OptimisticConcurrencyMode getOptimisticConcurrencyMode() {
+        return _optimisticConcurrencyMode;
+    }
+
+    /**
+     * Sets the optimistic concurrency mode for the session.
+     * Cannot be set if the deprecated {@code useOptimisticConcurrency} was already set on this session.
+     *
+     * @param optimisticConcurrencyMode sets the value
+     */
+    public void setOptimisticConcurrencyMode(OptimisticConcurrencyMode optimisticConcurrencyMode) {
+        if (_useOptimisticConcurrencyWasSet) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set when useOptimisticConcurrency was set. " +
+                    "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        _optimisticConcurrencyModeWasSet = true;
+        this._optimisticConcurrencyMode = optimisticConcurrencyMode;
+    }
 
     /**
      * Gets value indicating whether the session should use optimistic concurrency.
@@ -335,9 +368,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * and raise ConcurrencyException
      *
      * @return true if optimistic concurrency should be used
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
      */
+    @Deprecated
     public boolean isUseOptimisticConcurrency() {
-        return useOptimisticConcurrency;
+        return _optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE;
     }
 
     /**
@@ -346,9 +382,18 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * and raise ConcurrencyException
      *
      * @param useOptimisticConcurrency sets the value
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
      */
+    @Deprecated
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
-        this.useOptimisticConcurrency = useOptimisticConcurrency;
+        if (_optimisticConcurrencyModeWasSet) {
+            throw new IllegalStateException("useOptimisticConcurrency cannot be set when optimisticConcurrencyMode was set. " +
+                    "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        _useOptimisticConcurrencyWasSet = true;
+        this._optimisticConcurrencyMode = useOptimisticConcurrency ? OptimisticConcurrencyMode.WRITES : OptimisticConcurrencyMode.NONE;
     }
 
     protected final List<ICommandData> deferredCommands = new ArrayList<>();
@@ -395,7 +440,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         noTracking = options.isNoTracking();
 
-        this.useOptimisticConcurrency = _requestExecutor.getConventions().isUseOptimisticConcurrency();
+        this._optimisticConcurrencyMode = ObjectUtils.firstNonNull(options.getOptimisticConcurrencyMode(),
+                _requestExecutor.getConventions().getOptimisticConcurrencyMode());
+
+        if (options.getOptimisticConcurrencyMode() != null) {
+            _optimisticConcurrencyModeWasSet = true;
+        }
+
+        if (noTracking && _optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set to " + _optimisticConcurrencyMode + " when noTracking is true.");
+        }
+
+        trackedEntities = new TrackedEntitiesHolder(_optimisticConcurrencyMode == OptimisticConcurrencyMode.WRITES_AND_READS);
+        _knownMissingIds = new KnownMissingIdsHolder(trackedEntities);
         this.maxNumberOfRequestsPerSession = _requestExecutor.getConventions().getMaxNumberOfRequestsPerSession();
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
@@ -629,7 +686,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         documentsByEntity.put(info.getEntity(), info);
         documentsById.add(info);
         includedDocumentsById.remove(info.getId());
-
+        trackedEntities.tryAdd(info.getId(), info.getChangeVector());
     }
 
     /**
@@ -662,6 +719,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (!noTracking) {
                 includedDocumentsById.remove(id);
                 documentsByEntity.put(docInfo.getEntity(), docInfo);
+                trackedEntities.put(id, docInfo.getChangeVector());
             }
 
             onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getEntity());
@@ -679,6 +737,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 includedDocumentsById.remove(id);
                 documentsById.add(docInfo);
                 documentsByEntity.put(docInfo.getEntity(), docInfo);
+                trackedEntities.put(id, docInfo.getChangeVector());
             }
 
             onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getEntity());
@@ -703,6 +762,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             documentsById.add(newDocumentInfo);
             documentsByEntity.put(entity, newDocumentInfo);
+            trackedEntities.put(id, newDocumentInfo.getChangeVector());
         }
 
         onAfterConversionToEntityInvoke(id, document, entity);
@@ -742,7 +802,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (_countersByDocId != null) {
             _countersByDocId.remove(value.getId());
         }
-        _knownMissingIds.add(value.getId());
+        _knownMissingIds.addWithTracking(value.getId(), value.getChangeVector());
     }
 
     /**
@@ -774,10 +834,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             documentsById.remove(id);
             changeVector = documentInfo.getChangeVector();
+
+            _knownMissingIds.addWithTracking(id, changeVector);
+        } else {
+            _knownMissingIds.addWithoutTracking(id);
         }
 
-        _knownMissingIds.add(id);
-        changeVector = isUseOptimisticConcurrency() ? changeVector : null;
+        changeVector = _optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE ? changeVector : null;
         if (_countersByDocId != null) {
             _countersByDocId.remove(id);
         }
@@ -918,6 +981,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (id != null) {
             documentsById.add(documentInfo);
         }
+
+        trackedEntities.tryAdd(id, changeVector);
     }
 
     protected void assertNoNonUniqueInstance(Object entity, String id) {
@@ -959,6 +1024,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             deferredCommand.onBeforeSaveChanges(this);
         }
 
+        trackedEntities.prepareForEntitiesTrack(result);
+
         return result;
     }
 
@@ -967,8 +1034,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (isUseOptimisticConcurrency()) {
-            throw new IllegalStateException("useOptimisticConcurrency is not supported with TransactionMode set to " + TransactionMode.CLUSTER_WIDE);
+        if (_optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE) {
+            throw new IllegalStateException("optimisticConcurrencyMode is not supported with TransactionMode set to " + TransactionMode.CLUSTER_WIDE);
         }
 
         for (ICommandData commandData : result.getSessionCommands()) {
@@ -1097,11 +1164,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                         result.onSuccess.removeDocumentById(documentInfo.getId());
                     }
 
-                    if (!useOptimisticConcurrency) {
+                    if (_optimisticConcurrencyMode == OptimisticConcurrencyMode.NONE) {
                         changeVector = null;
                     }
 
                     onBeforeDeleteInvoke(new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity()));
+
+                    if (changeVector != null) {
+                        result.getIdsAlreadyCheckedForConcurrency().add(documentInfo.getId());
+                    }
+
                     DeleteCommandData deleteCommandData = new DeleteCommandData(documentInfo.getId(), changeVector, documentInfo.getChangeVector());
                     result.getSessionCommands().add(deleteCommandData);
                 }
@@ -1173,7 +1245,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result.onSuccess.updateEntityDocumentInfo(entity.getValue(), document);
 
                 String changeVector;
-                if (useOptimisticConcurrency) {
+                if (_optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE) {
                     if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
                         // if the user didn't provide a change vector, we'll test for an empty one
                         changeVector = ObjectUtils.firstNonNull(entity.getValue().getChangeVector(), "");
@@ -1195,6 +1267,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                         idsForCreatingForcedRevisions.remove(entity.getValue().getId());
                         forceRevisionCreationStrategy = creationStrategy;
                     }
+                }
+
+                if (changeVector != null) {
+                    result.getIdsAlreadyCheckedForConcurrency().add(entity.getValue().getId());
                 }
 
                 result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(),
@@ -1399,6 +1475,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (_timeSeriesByDocId != null) {
                 _timeSeriesByDocId.remove(documentInfo.getId());
             }
+            trackedEntities.tryRemove(documentInfo.getId());
         }
 
         deletedEntities.evict(entity);
@@ -1422,6 +1499,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         clearClusterSession();
         pendingLazyOperations.clear();
         entityToJson.clear();
+        trackedEntities.clear();
     }
 
     /**
@@ -1510,7 +1588,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        _knownMissingIds.addAll(Arrays.asList(ids));
+        _knownMissingIds.unionWith(Arrays.asList(ids));
     }
 
     public void registerIncludes(ObjectNode includes) {
@@ -1537,6 +1615,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             includedDocumentsById.put(newDocumentInfo.getId(), newDocumentInfo);
+            trackedEntities.tryAdd(newDocumentInfo.getId(), newDocumentInfo.getChangeVector());
         }
     }
 
@@ -2300,6 +2379,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             documentInfoById.setEntity(entity);
         }
 
+        trackedEntities.tryUpdate(documentInfo.getId(), documentInfo.getChangeVector());
+
         onAfterConversionToEntityInvoke(documentInfo.getId(), documentInfo.getDocument(), documentInfo.getEntity());
     }
 
@@ -2395,6 +2476,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         private final List<ICommandData> deferredCommands;
         private final Map<IdTypeAndName, ICommandData> deferredCommandsMap;
         private final List<ICommandData> sessionCommands = new ArrayList<>();
+        private BatchTrackChangesCommandData trackChangesCommandData;
+        private final Set<String> idsAlreadyCheckedForConcurrency = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         private final List<Object> entities = new ArrayList<>();
         private final BatchOptions options;
         private final ActionsToRunOnSuccess onSuccess;
@@ -2408,6 +2491,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         public ActionsToRunOnSuccess getOnSuccess() {
             return onSuccess;
+        }
+
+        public BatchTrackChangesCommandData getTrackChangesCommandData() {
+            return trackChangesCommandData;
+        }
+
+        public Set<String> getIdsAlreadyCheckedForConcurrency() {
+            return idsAlreadyCheckedForConcurrency;
         }
 
         public List<ICommandData> getDeferredCommands() {
@@ -2482,6 +2573,133 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             public void clearDeletedEntities() {
                 _clearDeletedEntities = true;
             }
+        }
+    }
+
+    public static class TrackedEntitiesHolder {
+        private final Map<String, String> _trackedEntities = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        private final boolean _shouldTrack;
+
+        public TrackedEntitiesHolder(boolean shouldTrack) {
+            _shouldTrack = shouldTrack;
+        }
+
+        public boolean any() {
+            if (_shouldTrack) {
+                return !_trackedEntities.isEmpty();
+            }
+
+            return false;
+        }
+
+        public void tryRemove(String id) {
+            if (_shouldTrack) {
+                _trackedEntities.remove(id);
+            }
+        }
+
+        public void tryAdd(String id, String changeVector) {
+            if (_shouldTrack && !_trackedEntities.containsKey(id)) {
+                _trackedEntities.put(id, changeVector);
+            }
+        }
+
+        public void clear() {
+            if (_shouldTrack) {
+                _trackedEntities.clear();
+            }
+        }
+
+        public boolean tryGetValue(String id, Reference<String> changeVector) {
+            changeVector.value = null;
+
+            if (!_shouldTrack) {
+                return false;
+            }
+
+            if (_trackedEntities.containsKey(id)) {
+                changeVector.value = _trackedEntities.get(id);
+                return true;
+            }
+
+            return false;
+        }
+
+        public boolean tryUpdate(String id, String changeVector) {
+            if (!tryGetValue(id, new Reference<>())) {
+                return false;
+            }
+
+            _trackedEntities.put(id, changeVector);
+            return true;
+        }
+
+        public void put(String id, String changeVector) {
+            if (_shouldTrack) {
+                _trackedEntities.put(id, changeVector);
+            }
+        }
+
+        public void prepareForEntitiesTrack(SaveChangesData result) {
+            if (!any()) {
+                return;
+            }
+
+            result.trackChangesCommandData = new BatchTrackChangesCommandData(_trackedEntities, result.idsAlreadyCheckedForConcurrency);
+            result.sessionCommands.add(0, result.trackChangesCommandData);
+        }
+    }
+
+    public static class KnownMissingIdsHolder implements Iterable<String> {
+        private final Set<String> _knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+
+        private final TrackedEntitiesHolder _trackedEntities;
+
+        public KnownMissingIdsHolder(TrackedEntitiesHolder trackedEntities) {
+            _trackedEntities = trackedEntities;
+        }
+
+        @Override
+        public Iterator<String> iterator() {
+            return _knownMissingIds.iterator();
+        }
+
+        public boolean any() {
+            return !_knownMissingIds.isEmpty();
+        }
+
+        public boolean contains(String id) {
+            return _knownMissingIds.contains(id);
+        }
+
+        public void remove(String id) {
+            _knownMissingIds.remove(id);
+        }
+
+        public boolean add(String id) {
+            _trackedEntities.tryAdd(id, "");
+            return _knownMissingIds.add(id);
+        }
+
+        public void unionWith(Iterable<String> ids) {
+            for (String id : ids) {
+                add(id);
+            }
+        }
+
+        public void clear() {
+            _knownMissingIds.clear();
+        }
+
+        public boolean addWithTracking(String id, String changeVector) {
+            _trackedEntities.tryUpdate(id, changeVector);
+            return _knownMissingIds.add(id);
+        }
+
+        public boolean addWithoutTracking(String id) {
+            _trackedEntities.tryRemove(id);
+            return _knownMissingIds.add(id);
         }
     }
 

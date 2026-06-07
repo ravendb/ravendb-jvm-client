@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
+import net.ravendb.client.documents.session.OptimisticConcurrencyMode;
 import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -65,7 +66,9 @@ public class DocumentConventions {
     private BiFunction<String, ObjectNode, String> _findJavaClass;
     private Function<String, Class> _findJavaClassByName;
 
-    private boolean _useOptimisticConcurrency;
+    private OptimisticConcurrencyMode _optimisticConcurrencyMode = OptimisticConcurrencyMode.NONE;
+    private boolean _useOptimisticConcurrencyWasSet;
+    private boolean _optimisticConcurrencyModeWasSet;
     private int _maxNumberOfRequestsPerSession;
 
     private Duration _requestTimeout;
@@ -473,20 +476,63 @@ public class DocumentConventions {
 
 
     /**
-     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @return true if optimistic concurrency is enabled
+     * Gets the default optimistic concurrency mode for all sessions opened from this store.
+     * Sessions inherit this value unless overridden via {@code SessionOptions.optimisticConcurrencyMode}.
+     * @return optimistic concurrency mode
      */
-    public boolean isUseOptimisticConcurrency() {
-        return _useOptimisticConcurrency;
+    public OptimisticConcurrencyMode getOptimisticConcurrencyMode() {
+        return _optimisticConcurrencyMode;
+    }
+
+    /**
+     * Configure the default optimistic concurrency mode for all sessions opened from this store.
+     * Sessions inherit this value unless overridden via {@code SessionOptions.optimisticConcurrencyMode}.
+     * Cannot be mixed with the deprecated {@code useOptimisticConcurrency} property.
+     * @param optimisticConcurrencyMode value to set
+     */
+    public void setOptimisticConcurrencyMode(OptimisticConcurrencyMode optimisticConcurrencyMode) {
+        assertNotFrozen();
+
+        if (_useOptimisticConcurrencyWasSet) {
+            throw new IllegalStateException("optimisticConcurrencyMode cannot be set when useOptimisticConcurrency was set. " +
+                    "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        _optimisticConcurrencyModeWasSet = true;
+        this._optimisticConcurrencyMode = optimisticConcurrencyMode;
     }
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @param useOptimisticConcurrency value to set
+     * @return true if optimistic concurrency is enabled
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
      */
+    @Deprecated
+    public boolean isUseOptimisticConcurrency() {
+        return _optimisticConcurrencyMode != OptimisticConcurrencyMode.NONE;
+    }
+
+    /**
+     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions.
+     * Setting to {@code true} maps to {@link OptimisticConcurrencyMode#WRITES};
+     * setting to {@code false} maps to {@link OptimisticConcurrencyMode#NONE}.
+     * Note: {@link OptimisticConcurrencyMode#WRITES_AND_READS} cannot be represented by this property.
+     * @param useOptimisticConcurrency value to set
+     * @deprecated useOptimisticConcurrency is deprecated and will be removed in the next major version.
+     * Please use optimisticConcurrencyMode instead.
+     */
+    @Deprecated
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
         assertNotFrozen();
-        this._useOptimisticConcurrency = useOptimisticConcurrency;
+
+        if (_optimisticConcurrencyModeWasSet) {
+            throw new IllegalStateException("useOptimisticConcurrency cannot be set when optimisticConcurrencyMode was set. " +
+                    "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        _useOptimisticConcurrencyWasSet = true;
+        this._optimisticConcurrencyMode = useOptimisticConcurrency ? OptimisticConcurrencyMode.WRITES : OptimisticConcurrencyMode.NONE;
     }
 
     public BiFunction<String, ObjectNode, String> getFindJavaClass() {
@@ -809,7 +855,9 @@ public class DocumentConventions {
         cloned._findJavaClassName = _findJavaClassName;
         cloned._findJavaClass = _findJavaClass;
         cloned._findJavaClassByName = _findJavaClassByName;
-        cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
+        cloned._optimisticConcurrencyMode = _optimisticConcurrencyMode;
+        cloned._useOptimisticConcurrencyWasSet = _useOptimisticConcurrencyWasSet;
+        cloned._optimisticConcurrencyModeWasSet = _optimisticConcurrencyModeWasSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;
         cloned._readBalanceBehavior = _readBalanceBehavior;

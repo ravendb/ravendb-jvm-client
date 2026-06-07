@@ -29,7 +29,9 @@ public enum CommandType {
     CLIENT_ANY_COMMAND,
     CLIENT_MODIFY_DOCUMENT_COMMAND,
 
-    HEART_BEAT;
+    HEART_BEAT,
+
+    BATCH_TRACK_CHANGES;
 
     public static CommandType parseCSharpValue(String input) {
         switch (input) {
@@ -63,6 +65,8 @@ public enum CommandType {
                 return TIME_SERIES;
             case "TimeSeriesWithIncrements":
                 return TIME_SERIES_WITH_INCREMENTS;
+            case "BatchTrackChanges":
+                return BATCH_TRACK_CHANGES;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }
