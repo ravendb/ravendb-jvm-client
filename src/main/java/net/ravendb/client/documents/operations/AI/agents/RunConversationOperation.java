@@ -7,9 +7,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.AI.AiConversationCreationOptions;
 import net.ravendb.client.documents.AI.ContentPart;
 import net.ravendb.client.documents.AI.TextPart;
+import net.ravendb.client.documents.commands.batches.ICommandData;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandData;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RavenCommandResponseType;
@@ -20,9 +24,12 @@ import net.ravendb.client.util.UrlUtils;
 import net.ravendb.client.util.ValidationMethods;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.mime.*;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,6 +52,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private final String changeVector;
     private final String streamPropertyPath;
     private final AiStreamCallback streamCallback;
+    private List<ICommandData> attachmentsCommands;
 
     public RunConversationOperation(String agentId, String conversationId, List<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, AiConversationCreationOptions options, String changeVector) {
         this(agentId, conversationId, promptParts, actionResponses, Collections.emptyList(), options, changeVector, null, null);
@@ -72,6 +80,11 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         this.options = options;
         this.streamPropertyPath = streamPropertyPath;
         this.streamCallback = streamedChunksCallback;
+    }
+
+    public RunConversationOperation(String agentId, String conversationId, Iterable<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, List<AiAgentArtificialActionResponse> artificialActions, AiConversationCreationOptions options, String changeVector, List<ICommandData> attachmentsCommands, String streamPropertyPath, AiStreamCallback streamedChunksCallback) {
+        this(agentId, conversationId, promptParts, actionResponses, artificialActions, options, changeVector, streamPropertyPath, streamedChunksCallback);
+        this.attachmentsCommands = attachmentsCommands;
     }
 
     @Deprecated
@@ -127,6 +140,10 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         return options;
     }
 
+    public List<ICommandData> getAttachmentsCommands() {
+        return attachmentsCommands;
+    }
+
     class RunConversationCommand<TAnswer>
             extends RavenCommand<ConversationResult<TAnswer>>
             implements IRaftCommand {
@@ -134,6 +151,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         private final RunConversationOperation<TAnswer> parent;
         private final DocumentConventions conventions;
         private String raftId;
+        private LinkedHashSet<InputStream> uniqueAttachmentStreams;
 
         public RunConversationCommand(RunConversationOperation<TAnswer> parent, DocumentConventions conventions) {
             super((Class<ConversationResult<TAnswer>>) (Class<?>) ConversationResult.class);
@@ -142,6 +160,21 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
 
             if (parent.getStreamPropertyPath() != null)
                 this.responseType = RavenCommandResponseType.RAW;
+
+            if (parent.getAttachmentsCommands() != null) {
+                for (ICommandData command : parent.getAttachmentsCommands()) {
+                    if (command instanceof PutAttachmentCommandData) {
+                        if (uniqueAttachmentStreams == null) {
+                            uniqueAttachmentStreams = new LinkedHashSet<>();
+                        }
+
+                        InputStream stream = ((PutAttachmentCommandData) command).getStream();
+                        if (!uniqueAttachmentStreams.add(stream)) {
+                            PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -183,6 +216,61 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                     generator.writeTree(bodyObj);
                 }
             }, ContentType.APPLICATION_JSON,conventions));
+
+            List<ICommandData> attachmentsCommands = this.parent.getAttachmentsCommands();
+            if (attachmentsCommands != null && !attachmentsCommands.isEmpty()) {
+                MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+
+                HttpEntity entity = request.getEntity();
+
+                try {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    entity.writeTo(baos);
+
+                    FormBodyPartBuilder mainPartBuilder = FormBodyPartBuilder
+                            .create("main", new ByteArrayBody(baos.toByteArray(), "main"));
+
+                    if (entity.getContentEncoding() != null) {
+                        mainPartBuilder.addField("Content-Encoding", entity.getContentEncoding());
+                    }
+
+                    entityBuilder.addPart(mainPartBuilder.build());
+
+                    ByteArrayOutputStream commandsStream = new ByteArrayOutputStream();
+                    try (JsonGenerator generator = createSafeJsonGenerator(commandsStream)) {
+                        generator.writeStartObject();
+                        generator.writeFieldName("Commands");
+                        generator.writeStartArray();
+
+                        for (ICommandData command : attachmentsCommands) {
+                            command.serialize(generator, conventions);
+                        }
+
+                        generator.writeEndArray();
+                        generator.writeEndObject();
+                    }
+
+                    entityBuilder.addPart(FormBodyPartBuilder
+                            .create("commands", new ByteArrayBody(commandsStream.toByteArray(), "commands"))
+                            .build());
+                } catch (IOException e) {
+                    throw new RavenException("Unable to serialize the conversation attachment commands", e);
+                }
+
+                if (uniqueAttachmentStreams != null) {
+                    int nameCounter = 1;
+
+                    for (InputStream stream : uniqueAttachmentStreams) {
+                        InputStreamBody inputStreamBody = new InputStreamBody(stream, (String) null);
+                        FormBodyPart part = FormBodyPartBuilder.create("attachment" + nameCounter++, inputStreamBody)
+                                .addField("Command-Type", "AttachmentStream")
+                                .build();
+                        entityBuilder.addPart(part);
+                    }
+                }
+
+                request.setEntity(entityBuilder.build());
+            }
 
             return request;
         }

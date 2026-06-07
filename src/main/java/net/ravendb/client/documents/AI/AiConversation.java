@@ -2,12 +2,16 @@ package net.ravendb.client.documents.AI;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.ravendb.client.documents.commands.batches.CopyAttachmentCommandData;
+import net.ravendb.client.documents.commands.batches.ICommandData;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandData;
 import net.ravendb.client.documents.operations.AI.agents.*;
 import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.extensions.expressionExtension;
 import net.ravendb.client.util.SerializableFunction;
 import net.ravendb.client.util.ValidationMethods;
 import org.apache.commons.lang3.StringUtils;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +32,7 @@ public class AiConversation {
     private final Map<String, AiAgentActionResponse> actionResponses = new LinkedHashMap<>();
     private final List<ContentPart> promptParts = new ArrayList<>();
     private final List<AiAgentArtificialActionResponse> artificialActions = new ArrayList<>();
+    private final List<ICommandData> attachmentsCommands = new ArrayList<>();
     private String changeVector;
 
     private final Map<String, IActionInvocation> invocations = new HashMap<>();
@@ -62,6 +67,35 @@ public class AiConversation {
         this.conversationId = conversationId;
         this.options = options;
         this.changeVector = changeVector;
+    }
+
+    /**
+     * Adds a file attachment as a stream to the conversation turn.
+     *
+     * @param name the name of the attachment (e.g. "monthly_budget.pdf").
+     *             A descriptive name is highly recommended as it helps the LLM understand the file's context and content.
+     * @param stream the data stream of the file
+     * @param contentType the MIME media type of the attachment content (e.g. image/png)
+     */
+    public void addAttachment(String name, InputStream stream, String contentType) {
+        if (stream == null) {
+            throw new IllegalArgumentException("stream cannot be null");
+        }
+
+        attachmentsCommands.add(new PutAttachmentCommandData("__this__", name, stream, contentType, null));
+    }
+
+    /**
+     * Copies an existing attachment from a document in RavenDB into the conversation context.
+     *
+     * @param sourceDocumentId the ID of the document in RavenDB that contains the attachment
+     * @param fileName the name to assign to the file in the conversation context
+     */
+    public void copyAttachmentFrom(String sourceDocumentId, String fileName) {
+        ValidationMethods.assertNotNullOrEmpty(sourceDocumentId, "sourceDocumentId");
+        ValidationMethods.assertNotNullOrEmpty(fileName, "fileName");
+
+        attachmentsCommands.add(new CopyAttachmentCommandData(sourceDocumentId, fileName, "__this__", fileName, null));
     }
 
     public void addArtificialActionWithResponse(String toolId, String actionResponse) {
@@ -345,7 +379,7 @@ public class AiConversation {
 
     private <TAnswer> CompletableFuture<AiAnswer<TAnswer>> runInternal(String streamPropertyPath, AiStreamCallback streamCallback) {
         try {
-            if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty()) {
+            if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty() && this.attachmentsCommands.isEmpty()) {
                 AiAnswer<TAnswer> doneAnswer = new AiAnswer<>();
                 doneAnswer.setStatus(AiConversationResult.Done);
                 return CompletableFuture.completedFuture(doneAnswer);
@@ -359,6 +393,7 @@ public class AiConversation {
                     this.artificialActions,
                     this.options,
                     this.changeVector,
+                    new ArrayList<>(this.attachmentsCommands),
                     streamPropertyPath,
                     streamCallback
             );
@@ -384,6 +419,7 @@ public class AiConversation {
             this.promptParts.clear();
             this.actionResponses.clear();
             this.artificialActions.clear();
+            this.attachmentsCommands.clear();
         }
     }
 
