@@ -20,6 +20,7 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
     private final Map<String, DatabaseAccess> _permissions;
     private final String _name;
     private final SecurityClearance _clearance;
+    private final boolean _disabled;
 
     public EditClientCertificateOperation(Parameters parameters) {
         if (parameters == null) {
@@ -42,11 +43,12 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
         this._thumbprint = parameters.getThumbprint();
         this._permissions = parameters.getPermissions();
         this._clearance = parameters.getClearance();
+        this._disabled = parameters.isDisabled();
     }
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new EditClientCertificateCommand(conventions, _thumbprint, _name, _permissions, _clearance);
+        return new EditClientCertificateCommand(conventions, _thumbprint, _name, _permissions, _clearance, _disabled);
     }
 
     private static class EditClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
@@ -55,13 +57,15 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
+        private final boolean _disabled;
 
-        public EditClientCertificateCommand(DocumentConventions conventions, String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        public EditClientCertificateCommand(DocumentConventions conventions, String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, boolean disabled) {
             _conventions = conventions;
             _thumbprint = thumbprint;
             _name = name;
             _permissions = permissions;
             _clearance = clearance;
+            _disabled = disabled;
         }
 
         @Override
@@ -78,6 +82,7 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
             definition.setPermissions(_permissions);
             definition.setSecurityClearance(_clearance);
             definition.setName(_name);
+            definition.setDisabled(_disabled);
 
             HttpPost request = new HttpPost(url);
 
@@ -101,6 +106,7 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
         private Map<String, DatabaseAccess> permissions;
         private String name;
         private SecurityClearance clearance;
+        private boolean disabled;
 
         public String getThumbprint() {
             return thumbprint;
@@ -132,6 +138,14 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
 
         public void setClearance(SecurityClearance clearance) {
             this.clearance = clearance;
+        }
+
+        public boolean isDisabled() {
+            return disabled;
+        }
+
+        public void setDisabled(boolean disabled) {
+            this.disabled = disabled;
         }
     }
 }

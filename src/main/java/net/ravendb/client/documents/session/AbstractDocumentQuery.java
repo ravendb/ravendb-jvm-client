@@ -2145,7 +2145,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
+        _orderByDistance(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor());
     }
 
     @Override
@@ -2166,7 +2166,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
+        _orderByDistance(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor());
     }
 
     @Override
@@ -2186,7 +2186,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor());
     }
 
     @Override
@@ -2206,7 +2206,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor());
     }
 
     @Override
