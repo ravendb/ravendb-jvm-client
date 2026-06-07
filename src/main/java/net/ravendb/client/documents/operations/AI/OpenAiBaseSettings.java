@@ -41,6 +41,14 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
      */
     private Double temperature;
 
+    /**
+     * Enables sending a {@code prompt_cache_key} field in chat completion requests,
+     * allowing providers that support it to cache and reuse prompt prefixes across
+     * requests with the same key.
+     * When {@code null}, the server applies a provider-specific default.
+     */
+    private Boolean enablePromptCache;
+
     protected OpenAiBaseSettings(String apiKey, String endpoint, String model,
                                  Integer dimensions, Double temperature) {
         this.apiKey = apiKey;
@@ -92,6 +100,14 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
         this.temperature = temperature;
     }
 
+    public Boolean getEnablePromptCache() {
+        return enablePromptCache;
+    }
+
+    public void setEnablePromptCache(Boolean enablePromptCache) {
+        this.enablePromptCache = enablePromptCache;
+    }
+
     /**
      * Returns the base endpoint URI, ensuring it ends with a slash.
      */
@@ -107,10 +123,6 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
     public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(apiKey)) {
             errors.add("Value of 'apiKey' field cannot be empty.");
-        }
-
-        if (StringUtils.isBlank(endpoint)) {
-            errors.add("Value of 'endpoint' field cannot be empty.");
         }
 
         if (StringUtils.isBlank(model)) {
@@ -161,6 +173,11 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
         if (hasTemp != otherHasTemp ||
                 (hasTemp && otherHasTemp &&
                         Math.abs(this.temperature - otherSettings.temperature) > 0.0001)) {
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
+        }
+
+        if (!Objects.equals(this.enablePromptCache, otherSettings.enablePromptCache)) {
             diff.remove(AiSettingsCompareDifferences.None);
             diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }

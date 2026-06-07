@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.AI;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.EnumSet;
 import java.util.Objects;
 
@@ -18,6 +20,26 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
      */
     private String projectId;
 
+    /**
+     * Controls the reasoning depth used by supported models (such as GPT-5 family).
+     * Lower values reduce the amount of internal reasoning performed by the model,
+     * which may improve latency and reduce variability in responses.
+     * <p>
+     * Note that this setting reduces the likelihood of non-deterministic behavior,
+     * but does not guarantee fully deterministic responses.
+     */
+    private OpenAiReasoningEffort reasoningEffort;
+
+    /**
+     * Optional seed used to make the model's sampling more reproducible across requests.
+     * When provided, identical inputs and configuration may produce the same outputs
+     * more consistently across runs.
+     * <p>
+     * This improves response stability (for example in automated tests),
+     * but does not guarantee fully deterministic results due to internal model behavior.
+     */
+    private Integer seed;
+
     private static final String OPENAI_BASE_URI = "https://api.openai.com/";
 
     public OpenAiSettings(String apiKey,
@@ -26,10 +48,24 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
                           String organizationId,
                           String projectId,
                           Integer dimensions,
-                          Double temperature) {
+                          Double temperature,
+                          OpenAiReasoningEffort reasoningEffort,
+                          Integer seed) {
         super(apiKey, endpoint, model, dimensions, temperature);
         this.organizationId = organizationId;
         this.projectId = projectId;
+        this.reasoningEffort = reasoningEffort;
+        this.seed = seed;
+    }
+
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model,
+                          String organizationId,
+                          String projectId,
+                          Integer dimensions,
+                          Double temperature) {
+        this(apiKey, endpoint, model, organizationId, projectId, dimensions, temperature, null, null);
     }
 
     public OpenAiSettings(String apiKey,
@@ -82,9 +118,25 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
         this.projectId = projectId;
     }
 
+    public OpenAiReasoningEffort getReasoningEffort() {
+        return reasoningEffort;
+    }
+
+    public void setReasoningEffort(OpenAiReasoningEffort reasoningEffort) {
+        this.reasoningEffort = reasoningEffort;
+    }
+
+    public Integer getSeed() {
+        return seed;
+    }
+
+    public void setSeed(Integer seed) {
+        this.seed = seed;
+    }
+
     @Override
     public String getBaseEndpointUri() {
-        String uri = super.getBaseEndpointUri();
+        String uri = StringUtils.isBlank(getEndpoint()) ? OPENAI_BASE_URI : super.getBaseEndpointUri();
         if (OPENAI_BASE_URI.equals(uri)) {
             return uri + "v1/";
         }

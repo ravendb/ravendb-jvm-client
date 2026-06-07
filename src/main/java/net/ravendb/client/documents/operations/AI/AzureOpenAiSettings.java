@@ -54,6 +54,10 @@ public final class AzureOpenAiSettings extends OpenAiBaseSettings {
         if (deploymentName == null || deploymentName.trim().isEmpty()) {
             errors.add("Value for 'deploymentName' field cannot be empty.");
         }
+
+        if (getEndpoint() == null || getEndpoint().trim().isEmpty()) {
+            errors.add("Value of 'endpoint' field cannot be empty.");
+        }
     }
 
     @Override
