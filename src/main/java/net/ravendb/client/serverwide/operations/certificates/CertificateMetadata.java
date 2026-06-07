@@ -13,6 +13,7 @@ public class CertificateMetadata {
     private List<String> collectionSecondaryKeys = new ArrayList<>();
     private String collectionPrimaryKey = "";
     private String publicKeyPinningHash;
+    private boolean disabled;
 
     public String getName() {
         return name;
@@ -84,5 +85,13 @@ public class CertificateMetadata {
 
     public void setPublicKeyPinningHash(String publicKeyPinningHash) {
         this.publicKeyPinningHash = publicKeyPinningHash;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 }
