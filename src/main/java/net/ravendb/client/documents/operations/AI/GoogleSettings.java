@@ -3,69 +3,42 @@ package net.ravendb.client.documents.operations.AI;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Objects;
 
 /**
  * Settings for Google AI service.
  */
-public final class GoogleSettings extends AbstractAiSettings {
-    /**
-     * The model that should be used.
-     */
-    private String model;
+public final class GoogleSettings extends OpenAiBaseSettings {
 
-    /**
-     * The API key to use to authenticate with the service.
-     */
-    private String apiKey;
+    private static final String GOOGLE_BASE_URI = "https://generativelanguage.googleapis.com/";
 
     /**
      * The version of Google AI to use.
      */
     private GoogleAIVersion aiVersion;
 
-    /**
-     * The number of dimensions that the model should use.
-     */
-    private Integer dimensions;
+    public GoogleSettings(String model, String apiKey, String endpoint, GoogleAIVersion aiVersion, Integer dimensions, Double temperature) {
+        super(apiKey, endpoint, model, dimensions, temperature);
+        this.aiVersion = aiVersion;
+    }
 
     public GoogleSettings(String model, String apiKey, GoogleAIVersion aiVersion, Integer dimensions) {
-        this.model = model;
-        this.apiKey = apiKey;
-        this.aiVersion = aiVersion;
-        this.dimensions = dimensions;
+        this(model, apiKey, null, aiVersion, dimensions, null);
     }
 
     public GoogleSettings(String model, String apiKey) {
-        this(model, apiKey, null, null);
+        this(model, apiKey, null, null, null, null);
     }
 
     public GoogleSettings(String model, String apiKey, GoogleAIVersion aiVersion) {
-        this(model, apiKey, aiVersion, null);
+        this(model, apiKey, null, aiVersion, null, null);
     }
 
     public GoogleSettings(String model, String apiKey, Integer dimensions) {
-        this(model, apiKey, null, dimensions);
+        this(model, apiKey, null, null, dimensions, null);
     }
 
     public GoogleSettings() {
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
     }
 
     public GoogleAIVersion getAiVersion() {
@@ -76,27 +49,13 @@ public final class GoogleSettings extends AbstractAiSettings {
         this.aiVersion = aiVersion;
     }
 
-    public Integer getDimensions() {
-        return dimensions;
-    }
-
-    public void setDimensions(Integer dimensions) {
-        this.dimensions = dimensions;
-    }
-
     @Override
-    public void validateFields(List<String> errors) {
-        if (StringUtils.isBlank(model)) {
-            errors.add("Value of 'model' field cannot be empty.");
+    public String getBaseEndpointUri() {
+        if (StringUtils.isNotEmpty(getEndpoint())) {
+            return super.getBaseEndpointUri();
         }
 
-        if (StringUtils.isBlank(apiKey)) {
-            errors.add("Value of 'apiKey' field cannot be empty.");
-        }
-
-        if (dimensions != null && dimensions <= 0) {
-            errors.add("Value of 'dimensions' field must be positive.");
-        }
+        return GOOGLE_BASE_URI;
     }
 
     @Override
@@ -106,22 +65,11 @@ public final class GoogleSettings extends AbstractAiSettings {
         }
 
         GoogleSettings otherSettings = (GoogleSettings) other;
-        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
+        EnumSet<AiSettingsCompareDifferences> diff = super.compare(other);
 
-        if (!Objects.equals(this.model, otherSettings.model) ||
-                !Objects.equals(this.aiVersion, otherSettings.aiVersion)) {
+        if (!Objects.equals(this.aiVersion, otherSettings.aiVersion)) {
             diff.remove(AiSettingsCompareDifferences.None);
             diff.add(AiSettingsCompareDifferences.ModelArchitecture);
-        }
-
-        if (!Objects.equals(this.apiKey, otherSettings.apiKey)) {
-            diff.remove(AiSettingsCompareDifferences.None);
-            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
-        }
-
-        if (!Objects.equals(this.dimensions, otherSettings.dimensions)) {
-            diff.remove(AiSettingsCompareDifferences.None);
-            diff.add(AiSettingsCompareDifferences.EmbeddingDimensions);
         }
 
         return diff;
