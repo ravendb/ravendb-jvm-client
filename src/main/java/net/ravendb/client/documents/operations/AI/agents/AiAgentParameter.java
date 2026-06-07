@@ -7,6 +7,8 @@ public class AiAgentParameter {
     private String name;
     private String description;
     private Boolean sendToModel;
+    private AiAgentParameterPolicy policy = AiAgentParameterPolicy.DEFAULT;
+    private AiAgentParameterValueType type = AiAgentParameterValueType.DEFAULT;
 
     public AiAgentParameter() {
     }
@@ -41,6 +43,53 @@ public class AiAgentParameter {
         this.sendToModel = sendToModel;
     }
 
+    /**
+     * Initializes a new agent parameter and controls whether its value should be sent to the LLM,
+     * with policy flags for sub-agent behavior.
+     *
+     * @param name the parameter name; cannot be null or empty.
+     * @param description a human-readable description.
+     * @param sendToModel when {@code false}, the parameter is hidden from the model.
+     * @param policy policy flags for this parameter. Use {@link AiAgentParameterPolicy#FORBID_MODEL_GENERATION}
+     *               to prevent the parent agent from generating a value for this parameter when the agent
+     *               is used as a sub-agent. The value may only be inherited from the parent agent,
+     *               if a parameter with the same name exists.
+     */
+    public AiAgentParameter(String name, String description, Boolean sendToModel, AiAgentParameterPolicy policy) {
+        this(name, description, sendToModel);
+        this.policy = policy;
+    }
+
+    /**
+     * Initializes a new agent parameter with a name, description, and policy flags.
+     *
+     * @param name the parameter name; cannot be null or empty.
+     * @param description a human-readable description.
+     * @param policy policy flags for this parameter. When {@link AiAgentParameterPolicy#FORBID_MODEL_GENERATION}
+     *               is set and this agent is used as a sub-agent, the parent agent cannot generate a value
+     *               for this parameter; it may only be inherited from the parent agent's parameters.
+     */
+    public AiAgentParameter(String name, String description, AiAgentParameterPolicy policy) {
+        this(name, description);
+        this.policy = policy;
+    }
+
+    /**
+     * Initializes a new agent parameter with full control over model visibility, policy, and value type.
+     *
+     * @param name the parameter name; cannot be null or empty.
+     * @param description a human-readable description.
+     * @param sendToModel when {@code false}, the parameter is hidden from the model.
+     * @param policy policy flags for this parameter.
+     * @param type the expected {@link AiAgentParameterValueType} for this parameter. When set to a concrete
+     *             value, the agent validates the provided value against it;
+     *             {@link AiAgentParameterValueType#DEFAULT} disables type validation (backward compatibility).
+     */
+    public AiAgentParameter(String name, String description, Boolean sendToModel, AiAgentParameterPolicy policy, AiAgentParameterValueType type) {
+        this(name, description, sendToModel, policy);
+        this.type = type;
+    }
+
     public Boolean getSendToModel() {
         return sendToModel;
     }
@@ -65,11 +114,35 @@ public class AiAgentParameter {
         this.description = description;
     }
 
+    /**
+     * @return Policy flags defining how this parameter behaves when a sub-agent defines a parameter with the same name.
+     */
+    public AiAgentParameterPolicy getPolicy() {
+        return policy;
+    }
+
+    public void setPolicy(AiAgentParameterPolicy policy) {
+        this.policy = policy;
+    }
+
+    /**
+     * @return The expected JSON value type for this parameter. {@link AiAgentParameterValueType#DEFAULT} disables type validation.
+     */
+    public AiAgentParameterValueType getType() {
+        return type;
+    }
+
+    public void setType(AiAgentParameterValueType type) {
+        this.type = type;
+    }
+
     public Map<String, Object> toJson() {
         Map<String, Object> json = new HashMap<>();
         json.put("Name", this.name);
         json.put("Description", this.description);
         json.put("SendToModel", this.sendToModel);
+        json.put("Policy", this.policy);
+        json.put("Type", this.type);
         return json;
     }
 }

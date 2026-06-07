@@ -4,6 +4,8 @@ public class AiAgentActionRequest {
     private String name;
     private String toolId;
     private String arguments;
+    private AiAgentActionRequestType type = AiAgentActionRequestType.USER_ACTION;
+    private String subConversationId;
 
     public AiAgentActionRequest() {
     }
@@ -36,5 +38,21 @@ public class AiAgentActionRequest {
 
     public void setArguments(String arguments) {
         this.arguments = arguments;
+    }
+
+    public AiAgentActionRequestType getType() {
+        return type;
+    }
+
+    public void setType(AiAgentActionRequestType type) {
+        this.type = type;
+    }
+
+    public String getSubConversationId() {
+        return subConversationId;
+    }
+
+    public void setSubConversationId(String subConversationId) {
+        this.subConversationId = subConversationId;
     }
 }
