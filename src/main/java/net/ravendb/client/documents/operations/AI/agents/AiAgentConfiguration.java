@@ -12,6 +12,7 @@ public class AiAgentConfiguration {
     private String outputSchema;
     private List<AiAgentToolQuery> queries;
     private List<AiAgentToolAction> actions;
+    private List<AiAgentToolSubAgent> subAgents = new ArrayList<>();
     private List<AiAgentParameter> parameters;
     private AiAgentChatTrimmingConfiguration chatTrimming;
     private Integer maxModelIterationsPerCall;
@@ -97,6 +98,23 @@ public class AiAgentConfiguration {
 
     public void setActions(List<AiAgentToolAction> actions) {
         this.actions = actions;
+    }
+
+    /**
+     * Server side sub-agents that the model can also call. Those sub-agents will be invoked and managed as part of the
+     * agent run, including running their own queries, etc. Parameters for the sub-agents will be inherited from the
+     * root agent.
+     * <p>
+     * If there is an action defined in the sub-agent, it will return all the way to the client code for handling.
+     *
+     * @return the sub-agents this agent can call
+     */
+    public List<AiAgentToolSubAgent> getSubAgents() {
+        return subAgents;
+    }
+
+    public void setSubAgents(List<AiAgentToolSubAgent> subAgents) {
+        this.subAgents = subAgents;
     }
 
     public List<AiAgentParameter> getParameters() {
