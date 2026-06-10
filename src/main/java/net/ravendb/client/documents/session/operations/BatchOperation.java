@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
 
 public class BatchOperation {
 
@@ -68,20 +67,6 @@ public class BatchOperation {
     }
 
     public void setResult(BatchCommandResult result) {
-
-        Function<ObjectNode, CommandType> getCommandType = batchResult -> {
-            JsonNode type = batchResult.get("Type");
-
-            if (type == null || !type.isTextual()) {
-                return CommandType.NONE;
-            }
-
-            String typeAsString = type.asText();
-
-            CommandType commandType = CommandType.parseCSharpValue(typeAsString);
-            return commandType;
-        };
-
         if (result.getResults() == null) {
             throwOnNullResults();
             return;
@@ -96,92 +81,118 @@ public class BatchOperation {
             }
         }
 
+        handleBatchOperationResult(result, 0, _sessionCommandsCount, false);
+        handleBatchOperationResult(result, _sessionCommandsCount, _allCommandsCount, true);
+
+        finalizeResult();
+    }
+
+    private void handleBatchOperationResult(BatchCommandResult result, int start, int end, boolean isDeferred) {
         int skip = 0;
 
-        for (int i = 0; i < _sessionCommandsCount; i++) {
+        for (int i = start; i < end; i++) {
             ObjectNode batchResult = (ObjectNode) result.getResults().get(i);
             if (batchResult == null) {
                 continue;
             }
 
-            CommandType type = getCommandType.apply(batchResult);
-
-            switch (type) {
-                case PUT:
-                    handlePut(i - skip, batchResult, false);
-                    break;
-                case FORCE_REVISION_CREATION:
-                    handleForceRevisionCreation(batchResult);
-                    break;
-                case DELETE:
-                    handleDelete(batchResult);
-                    break;
-                case COMPARE_EXCHANGE_PUT:
-                    handleCompareExchangePut(batchResult);
-                    break;
-                case COMPARE_EXCHANGE_DELETE:
-                    handleCompareExchangeDelete(batchResult);
-                    break;
-                case BATCH_TRACK_CHANGES:
-                    skip++;
-                    break;
-                default:
-                    throw new IllegalStateException("Command " + type + " is not supported");
+            if (isDeferred) {
+                handleDeferredCommand(i, batchResult);
+            } else {
+                skip = handleSessionCommand(i, batchResult, skip);
             }
         }
+    }
 
-        for (int i = _sessionCommandsCount; i < _allCommandsCount; i++) {
-            ObjectNode batchResult = (ObjectNode) result.getResults().get(i);
-            if (batchResult == null) {
-                continue;
-            }
+    private int handleSessionCommand(int index, ObjectNode batchResult, int skip) {
+        CommandType type = getCommandType(batchResult);
 
-            CommandType type = getCommandType.apply(batchResult);
-
-            switch (type) {
-                case PUT:
-                    handlePut(i, batchResult, true);
-                    break;
-                case DELETE:
-                    handleDelete(batchResult);
-                    break;
-                case PATCH:
-                    handlePatch(batchResult);
-                    break;
-                case ATTACHMENT_PUT:
-                    handleAttachmentPut(batchResult);
-                    break;
-                case ATTACHMENT_DELETE:
-                    handleAttachmentDelete(batchResult);
-                    break;
-                case ATTACHMENT_MOVE:
-                    handleAttachmentMove(batchResult);
-                    break;
-                case ATTACHMENT_COPY:
-                    handleAttachmentCopy(batchResult);
-                    break;
-                case COMPARE_EXCHANGE_PUT:
-                case COMPARE_EXCHANGE_DELETE:
-                case FORCE_REVISION_CREATION:
-                    break;
-                case COUNTERS:
-                    handleCounters(batchResult);
-                    break;
-                case TIME_SERIES:
-                case TIME_SERIES_WITH_INCREMENTS:
-                    //TODO: RavenDB-13474 add to time series cache
-                    break;
-                case TIME_SERIES_COPY:
-                    break;
-                case BATCH_PATCH:
-                    break;
-                case BATCH_TRACK_CHANGES:
-                    break;
-                default:
-                    throw new IllegalStateException("Command " + type + " is not supported");
-            }
+        switch (type) {
+            case PUT:
+                handlePut(index - skip, batchResult, false);
+                break;
+            case FORCE_REVISION_CREATION:
+                handleForceRevisionCreation(batchResult);
+                break;
+            case DELETE:
+                handleDelete(batchResult);
+                break;
+            case COMPARE_EXCHANGE_PUT:
+                handleCompareExchangePut(batchResult);
+                break;
+            case COMPARE_EXCHANGE_DELETE:
+                handleCompareExchangeDelete(batchResult);
+                break;
+            case BATCH_TRACK_CHANGES:
+                skip++;
+                break;
+            default:
+                throw new IllegalStateException("Command " + type + " is not supported");
         }
-        finalizeResult();
+
+        return skip;
+    }
+
+    private void handleDeferredCommand(int index, ObjectNode batchResult) {
+        CommandType type = getCommandType(batchResult);
+
+        switch (type) {
+            case PUT:
+                handlePut(index, batchResult, true);
+                break;
+            case DELETE:
+                handleDelete(batchResult);
+                break;
+            case PATCH:
+                handlePatch(batchResult);
+                break;
+            case JSON_PATCH:
+                handleJsonPatch(batchResult);
+                break;
+            case ATTACHMENT_PUT:
+                handleAttachmentPut(batchResult);
+                break;
+            case ATTACHMENT_DELETE:
+                handleAttachmentDelete(batchResult);
+                break;
+            case ATTACHMENT_MOVE:
+                handleAttachmentMove(batchResult);
+                break;
+            case ATTACHMENT_COPY:
+                handleAttachmentCopy(batchResult);
+                break;
+            case COMPARE_EXCHANGE_PUT:
+            case COMPARE_EXCHANGE_DELETE:
+            case FORCE_REVISION_CREATION:
+                break;
+            case COUNTERS:
+                handleCounters(batchResult);
+                break;
+            case TIME_SERIES:
+            case TIME_SERIES_WITH_INCREMENTS:
+                //TODO: RavenDB-13474 add to time series cache
+                break;
+            case TIME_SERIES_COPY:
+                break;
+            case BATCH_PATCH:
+                break;
+            case BATCH_TRACK_CHANGES:
+                break;
+            default:
+                throw new IllegalStateException("Command " + type + " is not supported");
+        }
+    }
+
+    private CommandType getCommandType(ObjectNode batchResult) {
+        JsonNode type = batchResult.get("Type");
+
+        if (type == null || !type.isTextual()) {
+            return CommandType.NONE;
+        }
+
+        String typeAsString = type.asText();
+
+        return CommandType.parseCSharpValue(typeAsString);
     }
 
     private void finalizeResult() {
@@ -363,6 +374,58 @@ public class BatchOperation {
 
                 String changeVector = getStringField(batchResult, CommandType.PATCH, "ChangeVector");
                 String lastModified = getStringField(batchResult, CommandType.PATCH, "LastModified");
+
+                documentInfo.setChangeVector(changeVector);
+
+                documentInfo.getMetadata().put(Constants.Documents.Metadata.ID, id);
+                documentInfo.getMetadata().put(Constants.Documents.Metadata.CHANGE_VECTOR, changeVector);
+                documentInfo.getMetadata().put(Constants.Documents.Metadata.LAST_MODIFIED, lastModified);
+
+                documentInfo.setDocument(document);
+                applyMetadataModifications(id, documentInfo);
+
+                if (documentInfo.getEntity() != null) {
+                    _session.getEntityToJson().populateEntity(documentInfo.getEntity(), id, documentInfo.getDocument());
+                    AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
+                    _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
+                }
+
+                break;
+        }
+    }
+
+    private void handleJsonPatch(ObjectNode batchResult) {
+        JsonNode patchStatus = batchResult.get("PatchStatus");
+        if (patchStatus == null || patchStatus.isNull()) {
+            throwMissingField(CommandType.JSON_PATCH, "PatchStatus");
+        }
+
+        PatchStatus status;
+        try {
+            status = JsonExtensions.getDefaultMapper().convertValue(patchStatus, PatchStatus.class);
+        } catch (IllegalArgumentException e) {
+            throwInvalidValue(patchStatus.asText(), "PatchStatus");
+            return;
+        }
+
+        switch (status) {
+            case PATCHED:
+                ObjectNode document = (ObjectNode) batchResult.get("ModifiedDocument");
+                if (document == null) {
+                    return;
+                }
+
+                String id = getStringField(batchResult, CommandType.JSON_PATCH, "Id");
+
+                DocumentInfo sessionDocumentInfo = _session.documentsById.getValue(id);
+                if (sessionDocumentInfo == null) {
+                    return;
+                }
+
+                DocumentInfo documentInfo = getOrAddModifications(id, sessionDocumentInfo, true);
+
+                String changeVector = getStringField(batchResult, CommandType.JSON_PATCH, "ChangeVector");
+                String lastModified = getStringField(batchResult, CommandType.JSON_PATCH, "LastModified");
 
                 documentInfo.setChangeVector(changeVector);
 

@@ -150,7 +150,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
 
         private final RunConversationOperation<TAnswer> parent;
         private final DocumentConventions conventions;
-        private String raftId;
+        private String raftId = "";
         private LinkedHashSet<InputStream> uniqueAttachmentStreams;
 
         public RunConversationCommand(RunConversationOperation<TAnswer> parent, DocumentConventions conventions) {
@@ -160,6 +160,10 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
 
             if (parent.getStreamPropertyPath() != null)
                 this.responseType = RavenCommandResponseType.RAW;
+
+            if (this.parent.getConversationId().charAt(this.parent.getConversationId().length() - 1) == '|') {
+                this.raftId = UUID.randomUUID().toString();
+            }
 
             if (parent.getAttachmentsCommands() != null) {
                 for (ICommandData command : parent.getAttachmentsCommands()) {
@@ -191,10 +195,6 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                     .append("/ai/agent?")
                     .append("conversationId=").append(UrlUtils.escapeDataString(this.parent.getConversationId()))
                     .append("&agentId=").append(UrlUtils.escapeDataString(this.parent.getAgentId()));
-
-            if (this.parent.getConversationId().charAt(this.parent.getConversationId().length() - 1) == '|') {
-                this.raftId = UUID.randomUUID().toString();
-            }
 
             if (this.parent.getChangeVector() != null && !this.parent.getChangeVector().isEmpty()) {
                 uriBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(this.parent.getChangeVector()));
