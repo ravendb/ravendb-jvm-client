@@ -419,8 +419,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
         assertThat(errors.size()).isGreaterThan(0);
         assertThat(errors.stream().anyMatch(e -> e.contains("apiKey"))).isTrue();
-        assertThat(errors.stream().anyMatch(e -> e.contains("endpoint"))).isTrue();
         assertThat(errors.stream().anyMatch(e -> e.contains("model"))).isTrue();
+        // endpoint is no longer required: when blank it defaults to https://api.openai.com/v1/
+        assertThat(errors.stream().anyMatch(e -> e.contains("endpoint"))).isFalse();
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
