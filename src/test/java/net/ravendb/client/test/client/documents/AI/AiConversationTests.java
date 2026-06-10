@@ -123,8 +123,6 @@ public class AiConversationTests extends RemoteTestBase {
             }
 
             conv.addActionResponse("tool2", "other response");
-            assertThat(conv.getActionResponses())
-                    .hasSize(2);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -297,8 +295,6 @@ public class AiConversationTests extends RemoteTestBase {
 
             Map<String, Object> argsMap = (Map<String, Object>) capturedArgs.get();
             assertThat(argsMap.get("value")).isEqualTo("test-data");
-
-            assertThat(conv.getActionResponses()).isNotEmpty();
         }
     }
 
@@ -327,7 +323,6 @@ public class AiConversationTests extends RemoteTestBase {
             conv.getInvocations().get("sync-action").invoke(request).join();
 
             assertThat(handlerCalled.get()).isTrue();
-            assertThat(conv.getActionResponses()).isNotEmpty();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -38,13 +38,6 @@ public class AiConversation {
     private final Map<String, IActionInvocation> invocations = new HashMap<>();
     private Consumer<UnhandledActionEventArgs> onUnhandledAction;
 
-    public List<AiAgentActionResponse> getActionResponses() { return new ArrayList<>(actionResponses.values()); }
-    public void setActionResponses(List<AiAgentActionResponse> actionResponses) {
-        for (AiAgentActionResponse actionResponse : actionResponses) {
-            this.actionResponses.put(actionResponse.getToolId(), actionResponse);
-        }
-    }
-
     public Map<String, IActionInvocation> getInvocations() { return invocations; }
     public void setInvocations(Map<String, IActionInvocation> invocations) { this.invocations.putAll(invocations); }
 
