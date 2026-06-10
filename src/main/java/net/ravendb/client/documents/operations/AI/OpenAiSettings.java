@@ -136,7 +136,7 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
 
     @Override
     public String getBaseEndpointUri() {
-        String uri = StringUtils.isBlank(getEndpoint()) ? OPENAI_BASE_URI : super.getBaseEndpointUri();
+        String uri = StringUtils.isEmpty(getEndpoint()) ? OPENAI_BASE_URI : super.getBaseEndpointUri();
         if (OPENAI_BASE_URI.equals(uri)) {
             return uri + "v1/";
         }

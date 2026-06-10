@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.AI;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -28,7 +27,7 @@ public class AiConversationCreationOptions {
 
     public AiConversationCreationOptions(Map<String, Object> parameters, Integer expirationInSec) {
         if (parameters != null) {
-            this.parameters = new LinkedHashMap<>();
+            this.parameters = new HashMap<>();
             for (Map.Entry<String, Object> entry : parameters.entrySet()) {
                 Object value = entry.getValue();
                 this.parameters.put(entry.getKey(), value instanceof AiConversationParameter
