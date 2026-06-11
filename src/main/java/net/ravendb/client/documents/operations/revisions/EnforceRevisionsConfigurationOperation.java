@@ -28,6 +28,7 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
          */
         private boolean includeForceCreated;
         private String[] collections;
+        private Integer maxOpsPerSecond;
 
         public boolean isIncludeForceCreated() {
             return includeForceCreated;
@@ -43,6 +44,23 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
 
         public void setCollections(String[] collections) {
             this.collections = collections;
+        }
+
+        /**
+         * Limits the number of documents processed per second.
+         * Use this to throttle the operation and reduce resource consumption on large datasets.
+         * Default is {@code null} (no throttling).
+         * @return Maximum operations per second
+         */
+        public Integer getMaxOpsPerSecond() {
+            return maxOpsPerSecond;
+        }
+
+        public void setMaxOpsPerSecond(Integer maxOpsPerSecond) {
+            if (maxOpsPerSecond != null && maxOpsPerSecond <= 0) {
+                throw new IllegalStateException("MaxOpsPerSecond must be greater than 0");
+            }
+            this.maxOpsPerSecond = maxOpsPerSecond;
         }
     }
 
