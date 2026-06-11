@@ -68,6 +68,9 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
         public HttpUriRequestBase createRequest(ServerNode node) {
             String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub/access?name=" + UrlUtils.escapeDataString(_hubName);
 
+            _access.setAllowedHubToSinkPaths(PullReplicationPathFilterUtils.normalizeAndValidate(_access.getAllowedHubToSinkPaths(), _access.getName()));
+            _access.setAllowedSinkToHubPaths(PullReplicationPathFilterUtils.normalizeAndValidate(_access.getAllowedSinkToHubPaths(), _access.getName()));
+
             HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {

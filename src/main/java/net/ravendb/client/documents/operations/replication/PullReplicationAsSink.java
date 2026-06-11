@@ -3,7 +3,12 @@ package net.ravendb.client.documents.operations.replication;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.util.Base64;
 import java.util.EnumSet;
+import java.util.Enumeration;
 
 public class PullReplicationAsSink extends ExternalReplicationBase {
 
@@ -84,5 +89,28 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
 
     public void setHubName(String hubName) {
         this.hubName = hubName;
+    }
+
+    boolean hasPrivateKey() {
+        try {
+            byte[] certBytes = Base64.getDecoder().decode(certificateWithPrivateKey);
+            char[] password = certificatePassword != null ? certificatePassword.toCharArray() : new char[0];
+
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            try (InputStream stream = new ByteArrayInputStream(certBytes)) {
+                keyStore.load(stream, password);
+            }
+
+            Enumeration<String> aliases = keyStore.aliases();
+            while (aliases.hasMoreElements()) {
+                if (keyStore.isKeyEntry(aliases.nextElement())) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to inspect certificate for a private key", e);
+        }
     }
 }
