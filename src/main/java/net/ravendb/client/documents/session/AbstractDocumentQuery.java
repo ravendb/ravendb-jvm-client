@@ -1198,9 +1198,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param ordering Ordering type
      */
     public void _orderBy(String field, OrderingType ordering) {
+        _orderBy(field, NullsOrdering.DEFAULT, ordering);
+    }
+
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field field to use in order
+     * @param nulls Null values placement (Corax indexes only)
+     * @param ordering Ordering type
+     */
+    public void _orderBy(String field, NullsOrdering nulls, OrderingType ordering) {
         assertNoRawQuery();
         String f = ensureValidFieldName(field, false);
-        orderByTokens.add(OrderByToken.createAscending(f, ordering));
+        orderByTokens.add(OrderByToken.createAscending(f, ordering, nulls));
     }
 
     public void _orderByDescending(String field, String sorterName) {
@@ -1231,9 +1243,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param ordering Ordering type
      */
     public void _orderByDescending(String field, OrderingType ordering) {
+        _orderByDescending(field, NullsOrdering.DEFAULT, ordering);
+    }
+
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by descending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field Field to use
+     * @param nulls Null values placement (Corax indexes only)
+     * @param ordering Ordering type
+     */
+    public void _orderByDescending(String field, NullsOrdering nulls, OrderingType ordering) {
         assertNoRawQuery();
         String f = ensureValidFieldName(field, false);
-        orderByTokens.add(OrderByToken.createDescending(f, ordering));
+        orderByTokens.add(OrderByToken.createDescending(f, ordering, nulls));
     }
 
     public void _orderByScore() {
@@ -2140,84 +2164,144 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
+        _orderByDistance(field, latitude, longitude, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls) {
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor());
+        _orderByDistance(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor(), nulls);
     }
 
     @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude) {
-        _orderByDistance(fieldName, latitude, longitude, 0);
+        _orderByDistance(fieldName, latitude, longitude, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, double latitude, double longitude, NullsOrdering nulls) {
+        _orderByDistance(fieldName, latitude, longitude, 0, nulls);
     }
 
     @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor) {
+        _orderByDistance(fieldName, latitude, longitude, roundFactor, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls) {
         String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName, nulls));
     }
 
     @Override
     public void _orderByDistance(DynamicSpatialField field, String shapeWkt) {
+        _orderByDistance(field, shapeWkt, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls) {
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor());
+        _orderByDistance(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor(), nulls);
     }
 
     @Override
     public void _orderByDistance(String fieldName, String shapeWkt) {
-        _orderByDistance(fieldName, shapeWkt, 0);
+        _orderByDistance(fieldName, shapeWkt, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, String shapeWkt, NullsOrdering nulls) {
+        _orderByDistance(fieldName, shapeWkt, 0, nulls);
     }
 
     @Override
     public void _orderByDistance(String fieldName, String shapeWkt, double roundFactor) {
+        _orderByDistance(fieldName, shapeWkt, roundFactor, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls) {
         String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt), roundFactorParameterName));
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt), roundFactorParameterName, nulls));
     }
 
     @Override
     public void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
+        _orderByDistanceDescending(field, latitude, longitude, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls) {
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor());
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), latitude, longitude, field.getRoundFactor(), nulls);
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
-        _orderByDistanceDescending(fieldName, latitude, longitude, 0);
+        _orderByDistanceDescending(fieldName, latitude, longitude, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, double latitude, double longitude, NullsOrdering nulls) {
+        _orderByDistanceDescending(fieldName, latitude, longitude, 0, nulls);
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor) {
+        _orderByDistanceDescending(fieldName, latitude, longitude, roundFactor, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls) {
         String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName, nulls));
     }
 
     @Override
     public void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
+        _orderByDistanceDescending(field, shapeWkt, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls) {
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor());
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), shapeWkt, field.getRoundFactor(), nulls);
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
-        _orderByDistanceDescending(fieldName, shapeWkt, 0);
+        _orderByDistanceDescending(fieldName, shapeWkt, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, String shapeWkt, NullsOrdering nulls) {
+        _orderByDistanceDescending(fieldName, shapeWkt, 0, nulls);
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor) {
+        _orderByDistanceDescending(fieldName, shapeWkt, roundFactor, NullsOrdering.DEFAULT);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls) {
         String factorParamName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt), factorParamName));
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt), factorParamName, nulls));
     }
 
     private void assertIsDynamicQuery(DynamicSpatialField dynamicField, String methodName) {

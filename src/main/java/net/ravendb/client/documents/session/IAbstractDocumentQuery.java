@@ -365,11 +365,15 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _orderBy(String field, OrderingType ordering);
 
+    void _orderBy(String field, NullsOrdering nulls, OrderingType ordering);
+
     void _orderByDescending(String field);
 
     void _orderByDescending(String field, String sorterName);
 
     void _orderByDescending(String field, OrderingType ordering);
+
+    void _orderByDescending(String field, NullsOrdering nulls, OrderingType ordering);
 
     void _orderByScore();
 
@@ -439,28 +443,40 @@ public interface IAbstractDocumentQuery<T> {
     void _spatial(String fieldName, SpatialCriteria criteria);
 
     void _orderByDistance(DynamicSpatialField field, double latitude, double longitude);
-
-    void _orderByDistance(String fieldName, double latitude, double longitude);
-
-    void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
+    void _orderByDistance(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls);
 
     void _orderByDistance(DynamicSpatialField field, String shapeWkt);
+    void _orderByDistance(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls);
+
+    void _orderByDistance(String fieldName, double latitude, double longitude);
+    void _orderByDistance(String fieldName, double latitude, double longitude, NullsOrdering nulls);
+
+    void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
+    void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls);
 
     void _orderByDistance(String fieldName, String shapeWkt);
+    void _orderByDistance(String fieldName, String shapeWkt, NullsOrdering nulls);
 
     void _orderByDistance(String fieldName, String shapeWkt, double roundFactor);
+    void _orderByDistance(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls);
 
     void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
-
-    void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
-
-    void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
+    void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls);
 
     void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
+    void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls);
+
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude, NullsOrdering nulls);
+
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
+    void _orderByDistanceDescending(String fieldName, String shapeWkt, NullsOrdering nulls);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor);
+    void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls);
 
     void _aggregateBy(FacetBase facet);
 

@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session.tokens;
 
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.session.NullsOrdering;
 import net.ravendb.client.documents.session.OrderingType;
 
 public class OrderByToken extends QueryToken {
@@ -9,12 +10,14 @@ public class OrderByToken extends QueryToken {
     private final boolean _descending;
     private final String _sorterName;
     private final OrderingType _ordering;
+    private final NullsOrdering _nullsOrdering;
     private final boolean _isMethodField;
 
-    private OrderByToken(String fieldName, boolean descending, OrderingType ordering, boolean isMethodField) {
+    private OrderByToken(String fieldName, boolean descending, OrderingType ordering, NullsOrdering nullsOrdering, boolean isMethodField) {
         _fieldName = fieldName;
         _descending = descending;
         _ordering = ordering;
+        _nullsOrdering = nullsOrdering;
         _sorterName = null;
         _isMethodField = isMethodField;
     }
@@ -24,32 +27,49 @@ public class OrderByToken extends QueryToken {
         _descending = descending;
         _sorterName = sorterName;
         _ordering = null;
+        _nullsOrdering = NullsOrdering.DEFAULT;
         _isMethodField = isMethodField;
     }
 
-    public static final OrderByToken random = new OrderByToken("random()", false, OrderingType.STRING, true);
+    public static final OrderByToken random = new OrderByToken("random()", false, OrderingType.STRING, NullsOrdering.DEFAULT, true);
 
-    public static final OrderByToken scoreAscending = new OrderByToken("score()", false, OrderingType.STRING, true);
+    public static final OrderByToken scoreAscending = new OrderByToken("score()", false, OrderingType.STRING, NullsOrdering.DEFAULT, true);
 
-    public static final OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING, true);
+    public static final OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING, NullsOrdering.DEFAULT, true);
 
     public static OrderByToken createDistanceAscending(String fieldName, String latitudeParameterName, String longitudeParameterName, String roundFactorParameterName) {
+        return createDistanceAscending(fieldName, latitudeParameterName, longitudeParameterName, roundFactorParameterName, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createDistanceAscending(String fieldName, String latitudeParameterName, String longitudeParameterName, String roundFactorParameterName, NullsOrdering nulls) {
         return new OrderByToken("spatial.distance(" + fieldName + ", spatial.point($" + latitudeParameterName + ", $" + longitudeParameterName + ")" + (roundFactorParameterName == null ? "" : ", $" + roundFactorParameterName) + ")",
-                false, OrderingType.STRING, true);
+                false, OrderingType.STRING, nulls, true);
     }
 
     public static OrderByToken createDistanceAscending(String fieldName, String shapeWktParameterName, String roundFactorParameterName) {
+        return createDistanceAscending(fieldName, shapeWktParameterName, roundFactorParameterName, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createDistanceAscending(String fieldName, String shapeWktParameterName, String roundFactorParameterName, NullsOrdering nulls) {
         return new OrderByToken("spatial.distance(" + fieldName + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName == null ? "" : ", $" + roundFactorParameterName) + ")",
-                false, OrderingType.STRING, true);
+                false, OrderingType.STRING, nulls, true);
     }
 
     public static OrderByToken createDistanceDescending(String fieldName, String latitudeParameterName, String longitudeParameterName, String roundFactorParameterName) {
+        return createDistanceDescending(fieldName, latitudeParameterName, longitudeParameterName, roundFactorParameterName, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createDistanceDescending(String fieldName, String latitudeParameterName, String longitudeParameterName, String roundFactorParameterName, NullsOrdering nulls) {
         return new OrderByToken("spatial.distance(" + fieldName + ", spatial.point($" + latitudeParameterName + ", $" + longitudeParameterName + ")" + (roundFactorParameterName == null ? "" : ", $" + roundFactorParameterName) + ")",
-                true, OrderingType.STRING, true);
+                true, OrderingType.STRING, nulls, true);
     }
 
     public static OrderByToken createDistanceDescending(String fieldName, String shapeWktParameterName, String roundFactorParameterName) {
-        return new OrderByToken("spatial.distance(" + fieldName + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName == null ? "" : ", $" + roundFactorParameterName) + ")", true, OrderingType.STRING, true);
+        return createDistanceDescending(fieldName, shapeWktParameterName, roundFactorParameterName, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createDistanceDescending(String fieldName, String shapeWktParameterName, String roundFactorParameterName, NullsOrdering nulls) {
+        return new OrderByToken("spatial.distance(" + fieldName + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName == null ? "" : ", $" + roundFactorParameterName) + ")", true, OrderingType.STRING, nulls, true);
     }
 
     public static OrderByToken createRandom(String seed) {
@@ -57,7 +77,7 @@ public class OrderByToken extends QueryToken {
             throw new IllegalArgumentException("seed cannot be null");
         }
 
-        return new OrderByToken("random('" + seed.replaceAll("'", "''") + "')", false, OrderingType.STRING, true);
+        return new OrderByToken("random('" + seed.replaceAll("'", "''") + "')", false, OrderingType.STRING, NullsOrdering.DEFAULT, true);
     }
 
     public static OrderByToken createAscending(String fieldName, String sorterName) {
@@ -65,7 +85,11 @@ public class OrderByToken extends QueryToken {
     }
 
     public static OrderByToken createAscending(String fieldName, OrderingType ordering) {
-        return new OrderByToken(fieldName, false, ordering, false);
+        return createAscending(fieldName, ordering, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createAscending(String fieldName, OrderingType ordering, NullsOrdering nulls) {
+        return new OrderByToken(fieldName, false, ordering, nulls, false);
     }
 
     public static OrderByToken createDescending(String fieldName, String sorterName) {
@@ -73,7 +97,11 @@ public class OrderByToken extends QueryToken {
     }
 
     public static OrderByToken createDescending(String fieldName, OrderingType ordering) {
-        return new OrderByToken(fieldName, true, ordering, false);
+        return createDescending(fieldName, ordering, NullsOrdering.DEFAULT);
+    }
+
+    public static OrderByToken createDescending(String fieldName, OrderingType ordering, NullsOrdering nulls) {
+        return new OrderByToken(fieldName, true, ordering, nulls, false);
     }
 
     @Override
@@ -107,6 +135,15 @@ public class OrderByToken extends QueryToken {
         if (_descending) { // we only add this if we have to, ASC is the default and reads nicer
             writer.append(" desc");
         }
+
+        switch (_nullsOrdering) {
+            case FIRST:
+                writer.append(" nulls first");
+                break;
+            case LAST:
+                writer.append(" nulls last");
+                break;
+        }
     }
 
     public OrderByToken addAlias(String alias) {
@@ -122,7 +159,7 @@ public class OrderByToken extends QueryToken {
         if (_sorterName != null) {
             return new OrderByToken(aliasedName, _descending, _sorterName, false);
         } else {
-            return new OrderByToken(aliasedName, _descending, _ordering, false);
+            return new OrderByToken(aliasedName, _descending, _ordering, _nullsOrdering, false);
         }
     }
 }
