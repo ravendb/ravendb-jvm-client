@@ -126,6 +126,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderBy(String field, OrderingType ordering);
 
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by ascending.
+     * @param field Field to use in order by
+     * @param nulls Null values placement (Corax indexes only)
+     * @param ordering Ordering type
+     * @return Query instance
+     */
+    TSelf orderBy(String field, NullsOrdering nulls, OrderingType ordering);
+
     //TBD expr TSelf OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
     //TBD expr TSelf OrderBy<TValue>(Expression<Func<T, TValue>> propertySelector, string sorterName);
 
@@ -154,6 +164,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * @return Query instance
      */
     TSelf orderByDescending(String field, OrderingType ordering);
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by descending.
+     * @param field Field to use in order by
+     * @param nulls Null values placement (Corax indexes only)
+     * @param ordering Ordering type
+     * @return Query instance
+     */
+    TSelf orderByDescending(String field, NullsOrdering nulls, OrderingType ordering);
 
     //TBD expr TSelf OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
     //TBD expr TSelf OrderByDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string sorterName);
@@ -203,9 +223,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(DynamicSpatialField field, double latitude, double longitude);
 
+    TSelf orderByDistance(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls);
+
     //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
 
     TSelf orderByDistance(DynamicSpatialField field, String shapeWkt);
+
+    TSelf orderByDistance(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls);
 
     //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
@@ -220,6 +244,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(String fieldName, double latitude, double longitude);
 
+    TSelf orderByDistance(String fieldName, double latitude, double longitude, NullsOrdering nulls);
+
     /**
      * Sorts the query results by distance.
      * @param fieldName Field name to use in order by
@@ -229,6 +255,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * @return Query instance
      */
     TSelf orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
+
+    TSelf orderByDistance(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls);
 
 
     //TBD expr TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
@@ -241,6 +269,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(String fieldName, String shapeWkt);
 
+    TSelf orderByDistance(String fieldName, String shapeWkt, NullsOrdering nulls);
+
     /**
      * Sorts the query results by distance.
      * @param field Field to use in order by
@@ -250,9 +280,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
 
+    TSelf orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude, NullsOrdering nulls);
+
     //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
 
     TSelf orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
+
+    TSelf orderByDistanceDescending(DynamicSpatialField field, String shapeWkt, NullsOrdering nulls);
 
     //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
@@ -267,6 +301,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude);
 
+    TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude, NullsOrdering nulls);
+
     /**
      * Sorts the query results by distance.
      * @param fieldName Field name to use in order by
@@ -277,6 +313,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
 
+    TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor, NullsOrdering nulls);
+
     //TBD expr TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
     /**
@@ -286,4 +324,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * @return Query instance
      */
     TSelf orderByDistanceDescending(String fieldName, String shapeWkt);
+
+    TSelf orderByDistanceDescending(String fieldName, String shapeWkt, NullsOrdering nulls);
 }
