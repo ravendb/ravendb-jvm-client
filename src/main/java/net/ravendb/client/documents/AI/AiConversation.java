@@ -14,9 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -36,6 +38,7 @@ public class AiConversation {
     private String changeVector;
 
     private final Map<String, IActionInvocation> invocations = new HashMap<>();
+    private final Set<String> dispatchedToolIds = new HashSet<>();
     private Consumer<UnhandledActionEventArgs> onUnhandledAction;
 
     public Map<String, IActionInvocation> getInvocations() { return invocations; }
@@ -293,6 +296,10 @@ public class AiConversation {
                 }
 
                 for (AiAgentActionRequest action : actionRequests) {
+                    if (!dispatchedToolIds.add(action.getToolId())) {
+                        continue;
+                    }
+
                     IActionInvocation invocation = invocations.get(action.getName());
                     try {
                         if (invocation != null) {
@@ -327,6 +334,8 @@ public class AiConversation {
 
     public <TAnswer> CompletableFuture<AiAnswer<TAnswer>> run() {
         return CompletableFuture.supplyAsync(() -> {
+            this.dispatchedToolIds.clear();
+
             while (true) {
                 @SuppressWarnings("unchecked")
                 AiAnswer<TAnswer> result = (AiAnswer<TAnswer>) runInternal(null, null).join();
@@ -340,6 +349,10 @@ public class AiConversation {
                 }
 
                 for (AiAgentActionRequest action : this.actionRequests) {
+                    if (!this.dispatchedToolIds.add(action.getToolId())) {
+                        continue;
+                    }
+
                     IActionInvocation invocation = this.invocations.get(action.getName());
                     if (invocation != null) {
                         try {
@@ -372,7 +385,7 @@ public class AiConversation {
 
     private <TAnswer> CompletableFuture<AiAnswer<TAnswer>> runInternal(String streamPropertyPath, AiStreamCallback streamCallback) {
         try {
-            if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty() && this.attachmentsCommands.isEmpty()) {
+            if (this.actionRequests != null && this.actionRequests.isEmpty() && this.promptParts.isEmpty() && this.actionResponses.isEmpty() && this.attachmentsCommands.isEmpty()) {
                 AiAnswer<TAnswer> doneAnswer = new AiAnswer<>();
                 doneAnswer.setStatus(AiConversationResult.Done);
                 return CompletableFuture.completedFuture(doneAnswer);
