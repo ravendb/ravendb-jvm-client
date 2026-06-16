@@ -219,12 +219,12 @@ public class ExceptionDispatcher {
         }
 
         JsonNode expectedChangeVectorNode = json.get("ExpectedChangeVector");
-        if (expectedChangeVectorNode != null) {
+        if (expectedChangeVectorNode != null && !expectedChangeVectorNode.isNull()) {
             concurrencyException.setExpectedChangeVector(expectedChangeVectorNode.asText());
         }
 
         JsonNode actualChangeVectorNode = json.get("ActualChangeVector");
-        if (actualChangeVectorNode != null) {
+        if (actualChangeVectorNode != null && !actualChangeVectorNode.isNull()) {
             concurrencyException.setActualChangeVector(actualChangeVectorNode.asText());
         }
 

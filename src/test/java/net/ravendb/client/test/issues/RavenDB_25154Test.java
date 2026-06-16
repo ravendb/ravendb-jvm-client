@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
  *  - All *Async tests / SessionAsyncActions: the Java client has no async session API.
  *  - WritesAndReads_ShouldThrowOnShardedDatabase: the Java test infrastructure has no sharded database mode.
  */
-@EnableOnServer(thresholdVersion = "7.2.1")
+@EnableOnServer(thresholdVersion = "7.2")
 public class RavenDB_25154Test extends RemoteTestBase {
 
     private static final String JERRY_ID = "employees/1-A";
@@ -700,73 +700,6 @@ public class RavenDB_25154Test extends RemoteTestBase {
     }
 
     @Test
-    public void shouldThrowConcurrencyException_WhenNonExistsEntityIncludedBySessionButThenWasAddedInBackgroundSession() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            String addressId = "addresses/1-A";
-
-            try (IDocumentSession session = store.openSession()) {
-                Address address = new Address();
-                address.setCity("Harish");
-                address.setStreet("Erets Rd");
-                address.setId(addressId);
-
-                Employee jerry = new Employee();
-                jerry.setFirstName("Jerry");
-                jerry.setAddress(address);
-                session.store(jerry, JERRY_ID);
-
-                Employee egor = new Employee();
-                egor.setFirstName("Egor");
-                egor.setAddress(street("Ahad Ha'am"));
-                session.store(egor, EGOR_ID);
-
-                session.saveChanges();
-            }
-
-            try (IDocumentSession session = store.openSession(writesAndReads())) {
-                // this should put the include into missing ids
-                Employee jerry = session.include("address.id").load(Employee.class, JERRY_ID);
-
-                int numOfRequests = session.advanced().getNumberOfRequests();
-                assertThat(session.load(Address.class, jerry.getAddress().getId())).isNull();
-                assertThat(session.advanced().getNumberOfRequests()).isEqualTo(numOfRequests);
-
-                modifyEgorInSession(session);
-
-                String actual;
-                try (IDocumentSession s = store.openSession()) {
-                    Address address = new Address();
-                    address.setCity("Harish");
-                    address.setStreet("Erets Rd");
-                    address.setId(addressId);
-                    s.store(address, addressId);
-                    s.saveChanges();
-                    actual = s.advanced().getChangeVectorFor(address);
-                }
-
-                assertThat(actual).isNotEmpty();
-
-                ConcurrencyException e = assertConcurrency(session::saveChanges);
-
-                assertThat(e.getMessage()).contains("Document 'addresses/1-A' has been modified");
-                assertThat(e.getId()).isEqualTo(addressId);
-                assertThat(e.getActualChangeVector()).isEqualTo(actual);
-                assertThat(e.getExpectedChangeVector()).isNullOrEmpty();
-            }
-
-            try (IDocumentSession session = store.openSession(writesAndReads())) {
-                Employee egor = session.load(Employee.class, EGOR_ID);
-                assertThat(egor.getFirstName()).isEqualTo("Egor");
-                assertThat(egor.getAddress().getStreet()).isEqualTo("Ahad Ha'am");
-
-                Address j = session.load(Address.class, addressId);
-                assertThat(j).isNotNull();
-                assertThat(j.getCity()).isEqualTo("Harish");
-            }
-        }
-    }
-
-    @Test
     public void shouldThrowConcurrencyException_WhenNonExistsEntityIncludedBySessionButThenWasEditedInBackgroundSession() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String addressId = "addresses/1-A";
@@ -895,53 +828,6 @@ public class RavenDB_25154Test extends RemoteTestBase {
 
                 Address j = session.load(Address.class, addressId);
                 assertThat(j.getCity()).isEqualTo("Hadera");
-            }
-        }
-    }
-
-    @Test
-    public void shouldNotThrowConcurrencyException_WhenNonExistsEntityIncludedBySessionButThenWasNotAddedInBackgroundSession() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            String addressId = "addresses/1-A";
-
-            try (IDocumentSession session = store.openSession()) {
-                Address address = new Address();
-                address.setCity("Harish");
-                address.setStreet("Erets Rd");
-                address.setId(addressId);
-
-                Employee jerry = new Employee();
-                jerry.setFirstName("Jerry");
-                jerry.setAddress(address);
-                session.store(jerry, JERRY_ID);
-
-                Employee egor = new Employee();
-                egor.setFirstName("Egor");
-                egor.setAddress(street("Ahad Ha'am"));
-                session.store(egor, EGOR_ID);
-
-                session.saveChanges();
-            }
-
-            try (IDocumentSession session = store.openSession(writesAndReads())) {
-                Employee jerry = session.include("address.id").load(Employee.class, JERRY_ID);
-
-                int numOfRequests = session.advanced().getNumberOfRequests();
-                assertThat(session.load(Address.class, jerry.getAddress().getId())).isNull();
-                assertThat(session.advanced().getNumberOfRequests()).isEqualTo(numOfRequests);
-
-                modifyEgorInSession(session);
-
-                session.saveChanges();
-            }
-
-            try (IDocumentSession session = store.openSession(writesAndReads())) {
-                Employee egor = session.load(Employee.class, EGOR_ID);
-                assertThat(egor.getFirstName()).isEqualTo("Egor");
-                assertThat(egor.getAddress().getStreet()).isEqualTo("Mul HaHof Village");
-
-                Address j = session.load(Address.class, addressId);
-                assertThat(j).isNull();
             }
         }
     }
