@@ -271,6 +271,10 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     TSelf orderByDistance(String fieldName, String shapeWkt, NullsOrdering nulls);
 
+    TSelf orderByDistance(String fieldName, String shapeWkt, double roundFactor);
+
+    TSelf orderByDistance(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls);
+
     /**
      * Sorts the query results by distance.
      * @param field Field to use in order by
@@ -326,4 +330,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf orderByDistanceDescending(String fieldName, String shapeWkt);
 
     TSelf orderByDistanceDescending(String fieldName, String shapeWkt, NullsOrdering nulls);
+
+    TSelf orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor);
+
+    TSelf orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls);
 }

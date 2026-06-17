@@ -97,4 +97,33 @@ public class NullsOrderingQueryTest extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void orderByDistanceWktWithRoundFactorAndNullsEmitsNullsClause() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                IDocumentQuery<Item> query = session.advanced().documentQuery(Item.class)
+                        .orderByDistance("location", "POINT(10 20)", 0.5, NullsOrdering.LAST);
+
+                assertThat(query.toString())
+                        .contains("spatial.distance(location, spatial.wkt($")
+                        .contains(" nulls last");
+            }
+        }
+    }
+
+    @Test
+    public void orderByDistanceDescendingWktWithRoundFactorEmitsNoNullsClause() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                IDocumentQuery<Item> query = session.advanced().documentQuery(Item.class)
+                        .orderByDistanceDescending("location", "POINT(10 20)", 0.5);
+
+                assertThat(query.toString())
+                        .contains("spatial.distance(location, spatial.wkt($")
+                        .contains(" desc")
+                        .doesNotContain("nulls");
+            }
+        }
+    }
 }
