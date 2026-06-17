@@ -891,6 +891,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
+    public IDocumentQuery<T> orderByDistance(String fieldName, String shapeWkt, double roundFactor) {
+        _orderByDistance(fieldName, shapeWkt, roundFactor);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> orderByDistance(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls) {
+        _orderByDistance(fieldName, shapeWkt, roundFactor, nulls);
+        return this;
+    }
+
+    @Override
     public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
         _orderByDistanceDescending(field, latitude, longitude);
         return this;
@@ -954,6 +966,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(String fieldName, String shapeWkt, NullsOrdering nulls) {
         _orderByDistanceDescending(fieldName, shapeWkt, nulls);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor) {
+        _orderByDistanceDescending(fieldName, shapeWkt, roundFactor);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor, NullsOrdering nulls) {
+        _orderByDistanceDescending(fieldName, shapeWkt, roundFactor, nulls);
         return this;
     }
 
