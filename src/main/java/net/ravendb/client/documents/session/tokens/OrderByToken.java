@@ -17,7 +17,7 @@ public class OrderByToken extends QueryToken {
         _fieldName = fieldName;
         _descending = descending;
         _ordering = ordering;
-        _nullsOrdering = nullsOrdering;
+        _nullsOrdering = nullsOrdering != null ? nullsOrdering : NullsOrdering.DEFAULT;
         _sorterName = null;
         _isMethodField = isMethodField;
     }

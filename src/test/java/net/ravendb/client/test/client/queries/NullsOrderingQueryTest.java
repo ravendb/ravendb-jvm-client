@@ -99,6 +99,20 @@ public class NullsOrderingQueryTest extends RemoteTestBase {
     }
 
     @Test
+    public void nullNullsOrderingIsTreatedAsDefault() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                IDocumentQuery<Item> query = session.advanced().documentQuery(Item.class)
+                        .orderBy("name", null, OrderingType.STRING);
+
+                assertThat(query.toString())
+                        .contains("order by name")
+                        .doesNotContain("nulls");
+            }
+        }
+    }
+
+    @Test
     public void orderByDistanceWktWithRoundFactorAndNullsEmitsNullsClause() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
