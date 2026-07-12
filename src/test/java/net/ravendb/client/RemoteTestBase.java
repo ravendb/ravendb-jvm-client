@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -29,6 +30,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -137,6 +139,18 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
     protected void customizeDbRecord(DatabaseRecord dbRecord) {
 
+    }
+
+    protected static void allowControlCharactersInIdentifier(DatabaseRecord dbRecord) {
+        List<String> features = new ArrayList<>();
+        features.add("ThrowRevisionKeyTooBigFix");
+        try {
+            Field field = DatabaseRecord.class.getDeclaredField("supportedFeatures");
+            field.setAccessible(true);
+            field.set(dbRecord, features);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected void customizeStore(DocumentStore store) {

@@ -6,6 +6,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.serverwide.DatabaseRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.Test;
 
@@ -86,7 +87,12 @@ public class CustomEntityNameTest extends RemoteTestBase {
 
     @Override
     protected void customizeStore(DocumentStore store) {
-        store.getConventions().setFindCollectionName(clazz -> "Test" + c + DocumentConventions.defaultGetCollectionName(clazz));
+        store.getConventions().setFindCollectionName(clazz -> "Test" + (c <= 31 ? "" : c) + DocumentConventions.defaultGetCollectionName(clazz));
+    }
+
+    @Override
+    protected void customizeDbRecord(DatabaseRecord dbRecord) {
+        allowControlCharactersInIdentifier(dbRecord);
     }
 
     private void testWhenCollectionAndIdContainSpecialChars(char c) throws Exception {
@@ -95,15 +101,24 @@ public class CustomEntityNameTest extends RemoteTestBase {
         }
 
         this.c = c;
+        boolean isControlChar = c <= 31;
 
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 Car car = new Car();
                 car.setManufacturer("BMW");
-                session.store(car);
                 User user = new User();
-                user.setCarId(car.getId());
-                session.store(user);
+
+                if (isControlChar) {
+                    session.store(car, store.getConventions().getFindCollectionName().apply(Car.class) + "/" + c + "1");
+                    user.setCarId(car.getId());
+                    session.store(user, store.getConventions().getFindCollectionName().apply(User.class) + "/" + c + "1");
+                } else {
+                    session.store(car);
+                    user.setCarId(car.getId());
+                    session.store(user);
+                }
+
                 session.saveChanges();
             }
 

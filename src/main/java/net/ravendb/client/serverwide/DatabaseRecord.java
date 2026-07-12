@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.attachments.RemoteAttachmentsConfiguration;
 import net.ravendb.client.documents.indexes.AutoIndexDefinition;
 import net.ravendb.client.documents.indexes.IndexDefinition;
@@ -87,6 +88,9 @@ public class DatabaseRecord {
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
     private Set<String> unusedDatabaseIds = new HashSet<>();
+
+    @JsonProperty("SupportedFeatures")
+    private List<String> supportedFeatures;
 
     public DatabaseRecord() {
     }
