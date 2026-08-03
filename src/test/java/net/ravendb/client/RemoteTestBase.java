@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -142,9 +143,21 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
     }
 
     protected static void allowControlCharactersInIdentifier(DatabaseRecord dbRecord) {
-        List<String> features = new ArrayList<>();
-        features.add("ThrowRevisionKeyTooBigFix");
         try {
+            List<String> features = new ArrayList<>();
+            for (Field feature : Constants.DatabaseRecord.SupportedFeatures.class.getFields()) {
+                if (!Modifier.isStatic(feature.getModifiers())
+                        || !Modifier.isFinal(feature.getModifiers())
+                        || !String.class.equals(feature.getType())) {
+                    continue;
+                }
+
+                String value = (String) feature.get(null);
+                if (!Constants.DatabaseRecord.SupportedFeatures.THROW_CONTROL_CHARACTERS_IN_IDENTIFIER.equals(value)) {
+                    features.add(value);
+                }
+            }
+
             Field field = DatabaseRecord.class.getDeclaredField("supportedFeatures");
             field.setAccessible(true);
             field.set(dbRecord, features);
