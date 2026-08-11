@@ -1,6 +1,18 @@
 package net.ravendb.client;
 
 public class Constants {
+
+    public static class DatabaseRecord {
+        private DatabaseRecord() {}
+
+        public static class SupportedFeatures {
+            private SupportedFeatures() {}
+
+            public static final String THROW_REVISION_KEY_TOO_BIG_FIX = "ThrowRevisionKeyTooBigFix";
+            public static final String THROW_CONTROL_CHARACTERS_IN_IDENTIFIER = "ThrowControlCharactersInIdentifier";
+        }
+    }
+
     public static class AI {
         private AI() {}
         public static final String PROMPT_TOKENS = "prompt_tokens";
