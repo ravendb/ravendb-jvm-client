@@ -22,6 +22,7 @@ import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
+import net.ravendb.client.documents.operations.cdcSink.CdcSinkConfiguration;
 import net.ravendb.client.documents.operations.queueSink.QueueSinkConfiguration;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
@@ -84,6 +85,7 @@ public class DatabaseRecord {
     private List<OlapEtlConfiguration> olapEtls = new ArrayList<>();
     private List<QueueEtlConfiguration> queueEtls = new ArrayList<>();
     private List<QueueSinkConfiguration> queueSinks = new ArrayList<>();
+    private List<CdcSinkConfiguration> cdcSinks = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -465,6 +467,14 @@ public class DatabaseRecord {
 
     public void setQueueSinks(List<QueueSinkConfiguration> queueSinks) {
         this.queueSinks = queueSinks;
+    }
+
+    public List<CdcSinkConfiguration> getCdcSinks() {
+        return cdcSinks;
+    }
+
+    public void setCdcSinks(List<CdcSinkConfiguration> cdcSinks) {
+        this.cdcSinks = cdcSinks;
     }
 
     public void setUnusedDatabaseIds(Set<String> unusedDatabaseIds) {

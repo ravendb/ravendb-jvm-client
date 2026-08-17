@@ -116,6 +116,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                     case QUEUE_SINK:
                         result = mapper.readValue(response, OngoingTaskQueueSink.class);
                         break;
+                    case CDC_SINK:
+                        result = mapper.readValue(response, OngoingTaskCdcSink.class);
+                        break;
                     case EMBEDDINGS_GENERATION:
                         result = mapper.readValue(response, OngoingTaskEmbeddingsGeneration.class);
                         break;

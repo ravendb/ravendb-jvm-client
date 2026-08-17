@@ -15,6 +15,7 @@ public enum OngoingTaskType {
     PULL_REPLICATION_AS_HUB,
     PULL_REPLICATION_AS_SINK,
     QUEUE_SINK,
+    CDC_SINK,
     EMBEDDINGS_GENERATION,
     GEN_AI
 }
