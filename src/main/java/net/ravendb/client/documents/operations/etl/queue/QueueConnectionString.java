@@ -12,6 +12,7 @@ public class QueueConnectionString extends ConnectionString {
     private RabbitMqConnectionSettings rabbitMqConnectionSettings;
     private AzureQueueStorageConnectionSettings azureQueueStorageConnectionSettings;
     private AmazonSqsConnectionSettings amazonSqsConnectionSettings;
+    private AzureServiceBusConnectionSettings azureServiceBusConnectionSettings;
 
     @Override
     public ConnectionStringType getType() {
@@ -51,4 +52,8 @@ public class QueueConnectionString extends ConnectionString {
     public void setAmazonSqsConnectionSettings(AmazonSqsConnectionSettings amazonSqsConnectionSettings) { this.amazonSqsConnectionSettings = amazonSqsConnectionSettings; }
 
     public AmazonSqsConnectionSettings getAmazonSqsConnectionSettings() { return this.amazonSqsConnectionSettings; }
+
+    public void setAzureServiceBusConnectionSettings(AzureServiceBusConnectionSettings azureServiceBusConnectionSettings) { this.azureServiceBusConnectionSettings = azureServiceBusConnectionSettings; }
+
+    public AzureServiceBusConnectionSettings getAzureServiceBusConnectionSettings() { return this.azureServiceBusConnectionSettings; }
 }
