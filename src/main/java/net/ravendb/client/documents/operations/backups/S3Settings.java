@@ -6,6 +6,7 @@ public class S3Settings extends AmazonSettings implements IS3Settings {
     private String customServerUrl;
     private S3StorageClass storageClass;
     private boolean forcePathStyle;
+    private boolean disableChecksumValidation;
 
     public String getBucketName() {
         return bucketName;
@@ -29,6 +30,16 @@ public class S3Settings extends AmazonSettings implements IS3Settings {
 
     public void setForcePathStyle(boolean forcePathStyle) {
         this.forcePathStyle = forcePathStyle;
+    }
+
+    @Override
+    public boolean isDisableChecksumValidation() {
+        return disableChecksumValidation;
+    }
+
+    @Override
+    public void setDisableChecksumValidation(boolean disableChecksumValidation) {
+        this.disableChecksumValidation = disableChecksumValidation;
     }
 
     @Override
