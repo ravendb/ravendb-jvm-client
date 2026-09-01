@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Objects;
-
 /**
  * Microsoft Entra ID (client credentials) authentication for an Azure Service Bus namespace.
  */
@@ -62,27 +60,5 @@ public final class AzureServiceBusEntraId {
                 && StringUtils.isNotBlank(tenantId)
                 && StringUtils.isNotBlank(clientId)
                 && StringUtils.isNotBlank(clientSecret);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof AzureServiceBusEntraId)) {
-            return false;
-        }
-
-        AzureServiceBusEntraId other = (AzureServiceBusEntraId) o;
-        return Objects.equals(namespace, other.namespace)
-                && Objects.equals(tenantId, other.tenantId)
-                && Objects.equals(clientId, other.clientId)
-                && Objects.equals(clientSecret, other.clientSecret);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(namespace, tenantId, clientId, clientSecret);
     }
 }

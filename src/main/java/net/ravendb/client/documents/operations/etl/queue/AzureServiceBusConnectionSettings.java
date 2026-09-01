@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Objects;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class AzureServiceBusConnectionSettings {
 
@@ -123,26 +121,5 @@ public final class AzureServiceBusConnectionSettings {
         }
 
         throw new IllegalStateException("No namespace provided");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof AzureServiceBusConnectionSettings)) {
-            return false;
-        }
-
-        AzureServiceBusConnectionSettings other = (AzureServiceBusConnectionSettings) o;
-        return Objects.equals(entraId, other.entraId)
-                && Objects.equals(connectionString, other.connectionString)
-                && Objects.equals(passwordless, other.passwordless);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(entraId, connectionString, passwordless);
     }
 }

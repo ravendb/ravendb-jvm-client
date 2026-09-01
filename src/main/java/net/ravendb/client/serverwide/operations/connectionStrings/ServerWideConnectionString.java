@@ -1,6 +1,5 @@
 package net.ravendb.client.serverwide.operations.connectionStrings;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -19,13 +18,13 @@ import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.ConnectionStringType;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Represents a server-wide connection string that is automatically propagated to all databases in the
@@ -72,7 +71,6 @@ public class ServerWideConnectionString {
     /**
      * @return the name of the connection string, delegated from the underlying {@link #getConnectionString()}
      */
-    @JsonIgnore
     public String getName() {
         return connectionString != null ? connectionString.getName() : null;
     }
@@ -81,22 +79,8 @@ public class ServerWideConnectionString {
      * @return the type of the connection string (Raven, Sql, Olap, etc.), delegated from the underlying
      *         {@link #getConnectionString()}
      */
-    @JsonIgnore
     public ConnectionStringType getType() {
         return connectionString != null ? connectionString.getType() : ConnectionStringType.NONE;
-    }
-
-    /**
-     * Determines whether the specified database is excluded from receiving this server-wide connection string.
-     * @param databaseName the name of the database to check
-     * @return true if the database is in the excluded list; otherwise false
-     */
-    public boolean isExcluded(String databaseName) {
-        if (excludedDatabases == null) {
-            return false;
-        }
-
-        return Arrays.stream(excludedDatabases).anyMatch(x -> x != null && x.equalsIgnoreCase(databaseName));
     }
 
     /**
@@ -140,6 +124,8 @@ public class ServerWideConnectionString {
                 return mapper.treeToValue(node, ElasticSearchConnectionString.class);
             case "Queue":
                 return mapper.treeToValue(node, QueueConnectionString.class);
+            case "Snowflake":
+                return mapper.treeToValue(node, SnowflakeConnectionString.class);
             case "Ai":
                 return mapper.treeToValue(node, AiConnectionString.class);
             default:

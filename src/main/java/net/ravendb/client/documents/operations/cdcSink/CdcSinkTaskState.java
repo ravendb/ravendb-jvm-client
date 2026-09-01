@@ -38,7 +38,12 @@ public class CdcSinkTaskState {
     }
 
     public void setTables(Map<String, CdcSinkTableLoadState> tables) {
-        this.tables = tables;
+        Map<String, CdcSinkTableLoadState> caseInsensitive = new TreeMap<>(String::compareToIgnoreCase);
+        if (tables != null) {
+            caseInsensitive.putAll(tables);
+        }
+
+        this.tables = caseInsensitive;
     }
 
     /**

@@ -5,7 +5,13 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsOperation;
 import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsResult;
+import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
+import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
+import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
+import net.ravendb.client.documents.operations.etl.queue.QueueBrokerType;
+import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.EnableOnServer;
@@ -66,8 +72,6 @@ public class ServerWideConnectionStringsTest extends RemoteTestBase {
         assertThat(parsed.getExcludedDatabases()).containsExactly("a", "b");
         assertThat(parsed.getConnectionString()).isInstanceOf(RavenConnectionString.class);
         assertThat(((RavenConnectionString) parsed.getConnectionString()).getDatabase()).isEqualTo("db2");
-        assertThat(parsed.isExcluded("A")).isTrue();
-        assertThat(parsed.isExcluded("c")).isFalse();
     }
 
     @Test
@@ -87,6 +91,102 @@ public class ServerWideConnectionStringsTest extends RemoteTestBase {
         assertThat(parsed.getConnectionString()).isInstanceOf(SqlConnectionString.class);
         assertThat(((SqlConnectionString) parsed.getConnectionString()).getFactoryName()).isEqualTo("Npgsql");
         assertThat(parsed.getExcludedDatabases()).isNull();
+    }
+
+    @Test
+    public void canRoundTripSnowflakeServerWideConnectionString() throws Exception {
+        SnowflakeConnectionString snowflake = new SnowflakeConnectionString();
+        snowflake.setName("swcs/snowflake");
+        snowflake.setConnectionString("account=acc;user=usr;db=test;schema=public;");
+
+        ServerWideConnectionString serverWide = new ServerWideConnectionString();
+        serverWide.setConnectionString(snowflake);
+        serverWide.setExcludedDatabases(new String[]{"db1"});
+
+        String json = JsonExtensions.getDefaultMapper().writeValueAsString(serverWide);
+        assertThat(json).contains("\"Type\":\"Snowflake\"");
+
+        ServerWideConnectionString parsed = JsonExtensions.getDefaultMapper().readValue(json, ServerWideConnectionString.class);
+
+        assertThat(parsed.getName()).isEqualTo("swcs/snowflake");
+        assertThat(parsed.getType()).isEqualTo(ConnectionStringType.SNOWFLAKE);
+        assertThat(parsed.getConnectionString()).isInstanceOf(SnowflakeConnectionString.class);
+        assertThat(((SnowflakeConnectionString) parsed.getConnectionString()).getConnectionString())
+                .isEqualTo("account=acc;user=usr;db=test;schema=public;");
+        assertThat(parsed.getExcludedDatabases()).containsExactly("db1");
+    }
+
+    /**
+     * The wire shape is flat: the underlying connection string's own properties sit alongside
+     * {@code Type} and {@code ExcludedDatabases}, and every supported type must survive a round trip.
+     */
+    @Test
+    public void everySupportedTypeRoundTrips() throws Exception {
+        ConnectionString[] connectionStrings = {
+                ravenServerWide("cs/raven", "db", "http://localhost:8080", null).getConnectionString(),
+                sql("cs/sql"),
+                olap("cs/olap"),
+                elasticSearch("cs/elastic"),
+                queue("cs/queue"),
+                snowflake("cs/snowflake"),
+        };
+
+        for (ConnectionString connectionString : connectionStrings) {
+            ServerWideConnectionString serverWide = new ServerWideConnectionString();
+            serverWide.setConnectionString(connectionString);
+
+            String json = JsonExtensions.getDefaultMapper().writeValueAsString(serverWide);
+            ServerWideConnectionString parsed =
+                    JsonExtensions.getDefaultMapper().readValue(json, ServerWideConnectionString.class);
+
+            assertThat(parsed).as("round trip of %s", connectionString.getType()).isNotNull();
+            assertThat(parsed.getType()).isEqualTo(connectionString.getType());
+            assertThat(parsed.getName()).isEqualTo(connectionString.getName());
+            assertThat(parsed.getConnectionString()).isInstanceOf(connectionString.getClass());
+        }
+    }
+
+    @Test
+    public void missingTypeDeserializesToNull() throws Exception {
+        ServerWideConnectionString parsed = JsonExtensions.getDefaultMapper()
+                .readValue("{\"Name\":\"x\",\"ExcludedDatabases\":null}", ServerWideConnectionString.class);
+
+        assertThat(parsed).isNull();
+    }
+
+    private static SqlConnectionString sql(String name) {
+        SqlConnectionString connectionString = new SqlConnectionString();
+        connectionString.setName(name);
+        connectionString.setConnectionString("Server=localhost;");
+        connectionString.setFactoryName("Npgsql");
+        return connectionString;
+    }
+
+    private static OlapConnectionString olap(String name) {
+        OlapConnectionString connectionString = new OlapConnectionString();
+        connectionString.setName(name);
+        return connectionString;
+    }
+
+    private static ElasticSearchConnectionString elasticSearch(String name) {
+        ElasticSearchConnectionString connectionString = new ElasticSearchConnectionString();
+        connectionString.setName(name);
+        connectionString.setNodes(new String[]{"http://localhost:9200"});
+        return connectionString;
+    }
+
+    private static QueueConnectionString queue(String name) {
+        QueueConnectionString connectionString = new QueueConnectionString();
+        connectionString.setName(name);
+        connectionString.setBrokerType(QueueBrokerType.KAFKA);
+        return connectionString;
+    }
+
+    private static SnowflakeConnectionString snowflake(String name) {
+        SnowflakeConnectionString connectionString = new SnowflakeConnectionString();
+        connectionString.setName(name);
+        connectionString.setConnectionString("account=acc;user=usr;");
+        return connectionString;
     }
 
     @Test

@@ -154,7 +154,8 @@ public class GetConversationMessagesTest {
         String json = "{"
                 + "\"ConversationId\":\"conversations/1-A\","
                 + "\"Agent\":\"agents/1-A\","
-                + "\"Parameters\":{\"name\":\"John\",\"age\":30,\"tags\":[\"a\",\"b\"],\"active\":true},"
+                + "\"Parameters\":{\"name\":\"John\",\"age\":30,\"tags\":[\"a\",\"b\"],\"active\":true,"
+                + "\"visits\":9999999999,\"ratio\":1.5,\"scores\":[1,2,3]},"
                 + "\"TotalUsage\":{\"PromptTokens\":10,\"CompletionTokens\":5,\"TotalTokens\":15,\"CachedTokens\":2,\"ReasoningTokens\":1},"
                 + "\"LastMessageAt\":\"2026-06-16T10:30:00.0000000Z\","
                 + "\"HasMoreMessages\":true,"
@@ -177,12 +178,18 @@ public class GetConversationMessagesTest {
         assertThat(result.getAttachments()).containsExactly("file.txt");
         assertThat(result.getLastMessageAt()).isEqualTo(utc(2026, 6, 16, 10, 30, 0));
 
+        // Parameters are heterogeneous - strings, numbers, booleans and arrays. Numbers widen the same way
+        // the .NET client materializes them: int, then long, then double.
         assertThat(result.getParameters())
                 .containsEntry("name", "John")
                 .containsEntry("age", 30)
-                .containsEntry("active", true);
+                .containsEntry("active", true)
+                .containsEntry("visits", 9999999999L)
+                .containsEntry("ratio", 1.5);
         List<Object> tags = (List<Object>) result.getParameters().get("tags");
         assertThat(tags).containsExactly("a", "b");
+        List<Object> scores = (List<Object>) result.getParameters().get("scores");
+        assertThat(scores).containsExactly(1, 2, 3);
 
         AiUsage totalUsage = result.getTotalUsage();
         assertThat(totalUsage.getTotalTokens()).isEqualTo(15);
@@ -224,5 +231,18 @@ public class GetConversationMessagesTest {
                         AiMessageRole.SUMMARY, AiMessageRole.INTERNAL);
 
         assertThat(result.getMessages().get(4).getSubConversationId()).isEqualTo("conversations/3-A");
+    }
+
+    @Test
+    public void conversationNotFoundLeavesResultNull() throws Exception {
+        GetConversationMessagesOptions options = new GetConversationMessagesOptions();
+        options.setConversationId("conversations/does-not-exist");
+
+        RavenCommand<AiConversationMessagesResult> command = new GetConversationMessagesOperation(options).getCommand(new DocumentConventions());
+
+        // On 404 the request executor hands the command a null response
+        command.setResponse(null, false);
+
+        assertThat(command.getResult()).isNull();
     }
 }

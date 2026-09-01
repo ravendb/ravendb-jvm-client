@@ -39,13 +39,7 @@ public class GetCdcSinkSchemaOperation implements IMaintenanceOperation<CdcSinkS
      * @param schemas the provider-specific schema filter, or null for the provider default
      */
     public GetCdcSinkSchemaOperation(SqlConnectionString connection, String[] schemas) {
-        if (connection == null) {
-            throw new IllegalArgumentException("connection cannot be null");
-        }
-
-        _request = new CdcSinkSchemaRequest();
-        _request.setConnection(connection);
-        _request.setSchemas(schemas);
+        this(forConnection(connection, schemas));
     }
 
     /**
@@ -62,13 +56,7 @@ public class GetCdcSinkSchemaOperation implements IMaintenanceOperation<CdcSinkS
      * @param schemas the provider-specific schema filter, or null for the provider default
      */
     public GetCdcSinkSchemaOperation(String connectionStringName, String[] schemas) {
-        if (connectionStringName == null) {
-            throw new IllegalArgumentException("connectionStringName cannot be null");
-        }
-
-        _request = new CdcSinkSchemaRequest();
-        _request.setConnectionStringName(connectionStringName);
-        _request.setSchemas(schemas);
+        this(forConnectionStringName(connectionStringName, schemas));
     }
 
     public GetCdcSinkSchemaOperation(CdcSinkSchemaRequest request) {
@@ -77,6 +65,28 @@ public class GetCdcSinkSchemaOperation implements IMaintenanceOperation<CdcSinkS
         }
 
         _request = request;
+    }
+
+    private static CdcSinkSchemaRequest forConnection(SqlConnectionString connection, String[] schemas) {
+        if (connection == null) {
+            throw new IllegalArgumentException("connection cannot be null");
+        }
+
+        CdcSinkSchemaRequest request = new CdcSinkSchemaRequest();
+        request.setConnection(connection);
+        request.setSchemas(schemas);
+        return request;
+    }
+
+    private static CdcSinkSchemaRequest forConnectionStringName(String connectionStringName, String[] schemas) {
+        if (connectionStringName == null) {
+            throw new IllegalArgumentException("connectionStringName cannot be null");
+        }
+
+        CdcSinkSchemaRequest request = new CdcSinkSchemaRequest();
+        request.setConnectionStringName(connectionStringName);
+        request.setSchemas(schemas);
+        return request;
     }
 
     @Override

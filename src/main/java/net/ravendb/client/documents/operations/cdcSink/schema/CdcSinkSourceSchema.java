@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.operations.cdcSink.schema;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +87,6 @@ public class CdcSinkSourceSchema {
      * @return true when nothing blocks setting up CDC against this source — i.e. there are no
      *         {@link #getErrors()}. Warnings do not affect success.
      */
-    @JsonIgnore
     public boolean isSuccess() {
         return errors == null || errors.isEmpty();
     }

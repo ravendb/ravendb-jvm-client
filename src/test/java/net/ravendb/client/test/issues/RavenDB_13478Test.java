@@ -38,6 +38,7 @@ public class RavenDB_13478Test extends RemoteTestBase {
             String name = store.subscriptions().create(Product.class, options);
 
             assertSubscription(store, name, 0);
+            store.subscriptions().delete(name);
 
             options = new SubscriptionCreationOptions();
             options.setIncludes(builder -> builder.includeAllCounters());
@@ -45,6 +46,7 @@ public class RavenDB_13478Test extends RemoteTestBase {
             name = store.subscriptions().create(Product.class, options);
 
             assertSubscription(store, name, 0);
+            store.subscriptions().delete(name);
 
             options = new SubscriptionCreationOptions();
             options.setIncludes(builder -> builder.includeCounter("likes"));
@@ -52,10 +54,12 @@ public class RavenDB_13478Test extends RemoteTestBase {
             name = store.subscriptions().create(Product.class, options);
 
             assertSubscription(store, name, 1);
+            store.subscriptions().delete(name);
 
             name = store.subscriptions().create(Product.class);
 
             assertSubscription(store, name, 2);
+            store.subscriptions().delete(name);
         }
     }
 

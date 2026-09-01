@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Objects;
-
 /**
  * Machine authentication (Managed Identity) for an Azure Service Bus namespace.
  */
@@ -32,23 +30,5 @@ public final class AzureServiceBusPasswordless {
     @JsonIgnore
     public boolean isValid() {
         return StringUtils.isNotBlank(namespace);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (!(o instanceof AzureServiceBusPasswordless)) {
-            return false;
-        }
-
-        return Objects.equals(namespace, ((AzureServiceBusPasswordless) o).namespace);
-    }
-
-    @Override
-    public int hashCode() {
-        return namespace != null ? namespace.hashCode() : 0;
     }
 }
