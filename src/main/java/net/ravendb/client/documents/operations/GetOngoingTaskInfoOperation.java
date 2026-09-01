@@ -107,6 +107,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                     case QUEUE_ETL:
                         result = mapper.readValue(response, OngoingTaskQueueEtl.class);
                         break;
+                    case SNOWFLAKE_ETL:
+                        result = mapper.readValue(response, OngoingTaskSnowflakeEtl.class);
+                        break;
                     case PULL_REPLICATION_AS_SINK:
                         result = mapper.readValue(response, OngoingTaskPullReplicationAsSink.class);
                         break;

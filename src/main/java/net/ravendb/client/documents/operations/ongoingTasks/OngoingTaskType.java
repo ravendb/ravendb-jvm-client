@@ -10,6 +10,7 @@ public enum OngoingTaskType {
     OLAP_ETL,
     ELASTIC_SEARCH_ETL,
     QUEUE_ETL,
+    SNOWFLAKE_ETL,
     BACKUP,
     SUBSCRIPTION,
     PULL_REPLICATION_AS_HUB,
