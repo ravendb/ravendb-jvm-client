@@ -11,6 +11,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
@@ -74,6 +75,7 @@ public class AddCdcSinkOperationTest extends RemoteTestBase {
     }
 
     @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @Test
     public void canAddCdcSink() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -109,6 +111,7 @@ public class AddCdcSinkOperationTest extends RemoteTestBase {
     }
 
     @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @Test
     public void canAddMultipleCdcSinks() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
