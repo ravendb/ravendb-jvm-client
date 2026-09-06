@@ -92,5 +92,9 @@ public class GetConversationMessagesOptions {
         if (pageSize <= 0) {
             throw new IllegalArgumentException("PageSize must be greater than 0.");
         }
+
+        if (detailLevel == null) {
+            throw new IllegalArgumentException("DetailLevel cannot be null.");
+        }
     }
 }

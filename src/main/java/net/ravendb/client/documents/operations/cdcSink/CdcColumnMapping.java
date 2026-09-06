@@ -7,7 +7,7 @@ public class CdcColumnMapping {
 
     private String column;
     private String name;
-    private CdcColumnType type;
+    private CdcColumnType type = CdcColumnType.DEFAULT;
 
     /**
      * @return the SQL column name in the source table

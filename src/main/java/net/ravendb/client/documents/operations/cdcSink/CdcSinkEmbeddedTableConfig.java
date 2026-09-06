@@ -11,7 +11,7 @@ public class CdcSinkEmbeddedTableConfig {
     private List<CdcColumnMapping> columns = new ArrayList<>();
     private List<String> primaryKeyColumns = new ArrayList<>();
     private List<String> joinColumns = new ArrayList<>();
-    private CdcSinkRelationType type;
+    private CdcSinkRelationType type = CdcSinkRelationType.ARRAY;
     private String patch;
     private CdcSinkOnDeleteConfig onDelete;
     private boolean caseSensitiveKeys;
