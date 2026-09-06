@@ -61,7 +61,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.GEN_AI_ETLS,
             DatabaseRecordItemType.AI_AGENTS,
             DatabaseRecordItemType.REMOTE_ATTACHMENTS,
-            DatabaseRecordItemType.SCHEMA_VALIDATION);
+            DatabaseRecordItemType.SCHEMA_VALIDATION,
+            DatabaseRecordItemType.CDC_SINKS);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

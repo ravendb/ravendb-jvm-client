@@ -14,6 +14,8 @@ import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
@@ -159,6 +161,20 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
         return this;
     }
 
+    @Override
+    public IConnectionStringConfigurationBuilder addSnowflakeConnectionString(SnowflakeConnectionString connectionString) {
+        if (connectionString == null) {
+            throw new IllegalArgumentException("ConnectionString cannot be null");
+        }
+
+        if (_databaseRecord.getSnowflakeConnectionStrings() == null) {
+            _databaseRecord.setSnowflakeConnectionStrings(new HashMap<>());
+        }
+
+        _databaseRecord.getSnowflakeConnectionStrings().put(connectionString.getName(), connectionString);
+        return this;
+    }
+
     public IDatabaseRecordBuilder regular(String databaseName) {
         withName(databaseName);
         return this;
@@ -250,6 +266,20 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
         }
 
         _databaseRecord.getQueueEtls().add(configuration);
+        return this;
+    }
+
+    @Override
+    public IEtlConfigurationBuilder addSnowflakeEtl(SnowflakeEtlConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+
+        if (_databaseRecord.getSnowflakeEtls() == null) {
+            _databaseRecord.setSnowflakeEtls(new ArrayList<>());
+        }
+
+        _databaseRecord.getSnowflakeEtls().add(configuration);
         return this;
     }
 

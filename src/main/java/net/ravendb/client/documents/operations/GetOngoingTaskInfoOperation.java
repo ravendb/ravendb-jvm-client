@@ -107,6 +107,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                     case QUEUE_ETL:
                         result = mapper.readValue(response, OngoingTaskQueueEtl.class);
                         break;
+                    case SNOWFLAKE_ETL:
+                        result = mapper.readValue(response, OngoingTaskSnowflakeEtl.class);
+                        break;
                     case PULL_REPLICATION_AS_SINK:
                         result = mapper.readValue(response, OngoingTaskPullReplicationAsSink.class);
                         break;
@@ -115,6 +118,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                         break;
                     case QUEUE_SINK:
                         result = mapper.readValue(response, OngoingTaskQueueSink.class);
+                        break;
+                    case CDC_SINK:
+                        result = mapper.readValue(response, OngoingTaskCdcSink.class);
                         break;
                     case EMBEDDINGS_GENERATION:
                         result = mapper.readValue(response, OngoingTaskEmbeddingsGeneration.class);

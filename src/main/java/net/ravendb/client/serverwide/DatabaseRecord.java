@@ -19,9 +19,12 @@ import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
+import net.ravendb.client.documents.operations.cdcSink.CdcSinkConfiguration;
 import net.ravendb.client.documents.operations.queueSink.QueueSinkConfiguration;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
@@ -78,12 +81,15 @@ public class DatabaseRecord {
     private Map<String, AiConnectionString> aiConnectionStrings = new HashMap<>();
     private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings = new HashMap<>();
     private Map<String, QueueConnectionString> queueConnectionStrings = new HashMap<>();
+    private Map<String, SnowflakeConnectionString> snowflakeConnectionStrings = new HashMap<>();
     private List<RavenEtlConfiguration> ravenEtls = new ArrayList<>();
     private List<SqlEtlConfiguration> sqlEtls = new ArrayList<>();
     private List<ElasticSearchEtlConfiguration> elasticSearchEtls = new ArrayList<>();
     private List<OlapEtlConfiguration> olapEtls = new ArrayList<>();
     private List<QueueEtlConfiguration> queueEtls = new ArrayList<>();
+    private List<SnowflakeEtlConfiguration> snowflakeEtls = new ArrayList<>();
     private List<QueueSinkConfiguration> queueSinks = new ArrayList<>();
+    private List<CdcSinkConfiguration> cdcSinks = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -459,12 +465,36 @@ public class DatabaseRecord {
         this.queueEtls = queueEtls;
     }
 
+    public Map<String, SnowflakeConnectionString> getSnowflakeConnectionStrings() {
+        return snowflakeConnectionStrings;
+    }
+
+    public void setSnowflakeConnectionStrings(Map<String, SnowflakeConnectionString> snowflakeConnectionStrings) {
+        this.snowflakeConnectionStrings = snowflakeConnectionStrings;
+    }
+
+    public List<SnowflakeEtlConfiguration> getSnowflakeEtls() {
+        return snowflakeEtls;
+    }
+
+    public void setSnowflakeEtls(List<SnowflakeEtlConfiguration> snowflakeEtls) {
+        this.snowflakeEtls = snowflakeEtls;
+    }
+
     public List<QueueSinkConfiguration> getQueueSinks() {
         return queueSinks;
     }
 
     public void setQueueSinks(List<QueueSinkConfiguration> queueSinks) {
         this.queueSinks = queueSinks;
+    }
+
+    public List<CdcSinkConfiguration> getCdcSinks() {
+        return cdcSinks;
+    }
+
+    public void setCdcSinks(List<CdcSinkConfiguration> cdcSinks) {
+        this.cdcSinks = cdcSinks;
     }
 
     public void setUnusedDatabaseIds(Set<String> unusedDatabaseIds) {

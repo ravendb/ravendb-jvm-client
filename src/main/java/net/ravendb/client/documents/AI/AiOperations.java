@@ -101,4 +101,22 @@ public class AiOperations {
                                        String changeVector) {
         return new AiConversation(this, agentId, conversationId, creationOptions, changeVector);
     }
+
+    /**
+     * Reads messages from an AI conversation. Returns the most recent messages by default.
+     * @param conversationId the conversation document ID
+     * @return the conversation messages, or null when the conversation does not exist
+     */
+    public AiConversationMessagesResult getConversationMessages(String conversationId) {
+        return executor.send(new GetConversationMessagesOperation(conversationId));
+    }
+
+    /**
+     * Reads messages from an AI conversation with full control over paging and filtering.
+     * @param parameters parameters controlling paging (before/after timestamps), page size, and view filter
+     * @return the conversation messages, or null when the conversation does not exist
+     */
+    public AiConversationMessagesResult getConversationMessages(GetConversationMessagesOptions parameters) {
+        return executor.send(new GetConversationMessagesOperation(parameters));
+    }
 }

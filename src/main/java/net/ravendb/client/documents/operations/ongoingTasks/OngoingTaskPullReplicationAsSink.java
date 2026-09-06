@@ -14,9 +14,27 @@ public class OngoingTaskPullReplicationAsSink extends OngoingTask {
     private String accessName;
     private String[] allowedHubToSinkPaths;
     private String[] allowedSinkToHubPaths;
+    private String hubCursor;
+    private String sinkCursor;
 
     public OngoingTaskPullReplicationAsSink() {
         setTaskType(OngoingTaskType.PULL_REPLICATION_AS_SINK);
+    }
+
+    public String getHubCursor() {
+        return hubCursor;
+    }
+
+    public void setHubCursor(String hubCursor) {
+        this.hubCursor = hubCursor;
+    }
+
+    public String getSinkCursor() {
+        return sinkCursor;
+    }
+
+    public void setSinkCursor(String sinkCursor) {
+        this.sinkCursor = sinkCursor;
     }
 
 
