@@ -12,7 +12,7 @@ public class CdcSinkSourceColumn {
 
     private String name;
     private String nativeType;
-    private CdcColumnType suggestedType;
+    private CdcColumnType suggestedType = CdcColumnType.DEFAULT;
 
     @JsonProperty("IsPrimaryKey")
     private boolean primaryKey;

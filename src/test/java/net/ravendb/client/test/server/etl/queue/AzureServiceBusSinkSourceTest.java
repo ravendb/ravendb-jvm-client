@@ -3,7 +3,10 @@ package net.ravendb.client.test.server.etl.queue;
 import net.ravendb.client.documents.operations.etl.queue.AzureServiceBusConnectionSettings;
 import net.ravendb.client.documents.operations.etl.queue.AzureServiceBusEntraId;
 import net.ravendb.client.documents.operations.etl.queue.AzureServiceBusPasswordless;
+import net.ravendb.client.documents.operations.etl.queue.QueueBrokerType;
+import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.queueSink.AzureServiceBusSinkSource;
+import net.ravendb.client.extensions.JsonExtensions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -14,6 +17,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AzureServiceBusSinkSourceTest {
@@ -163,5 +167,92 @@ public class AzureServiceBusSinkSourceTest {
         AzureServiceBusConnectionSettings noSeparator = new AzureServiceBusConnectionSettings();
         noSeparator.setConnectionString("Endpoint=sb://ns.servicebus.windows.net");
         assertThat(noSeparator.getServiceBusUrl()).isEqualTo("sb://ns.servicebus.windows.net");
+    }
+
+    @Test
+    public void brokerTypeIsSentUsingTheServerName() throws Exception {
+        String json = JsonExtensions.getDefaultMapper().writeValueAsString(entraIdConnectionString());
+
+        assertThat(json).contains("\"BrokerType\":\"AzureServiceBus\"");
+
+        QueueConnectionString parsed =
+                JsonExtensions.getDefaultMapper().readValue(json, QueueConnectionString.class);
+        assertThat(parsed.getBrokerType()).isEqualTo(QueueBrokerType.AZURE_SERVICE_BUS);
+    }
+
+    @Test
+    public void connectionStringRoundTripsAzureServiceBusSettings() throws Exception {
+        String json = JsonExtensions.getDefaultMapper().writeValueAsString(entraIdConnectionString());
+
+        QueueConnectionString parsed =
+                JsonExtensions.getDefaultMapper().readValue(json, QueueConnectionString.class);
+
+        AzureServiceBusConnectionSettings settings = parsed.getAzureServiceBusConnectionSettings();
+        assertThat(settings).isNotNull();
+        assertThat(settings.getEntraId()).isNotNull();
+        assertThat(settings.getEntraId().getNamespace()).isEqualTo("ns.servicebus.windows.net");
+        assertThat(settings.getEntraId().getTenantId()).isEqualTo("tenant");
+        assertThat(settings.getEntraId().getClientId()).isEqualTo("client");
+        assertThat(settings.getEntraId().getClientSecret()).isEqualTo("secret");
+        assertThat(settings.isValidConnection()).isTrue();
+    }
+
+    /**
+     * {@code isValidConnection()} and {@code getServiceBusUrl()} are plain methods in C#, so there is no
+     * {@code [JsonIgnore]} upstream to mirror. The Java bean naming makes Jackson pick them up as
+     * properties, and the {@code @JsonIgnore} that suppresses them exists only on this side - pin it.
+     */
+    @Test
+    public void derivedHelpersAreNotSerialized() throws Exception {
+        String json = JsonExtensions.getDefaultMapper().writeValueAsString(entraIdConnectionString());
+
+        assertThat(json)
+                .doesNotContain("ServiceBusUrl")
+                .doesNotContain("ValidConnection");
+    }
+
+    /**
+     * Without {@code @JsonIgnore} on {@code getServiceBusUrl()}, serializing settings that carry no
+     * namespace fails inside Jackson with {@code IllegalStateException("No namespace provided")}.
+     */
+    @Test
+    public void settingsWithoutNamespaceSerializeWithoutThrowing() {
+        QueueConnectionString connectionString = new QueueConnectionString();
+        connectionString.setName("asb-cs");
+        connectionString.setBrokerType(QueueBrokerType.AZURE_SERVICE_BUS);
+        connectionString.setAzureServiceBusConnectionSettings(new AzureServiceBusConnectionSettings());
+
+        assertThatCode(() -> JsonExtensions.getDefaultMapper().writeValueAsString(connectionString))
+                .doesNotThrowAnyException();
+    }
+
+    /**
+     * The other branch of the same trap: a connection string with no {@code sb://} endpoint makes
+     * {@code getServiceBusUrl()} throw {@code IllegalStateException("No endpoint provided")}.
+     */
+    @Test
+    public void settingsWithoutEndpointSerializeWithoutThrowing() {
+        AzureServiceBusConnectionSettings settings = new AzureServiceBusConnectionSettings();
+        settings.setConnectionString("SharedAccessKeyName=key;SharedAccessKey=abc");
+
+        assertThatCode(() -> JsonExtensions.getDefaultMapper().writeValueAsString(settings))
+                .doesNotThrowAnyException();
+    }
+
+    private static QueueConnectionString entraIdConnectionString() {
+        AzureServiceBusEntraId entraId = new AzureServiceBusEntraId();
+        entraId.setNamespace("ns.servicebus.windows.net");
+        entraId.setTenantId("tenant");
+        entraId.setClientId("client");
+        entraId.setClientSecret("secret");
+
+        AzureServiceBusConnectionSettings settings = new AzureServiceBusConnectionSettings();
+        settings.setEntraId(entraId);
+
+        QueueConnectionString connectionString = new QueueConnectionString();
+        connectionString.setName("asb-cs");
+        connectionString.setBrokerType(QueueBrokerType.AZURE_SERVICE_BUS);
+        connectionString.setAzureServiceBusConnectionSettings(settings);
+        return connectionString;
     }
 }
