@@ -41,5 +41,6 @@ public enum DatabaseRecordItemType {
     GEN_AI_ETLS,
     AI_AGENTS,
     REMOTE_ATTACHMENTS,
-    SCHEMA_VALIDATION
+    SCHEMA_VALIDATION,
+    CDC_SINKS
 }

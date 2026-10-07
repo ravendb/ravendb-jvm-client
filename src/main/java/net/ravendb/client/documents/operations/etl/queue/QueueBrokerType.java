@@ -9,7 +9,8 @@ public enum QueueBrokerType {
     KAFKA,
     RABBIT_MQ,
     AZURE_QUEUE_STORAGE,
-    AMAZON_SQS;
+    AMAZON_SQS,
+    AZURE_SERVICE_BUS;
 
     @JsonCreator
     public static QueueBrokerType fromString(String value) {
@@ -37,6 +38,10 @@ public enum QueueBrokerType {
                 return AMAZON_SQS;
             case "AmazonSqs":
                 return AMAZON_SQS;
+            case "AZURE_SERVICE_BUS":
+                return AZURE_SERVICE_BUS;
+            case "AzureServiceBus":
+                return AZURE_SERVICE_BUS;
             default:
                 throw new IllegalArgumentException("Unknown QueueBrokerType: " + value);
         }

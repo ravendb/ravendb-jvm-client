@@ -102,4 +102,15 @@ public interface IS3Settings {
      * @param remoteFolderName
      */
     void setRemoteFolderName(String remoteFolderName);
+
+    /**
+     * Gets a value indicating whether to disable checksum validation.
+     */
+    boolean isDisableChecksumValidation();
+
+    /**
+     * Sets a value indicating whether to disable checksum validation.
+     * @param disableChecksumValidation disable checksum validation
+     */
+    void setDisableChecksumValidation(boolean disableChecksumValidation);
 }

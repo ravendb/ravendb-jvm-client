@@ -14,6 +14,10 @@ public class CertificateMetadata {
     private String collectionPrimaryKey = "";
     private String publicKeyPinningHash;
     private boolean disabled;
+    private CertificateUsage usage;
+    private List<String> ssoServerPublicKeyPinningHashes = new ArrayList<>();
+    private boolean allowAnySsoServer;
+    private List<SsoIdentifier> ssoIdentifiers = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -93,5 +97,50 @@ public class CertificateMetadata {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    /**
+     * @return what this certificate is used for, or null when the server did not classify it
+     */
+    public CertificateUsage getUsage() {
+        return usage;
+    }
+
+    public void setUsage(CertificateUsage usage) {
+        this.usage = usage;
+    }
+
+    /**
+     * @return the public key pinning hashes of the SSO servers allowed to authorize this certificate's user
+     */
+    public List<String> getSsoServerPublicKeyPinningHashes() {
+        return ssoServerPublicKeyPinningHashes;
+    }
+
+    public void setSsoServerPublicKeyPinningHashes(List<String> ssoServerPublicKeyPinningHashes) {
+        this.ssoServerPublicKeyPinningHashes = ssoServerPublicKeyPinningHashes;
+    }
+
+    /**
+     * @return true when any SSO server may authorize this certificate's user, ignoring
+     *         {@link #getSsoServerPublicKeyPinningHashes()}
+     */
+    public boolean isAllowAnySsoServer() {
+        return allowAnySsoServer;
+    }
+
+    public void setAllowAnySsoServer(boolean allowAnySsoServer) {
+        this.allowAnySsoServer = allowAnySsoServer;
+    }
+
+    /**
+     * @return the SSO principals this certificate authorizes
+     */
+    public List<SsoIdentifier> getSsoIdentifiers() {
+        return ssoIdentifiers;
+    }
+
+    public void setSsoIdentifiers(List<SsoIdentifier> ssoIdentifiers) {
+        this.ssoIdentifiers = ssoIdentifiers;
     }
 }

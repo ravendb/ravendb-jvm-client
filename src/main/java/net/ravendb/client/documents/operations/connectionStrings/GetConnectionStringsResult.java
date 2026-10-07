@@ -5,6 +5,7 @@ import net.ravendb.client.documents.operations.AI.AiConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
+import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class GetConnectionStringsResult {
     private Map<String, OlapConnectionString> olapConnectionStrings;
     private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings;
     private Map<String, QueueConnectionString> queueConnectionStrings;
+    private Map<String, SnowflakeConnectionString> snowflakeConnectionStrings;
     private Map<String, AiConnectionString> aiConnectionStrings;
 
     public Map<String, AiConnectionString> getAiConnectionStrings() { return aiConnectionStrings; }
@@ -59,5 +61,13 @@ public class GetConnectionStringsResult {
 
     public void setQueueConnectionStrings(Map<String, QueueConnectionString> queueConnectionStrings) {
         this.queueConnectionStrings = queueConnectionStrings;
+    }
+
+    public Map<String, SnowflakeConnectionString> getSnowflakeConnectionStrings() {
+        return snowflakeConnectionStrings;
+    }
+
+    public void setSnowflakeConnectionStrings(Map<String, SnowflakeConnectionString> snowflakeConnectionStrings) {
+        this.snowflakeConnectionStrings = snowflakeConnectionStrings;
     }
 }

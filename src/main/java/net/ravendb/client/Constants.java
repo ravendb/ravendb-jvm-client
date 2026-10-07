@@ -9,6 +9,8 @@ public class Constants {
             private SupportedFeatures() {}
 
             public static final String THROW_REVISION_KEY_TOO_BIG_FIX = "ThrowRevisionKeyTooBigFix";
+            public static final String HASHED_REVISION_PK = "HashedRevisionPk";
+            public static final String PULL_REPLICATION_COMPOSITE_CHANGE_VECTORS = "PullReplicationCompositeChangeVectors";
             public static final String THROW_CONTROL_CHARACTERS_IN_IDENTIFIER = "ThrowControlCharactersInIdentifier";
         }
     }

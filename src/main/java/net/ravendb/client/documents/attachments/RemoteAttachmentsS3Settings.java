@@ -194,6 +194,22 @@ public final class RemoteAttachmentsS3Settings implements IS3Settings, IRemoteAt
     private boolean forcePathStyle;
 
     /**
+     * Gets or sets a value indicating whether to disable checksum validation.
+     *
+     * <p>
+     * This property disables checksum validation for S3 uploads. Checksum
+     * validation ensures data integrity and should not be disabled if not
+     * necessary.
+     * </p>
+     *
+     * <p>
+     * Set this to {@code true} if your S3‑compatible storage does not support
+     * modern object integrity checks.
+     * </p>
+     */
+    private boolean disableChecksumValidation;
+
+    /**
      * Gets or sets the S3 storage class to use for stored attachments.
      *
      * <p>
@@ -312,6 +328,19 @@ public final class RemoteAttachmentsS3Settings implements IS3Settings, IRemoteAt
 
     public void setForcePathStyle(boolean forcePathStyle) {
         this.forcePathStyle = forcePathStyle;
+    }
+
+    /**
+     * @return {@code true} when checksum validation is disabled for S3 uploads; {@code false} (default) to keep it enabled.
+     */
+    @Override
+    public boolean isDisableChecksumValidation() {
+        return disableChecksumValidation;
+    }
+
+    @Override
+    public void setDisableChecksumValidation(boolean disableChecksumValidation) {
+        this.disableChecksumValidation = disableChecksumValidation;
     }
 
      /**
