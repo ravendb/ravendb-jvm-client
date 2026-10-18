@@ -15,11 +15,12 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.QueryTest;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,6 +73,74 @@ public class SmugglerTest extends RemoteTestBase {
                     .isEqualTo(1);
             assertThat(stats.getCountOfCounterEntries())
                     .isEqualTo(1);
+        }
+    }
+
+    @Test
+    public void importFromFileIgnoresSiblingPartFiles() throws Exception {
+        File exportFile = File.createTempFile("exported-db-", "." + Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+        exportFile.deleteOnExit();
+
+        // name the legacy loop used to probe for: "%s.part%3d"
+        File partFile = new File(exportFile.getAbsolutePath() + ".part  1");
+        partFile.deleteOnExit();
+
+        exportSingleUser(exportFile, "users/a");
+        exportSingleUser(partFile, "users/b");
+
+        try (IDocumentStore store = getDocumentStore()) {
+            DatabaseSmugglerImportOptions options = new DatabaseSmugglerImportOptions();
+            Operation operation = store.smuggler().importAsync(options, exportFile.getAbsolutePath());
+            operation.waitForCompletion();
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.load(User.class, "users/a"))
+                        .isNotNull();
+                assertThat(session.load(User.class, "users/b"))
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
+    public void importFromStreamLeavesCallerStreamOpen() throws Exception {
+        File exportFile = File.createTempFile("exported-db-", "." + Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+        exportFile.deleteOnExit();
+
+        exportSingleUser(exportFile, "users/a");
+
+        AtomicBoolean closed = new AtomicBoolean();
+
+        try (IDocumentStore store = getDocumentStore();
+             InputStream stream = new FilterInputStream(new FileInputStream(exportFile)) {
+                 @Override
+                 public void close() throws IOException {
+                     closed.set(true);
+                     super.close();
+                 }
+             }) {
+            Operation operation = store.smuggler().importAsync(new DatabaseSmugglerImportOptions(), stream);
+            operation.waitForCompletion();
+
+            assertThat(closed)
+                    .isFalse();
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.load(User.class, "users/a"))
+                        .isNotNull();
+            }
+        }
+    }
+
+    private void exportSingleUser(File file, String id) throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new User(), id);
+                session.saveChanges();
+            }
+
+            Operation operation = store.smuggler().exportAsync(new DatabaseSmugglerExportOptions(), file.getAbsolutePath());
+            operation.waitForCompletion();
         }
     }
 
