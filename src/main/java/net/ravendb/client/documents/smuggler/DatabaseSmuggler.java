@@ -130,13 +130,15 @@ public class DatabaseSmuggler {
 
         for (int i = 0; i < files.size() - 1; i++) {
             File filePath = files.get(i);
-            importAsync(options, filePath.getAbsolutePath());
+            Operation op = importAsync(options, filePath.getAbsolutePath());
+            op.waitForCompletion();
         }
 
         options.setOperateOnTypes(oldOperateOnTypes);
 
         File lastFile = files.get(files.size() - 1);
-        importAsync(options, lastFile.getAbsolutePath());
+        Operation operation = importAsync(options, lastFile.getAbsolutePath());
+        operation.waitForCompletion();
     }
 
     public static EnumSet<DatabaseItemType> configureOptionsFromIncrementalImport(DatabaseSmugglerOptions options) {

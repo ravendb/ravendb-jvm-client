@@ -15,7 +15,11 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.QueryTest;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
