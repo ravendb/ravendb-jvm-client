@@ -61,6 +61,11 @@ public class RavenDB_24824Test extends RemoteTestBase {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("noSchema");
 
+            // a String passed to the generic sample-object overload is a sample object, not a schema - reject it like C#
+            assertThatThrownBy(() -> chat.streamWithSchema("summary", chunk -> CompletableFuture.completedFuture(null), "{\"type\":\"object\"}"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("raw string");
+
             // a structured answer still needs a property to stream
             assertThatThrownBy(() -> chat.streamWithSchema("", chunk -> CompletableFuture.completedFuture(null), new AiOutputOptions("{}")))
                     .isInstanceOf(IllegalArgumentException.class);

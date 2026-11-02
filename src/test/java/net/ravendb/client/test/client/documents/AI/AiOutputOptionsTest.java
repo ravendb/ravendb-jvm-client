@@ -29,6 +29,10 @@ public class AiOutputOptionsTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new AiOutputOptions("   "))
                 .isInstanceOf(IllegalArgumentException.class);
+        // a String reaching the sample-object constructor (e.g. via generic overloads) is rejected, like C#
+        assertThatThrownBy(() -> new AiOutputOptions((Object) "{\"type\":\"object\"}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("raw string");
     }
 
     @Test

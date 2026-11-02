@@ -31,6 +31,13 @@ public class AiOutputOptions {
         if (sampleObject == null) {
             throw new IllegalArgumentException("sampleObject cannot be null");
         }
+        // the answer type is erased at runtime, so a String sample object (only reachable through the generic
+        // sample-object overloads) stands in for C#'s "sample object with a raw string answer type" check
+        if (sampleObject instanceof String) {
+            throw new IllegalStateException("When the answer type is a raw string you cannot set an output schema, because the model is expected to return just a string, with no structure. " +
+                    "You can either set noSchema to true, or remove the output schema and sample object. " +
+                    "To pass an explicit JSON schema, use AiOutputOptions(String outputSchema).");
+        }
         this.sampleObject = sampleObject;
     }
 
