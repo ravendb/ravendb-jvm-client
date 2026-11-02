@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -129,13 +130,15 @@ public class DatabaseSmuggler {
 
         for (int i = 0; i < files.size() - 1; i++) {
             File filePath = files.get(i);
-            importAsync(options, filePath.getAbsolutePath());
+            Operation op = importAsync(options, filePath.getAbsolutePath());
+            op.waitForCompletion();
         }
 
         options.setOperateOnTypes(oldOperateOnTypes);
 
         File lastFile = files.get(files.size() - 1);
-        importAsync(options, lastFile.getAbsolutePath());
+        Operation operation = importAsync(options, lastFile.getAbsolutePath());
+        operation.waitForCompletion();
     }
 
     public static EnumSet<DatabaseItemType> configureOptionsFromIncrementalImport(DatabaseSmugglerOptions options) {
@@ -152,19 +155,9 @@ public class DatabaseSmuggler {
     }
 
     public Operation importAsync(DatabaseSmugglerImportOptions options, String fromFile) throws IOException {
-        int countOfFileParts = 0;
-
-        Operation result;
-
-        do {
-            try (FileInputStream fos = new FileInputStream(fromFile)) {
-                result = importAsync(options, fos);
-            }
-            countOfFileParts++;
-            fromFile = String.format("%s.part%3d", fromFile, countOfFileParts);
-        } while (new File(fromFile).exists());
-
-        return result;
+        try (FileInputStream fis = new FileInputStream(fromFile)) {
+            return importAsync(options, fis);
+        }
     }
 
     public Operation importAsync(DatabaseSmugglerImportOptions options, InputStream stream) {
@@ -271,7 +264,7 @@ public class DatabaseSmuggler {
                 MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
                 entityBuilder.addBinaryBody("importOptions", JsonExtensions.writeValueAsBytes(_options));
-                InputStreamBody inputStreamBody = new InputStreamBody(_stream, "name");
+                InputStreamBody inputStreamBody = new InputStreamBody(CloseShieldInputStream.wrap(_stream), "name");
                 FormBodyPart part = FormBodyPartBuilder.create("file", inputStreamBody)
                         .build();
                 entityBuilder.addPart(part);
