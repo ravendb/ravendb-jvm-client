@@ -42,6 +42,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -875,6 +877,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private static boolean shouldUseJsonPatch(Object value) {
+        // LocalDate/LocalTime are the DateOnly/TimeOnly counterparts, which C# keeps on the JavaScript patch path
+        if (value instanceof LocalDate || value instanceof LocalTime) {
+            return false;
+        }
+
         return value == null
                 || value instanceof String
                 || value instanceof Number

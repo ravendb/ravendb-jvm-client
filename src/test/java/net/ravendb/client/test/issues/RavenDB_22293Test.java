@@ -24,6 +24,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -285,6 +287,26 @@ public class RavenDB_22293Test extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 assertThat(session.load(UserWithTags.class, "users/1").getAddress().getCity()).isEqualTo("Hadera");
+            }
+        }
+    }
+
+    @Test
+    public void patch_localDateAndLocalTime_fallBackToJavaScript() throws Exception {
+        // LocalDate/LocalTime mirror C# DateOnly/TimeOnly, which stay on the JavaScript patch path
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                session.advanced().patch("users/1", "birthday", LocalDate.of(2000, 1, 1));
+
+                assertThat(hasDeferredCommand(session, "users/1", CommandType.PATCH)).isTrue();
+                assertThat(hasDeferredCommand(session, "users/1", CommandType.JSON_PATCH)).isFalse();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.advanced().patch("users/1", "wakeUp", LocalTime.of(7, 30));
+
+                assertThat(hasDeferredCommand(session, "users/1", CommandType.PATCH)).isTrue();
+                assertThat(hasDeferredCommand(session, "users/1", CommandType.JSON_PATCH)).isFalse();
             }
         }
     }
