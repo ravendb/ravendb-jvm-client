@@ -16,6 +16,7 @@ import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentToolAction;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.test.client.documents.AI.AiOutputOptionsTest.AlternativeSchema;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -71,6 +72,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
     private static final String OPENAI_API_KEY = "RAVEN_AI_INTEGRATION_OPENAI_API_KEY";
     private static final String NOT_BLANK = "(?s).*\\S.*";
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void outputSchemaFieldTrackedPerTurnInDocument() throws Exception {
@@ -115,6 +118,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void runWithoutSchemaReturnsRawString() throws Exception {
@@ -129,6 +134,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void streamWithoutSchemaStreamsRawText() throws Exception {
@@ -147,6 +154,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void convenienceOverloadsWork() throws Exception {
@@ -169,6 +178,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void canHandleNoArgsTool() throws Exception {
@@ -197,6 +208,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void multiTurnConversationResumesCorrectlyAfterNoSchemaTurn() throws Exception {
@@ -216,6 +229,8 @@ public class RavenDB_24824Test extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.2")
+    @DisabledOnPullRequest
     @EnabledIfEnvironmentVariable(named = OPENAI_API_KEY, matches = NOT_BLANK)
     @Test
     public void canStreamWithSchemaOverride() throws Exception {
