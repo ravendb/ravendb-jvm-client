@@ -877,7 +877,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     private static boolean shouldUseJsonPatch(Object value) {
-        // LocalDate/LocalTime are the DateOnly/TimeOnly counterparts, which C# keeps on the JavaScript patch path
         if (value instanceof LocalDate || value instanceof LocalTime) {
             return false;
         }
