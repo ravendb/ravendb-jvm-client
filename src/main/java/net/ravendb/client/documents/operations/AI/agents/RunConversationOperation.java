@@ -1,10 +1,12 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.AI.AiConversationCreationOptions;
+import net.ravendb.client.documents.AI.AiOutputOptions;
 import net.ravendb.client.documents.AI.ContentPart;
 import net.ravendb.client.documents.AI.TextPart;
 import net.ravendb.client.documents.commands.batches.ICommandData;
@@ -53,6 +55,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private final String streamPropertyPath;
     private final AiStreamCallback streamCallback;
     private List<ICommandData> attachmentsCommands;
+    private AiOutputOptions outputOptions;
 
     public RunConversationOperation(String agentId, String conversationId, List<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, AiConversationCreationOptions options, String changeVector) {
         this(agentId, conversationId, promptParts, actionResponses, Collections.emptyList(), options, changeVector, null, null);
@@ -85,6 +88,11 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     public RunConversationOperation(String agentId, String conversationId, Iterable<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, List<AiAgentArtificialActionResponse> artificialActions, AiConversationCreationOptions options, String changeVector, List<ICommandData> attachmentsCommands, String streamPropertyPath, AiStreamCallback streamedChunksCallback) {
         this(agentId, conversationId, promptParts, actionResponses, artificialActions, options, changeVector, streamPropertyPath, streamedChunksCallback);
         this.attachmentsCommands = attachmentsCommands;
+    }
+
+    public RunConversationOperation(String agentId, String conversationId, Iterable<ContentPart> promptParts, List<AiAgentActionResponse> actionResponses, List<AiAgentArtificialActionResponse> artificialActions, AiConversationCreationOptions options, String changeVector, List<ICommandData> attachmentsCommands, String streamPropertyPath, AiStreamCallback streamedChunksCallback, AiOutputOptions outputOptions) {
+        this(agentId, conversationId, promptParts, actionResponses, artificialActions, options, changeVector, attachmentsCommands, streamPropertyPath, streamedChunksCallback);
+        this.outputOptions = outputOptions;
     }
 
     @Deprecated
@@ -213,6 +221,9 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                     bodyObj.set("ArtificialActions", mapper.valueToTree(this.parent.getArtificialActions()));
                     bodyObj.set("UserPrompt", mapper.valueToTree(this.parent.getPromptParts()));
                     bodyObj.set("CreationOptions", mapper.valueToTree(this.parent.getOptions()));
+                    if (this.parent.outputOptions != null) {
+                        bodyObj.set("OutputOptions", outputOptionsToJson(this.parent.outputOptions));
+                    }
                     generator.writeTree(bodyObj);
                 }
             }, ContentType.APPLICATION_JSON,conventions));
@@ -273,6 +284,20 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
             }
 
             return request;
+        }
+
+        private ObjectNode outputOptionsToJson(AiOutputOptions outputOptions) throws JsonProcessingException {
+            ObjectNode json = mapper.createObjectNode();
+            if (outputOptions.getSampleObject() != null) {
+                json.put("SampleObject", conventions.getEntityMapper().writeValueAsString(outputOptions.getSampleObject()));
+            }
+            if (outputOptions.getOutputSchema() != null) {
+                json.put("OutputSchema", outputOptions.getOutputSchema());
+            }
+            if (outputOptions.isNoSchema()) {
+                json.put("NoSchema", true);
+            }
+            return json;
         }
 
         @Override

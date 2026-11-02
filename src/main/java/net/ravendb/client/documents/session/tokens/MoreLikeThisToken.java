@@ -17,6 +17,11 @@ public class MoreLikeThisToken extends WhereToken {
     }
 
     @Override
+    public WhereToken addAlias(String alias) {
+        return this;
+    }
+
+    @Override
     public void writeTo(StringBuilder writer) {
         writer.append("moreLikeThis(");
 

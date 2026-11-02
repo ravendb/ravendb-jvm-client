@@ -17,6 +17,7 @@ public class JavaScriptMap<TKey, TValue> {
 
     private final List<String> scriptLines = new ArrayList<>();
     private final Map<String, Object> parameters = new HashMap<>();
+    private final List<Operation> operations = new ArrayList<>();
 
     public JavaScriptMap(int suffix, String pathToMap) {
         this.suffix = suffix;
@@ -28,11 +29,13 @@ public class JavaScriptMap<TKey, TValue> {
 
         scriptLines.add("this." + pathToMap + "[" + formatKeyForJavaScript(key) + "] = args." + argumentName + ";");
         parameters.put(argumentName, value);
+        operations.add(new Operation(key, value, false));
         return this;
     }
 
     public JavaScriptMap<TKey, TValue> remove(TKey key) {
         scriptLines.add("delete this." + pathToMap + "[" + formatKeyForJavaScript(key) + "];");
+        operations.add(new Operation(key, null, true));
         return this;
     }
 
@@ -60,4 +63,31 @@ public class JavaScriptMap<TKey, TValue> {
         return parameters;
     }
 
+    List<Operation> getOperations() {
+        return operations;
+    }
+
+    static final class Operation {
+        private final Object key;
+        private final Object value;
+        private final boolean remove;
+
+        private Operation(Object key, Object value, boolean remove) {
+            this.key = key;
+            this.value = value;
+            this.remove = remove;
+        }
+
+        Object getKey() {
+            return key;
+        }
+
+        Object getValue() {
+            return value;
+        }
+
+        boolean isRemove() {
+            return remove;
+        }
+    }
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @EnableOnServer(thresholdVersion = "7.1")
 public class AiConversationTests extends RemoteTestBase {
@@ -418,6 +419,70 @@ public class AiConversationTests extends RemoteTestBase {
             assertThat(conv.getInvocations().containsKey("two-param")).isTrue();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void handle_noArgsTool_sendsHandlerResult() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/17|", new AiConversationCreationOptions());
+
+            AtomicBoolean handlerCalled = new AtomicBoolean(false);
+            conv.handle("get-current-time", () -> {
+                handlerCalled.set(true);
+                return "2026-01-01T00:00:00Z";
+            });
+
+            conv.getInvocations().get("get-current-time")
+                    .invoke(new AiAgentActionRequest("get-current-time", "tool-200", "{}")).join();
+
+            assertThat(handlerCalled.get()).isTrue();
+
+            // the handler result was already registered as the response for this tool call
+            assertThatThrownBy(() -> conv.addActionResponse("tool-200", "duplicate"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already added");
+        }
+    }
+
+    @Test
+    public void receive_noArgsTool_receivesRequest() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/18|", new AiConversationCreationOptions());
+
+            AtomicReference<AiAgentActionRequest> received = new AtomicReference<>();
+            conv.receive("ping", received::set);
+
+            AiAgentActionRequest request = new AiAgentActionRequest("ping", "tool-201", "{}");
+            conv.getInvocations().get("ping").invoke(request).join();
+
+            assertThat(received.get()).isSameAs(request);
+        }
+    }
+
+    @Test
+    public void handle_noArgsTool_respectsErrorStrategy() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/19|", new AiConversationCreationOptions());
+
+            conv.handle("fail-raise", () -> {
+                throw new IllegalStateException("boom-raise");
+            }, AiHandleErrorStrategy.RaiseImmediately);
+            conv.handle("fail-send", () -> {
+                throw new IllegalStateException("boom-send");
+            });
+
+            IActionInvocation raise = conv.getInvocations().get("fail-raise");
+            assertThatThrownBy(() -> raise.invoke(new AiAgentActionRequest("fail-raise", "tool-202", "{}")))
+                    .hasMessageContaining("boom-raise");
+
+            conv.getInvocations().get("fail-send")
+                    .invoke(new AiAgentActionRequest("fail-send", "tool-203", "{}")).join();
+
+            // with SendErrorsToModel the error is registered as the tool response instead of being thrown
+            assertThatThrownBy(() -> conv.addActionResponse("tool-203", "duplicate"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already added");
         }
     }
 }

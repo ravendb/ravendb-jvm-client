@@ -1937,12 +1937,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("Alias cannot be null or empty");
         }
 
-        for (QueryToken token : tokens) {
+        ListIterator<QueryToken> iterator = tokens.listIterator();
+        while (iterator.hasNext()) {
+            QueryToken token = iterator.next();
             if (token instanceof WhereToken) {
-                ((WhereToken) token).addAlias(fromAlias);
-            }
-            if (token instanceof OrderByToken) {
-                ((OrderByToken) token).addAlias(fromAlias);
+                iterator.set(((WhereToken) token).addAlias(fromAlias));
+            } else if (token instanceof OrderByToken) {
+                iterator.set(((OrderByToken) token).addAlias(fromAlias));
             }
         }
     }

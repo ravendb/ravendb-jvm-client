@@ -48,6 +48,7 @@ public class DocumentConventions {
     private ClientConfiguration _originalConfiguration;
     private final Map<Class, Field> _idPropertyCache = new HashMap<>();
     private boolean _saveEnumsAsIntegers;
+    private SessionPatchBehavior _sessionPatchBehavior;
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
@@ -209,6 +210,7 @@ public class DocumentConventions {
         _findCollectionName = type -> defaultGetCollectionName(type);
 
         _maxNumberOfRequestsPerSession = 30;
+        _sessionPatchBehavior = SessionPatchBehavior.JSON_PATCH;
         _bulkInsert = new BulkInsertConventions(this);
         _sharding = new ShardingConventions(this);
         _maxHttpCacheSize = 128 * 1024 * 1024;
@@ -472,6 +474,28 @@ public class DocumentConventions {
     public void setMaxNumberOfRequestsPerSession(int maxNumberOfRequestsPerSession) {
         assertNotFrozen();
         _maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
+    }
+
+    /**
+     * Determines whether the session patch methods emit RFC 6902 JsonPatch commands
+     * ({@link SessionPatchBehavior#JSON_PATCH}, the default) or legacy JavaScript patch commands
+     * ({@link SessionPatchBehavior#JAVA_SCRIPT}).
+     * Set to {@link SessionPatchBehavior#JAVA_SCRIPT} to opt out of the JsonPatch code path entirely and restore the previous behavior.
+     * @return session patch behavior
+     */
+    public SessionPatchBehavior getSessionPatchBehavior() {
+        return _sessionPatchBehavior;
+    }
+
+    /**
+     * Determines whether the session patch methods emit RFC 6902 JsonPatch commands
+     * ({@link SessionPatchBehavior#JSON_PATCH}, the default) or legacy JavaScript patch commands
+     * ({@link SessionPatchBehavior#JAVA_SCRIPT}).
+     * @param sessionPatchBehavior session patch behavior
+     */
+    public void setSessionPatchBehavior(SessionPatchBehavior sessionPatchBehavior) {
+        assertNotFrozen();
+        _sessionPatchBehavior = sessionPatchBehavior;
     }
 
 
@@ -845,6 +869,7 @@ public class DocumentConventions {
         cloned._shouldIgnoreEntityChanges = _shouldIgnoreEntityChanges;
         cloned._originalConfiguration = _originalConfiguration;
         cloned._saveEnumsAsIntegers = _saveEnumsAsIntegers;
+        cloned._sessionPatchBehavior = _sessionPatchBehavior;
         cloned._identityPartsSeparator = _identityPartsSeparator;
         cloned._disableTopologyUpdates = _disableTopologyUpdates;
         cloned._findIdentityProperty = _findIdentityProperty;

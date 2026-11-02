@@ -14,6 +14,7 @@ import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
+import net.ravendb.client.documents.conventions.SessionPatchBehavior;
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
@@ -41,9 +42,14 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DocumentSession extends InMemoryDocumentSessionOperations
         implements IAdvancedSessionOperations, IDocumentSessionImpl, IDocumentQueryGenerator {
@@ -752,6 +758,22 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T, U> void patch(String id, String path, U value) {
+        if (useJsonPatchInSessionPatchMethods() && shouldUseJsonPatch(value) && !hasExistingJavaScriptPatch(id)) {
+            String jsonPointer = tryBuildJsonPointer(path);
+            if (jsonPointer != null) {
+                JsonPatchDocument jsonPatch = new JsonPatchDocument();
+
+                if (isNamedMemberAccess(path)) {
+                    jsonPatch.add(jsonPointer, value);
+                } else {
+                    jsonPatch.replace(jsonPointer, value);
+                }
+
+                deferJsonPatchIfNotMerged(id, jsonPatch);
+                return;
+            }
+        }
+
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript("this." + path + " = args.val_" + _valsCount + ";");
         patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
@@ -776,6 +798,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         arrayAdder.accept(scriptArray);
 
+        if (useJsonPatchInSessionPatchMethods() && !hasExistingJavaScriptPatch(id)
+                && tryCreateArrayJsonPatch(id, pathToArray, scriptArray)) {
+            return;
+        }
+
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript(scriptArray.getScript());
         patchRequest.setValues(scriptArray.getParameters());
@@ -797,6 +824,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         JavaScriptMap<TKey, TValue> scriptMap = new JavaScriptMap<>(_customCount++, pathToObject);
 
         mapAdder.accept(scriptMap);
+
+        if (useJsonPatchInSessionPatchMethods() && !hasExistingJavaScriptPatch(id)
+                && tryCreateMapJsonPatch(id, pathToObject, scriptMap)) {
+            return;
+        }
 
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript(scriptMap.getScript());
@@ -831,6 +863,155 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         defer(new PatchCommandData(id, null, newPatchRequest, null));
 
         return true;
+    }
+
+    private static final Pattern PATH_SEGMENT = Pattern.compile("([A-Za-z_$][A-Za-z0-9_$]*)((?:\\[(?:0|[1-9][0-9]{0,8})])*)");
+    private static final Pattern PATH_INDEXER = Pattern.compile("\\[([0-9]+)]");
+
+    private boolean useJsonPatchInSessionPatchMethods() {
+        return getConventions().getSessionPatchBehavior() == SessionPatchBehavior.JSON_PATCH;
+    }
+
+    private boolean hasExistingJavaScriptPatch(String id) {
+        return deferredCommandsMap.containsKey(IdTypeAndName.create(id, CommandType.PATCH, null));
+    }
+
+    private static boolean shouldUseJsonPatch(Object value) {
+        if (value instanceof LocalDate || value instanceof LocalTime) {
+            return false;
+        }
+
+        return value == null
+                || value instanceof String
+                || value instanceof Number
+                || value instanceof Boolean
+                || value instanceof Character
+                || value instanceof Enum
+                || value instanceof Date
+                || value instanceof Temporal
+                || value instanceof Duration
+                || value instanceof UUID;
+    }
+
+    /**
+     * Converts a session patch path (e.g. "address.city" or "lines[0].price") to a JSON pointer.
+     * Returns null for anything that isn't plain member access and constant indexers, so the caller
+     * falls back to a JavaScript patch.
+     */
+    private static String tryBuildJsonPointer(String path) {
+        if (StringUtils.isEmpty(path)) {
+            return null;
+        }
+
+        StringBuilder jsonPointer = new StringBuilder();
+        for (String segment : path.split("\\.", -1)) {
+            Matcher segmentMatcher = PATH_SEGMENT.matcher(segment);
+            if (!segmentMatcher.matches()) {
+                return null;
+            }
+
+            jsonPointer.append('/').append(segmentMatcher.group(1));
+
+            Matcher indexerMatcher = PATH_INDEXER.matcher(segmentMatcher.group(2));
+            while (indexerMatcher.find()) {
+                jsonPointer.append('/').append(indexerMatcher.group(1));
+            }
+        }
+
+        return jsonPointer.toString();
+    }
+
+    private static boolean isNamedMemberAccess(String path) {
+        return !path.endsWith("]");
+    }
+
+    private static String escapeJsonPointerSegment(String segment) {
+        return segment.replace("~", "~0").replace("/", "~1");
+    }
+
+    private static boolean isValidJsonPointerSegment(String segment) {
+        return StringUtils.isNotBlank(segment);
+    }
+
+    private boolean tryCreateArrayJsonPatch(String id, String pathToArray, JavaScriptArray<?> scriptArray) {
+        if (scriptArray.getOperations().isEmpty()) {
+            return false;
+        }
+
+        String jsonPointer = tryBuildJsonPointer(pathToArray);
+        if (jsonPointer == null) {
+            return false;
+        }
+
+        JsonPatchDocument jsonPatch = new JsonPatchDocument();
+        for (JavaScriptArray.Operation operation : scriptArray.getOperations()) {
+            if (operation.isAdd()) {
+                for (Object value : operation.getValuesToAdd()) {
+                    if (!shouldUseJsonPatch(value)) {
+                        return false;
+                    }
+                    jsonPatch.add(jsonPointer + "/-", value);
+                }
+            } else {
+                jsonPatch.remove(jsonPointer + "/" + operation.getIndexToRemove());
+            }
+        }
+
+        deferJsonPatchIfNotMerged(id, jsonPatch);
+        return true;
+    }
+
+    private boolean tryCreateMapJsonPatch(String id, String pathToObject, JavaScriptMap<?, ?> scriptMap) {
+        if (scriptMap.getOperations().isEmpty()) {
+            return false;
+        }
+
+        String jsonPointer = tryBuildJsonPointer(pathToObject);
+        if (jsonPointer == null) {
+            return false;
+        }
+
+        JsonPatchDocument jsonPatch = new JsonPatchDocument();
+        for (JavaScriptMap.Operation operation : scriptMap.getOperations()) {
+            String key = operation.getKey().toString();
+            if (!isValidJsonPointerSegment(key)) {
+                return false;
+            }
+
+            String keyPointer = jsonPointer + "/" + escapeJsonPointerSegment(key);
+            if (operation.isRemove()) {
+                jsonPatch.remove(keyPointer);
+            } else {
+                if (!shouldUseJsonPatch(operation.getValue())) {
+                    return false;
+                }
+                jsonPatch.add(keyPointer, operation.getValue());
+            }
+        }
+
+        deferJsonPatchIfNotMerged(id, jsonPatch);
+        return true;
+    }
+
+    private boolean tryMergeJsonPatches(String id, JsonPatchDocument jsonPatch) {
+        ICommandData command = deferredCommandsMap.get(IdTypeAndName.create(id, CommandType.JSON_PATCH, null));
+        if (command == null) {
+            return false;
+        }
+
+        deferredCommands.remove(command);
+
+        JsonPatchCommandData oldPatch = (JsonPatchCommandData) command;
+        oldPatch.getJsonPatch().getOperations().addAll(jsonPatch.getOperations());
+
+        defer(oldPatch);
+        return true;
+    }
+
+    private void deferJsonPatchIfNotMerged(String id, JsonPatchDocument jsonPatch) {
+        if (!tryMergeJsonPatches(id, jsonPatch)) {
+            defer(new JsonPatchCommandData(id, jsonPatch));
+        }
     }
 
     public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {

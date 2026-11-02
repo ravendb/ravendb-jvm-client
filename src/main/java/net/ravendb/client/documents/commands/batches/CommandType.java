@@ -59,6 +59,8 @@ public enum CommandType {
                 return COUNTERS;
             case "BatchPATCH":
                 return BATCH_PATCH;
+            case "JsonPatch":
+                return JSON_PATCH;
             case "ForceRevisionCreation":
                 return FORCE_REVISION_CREATION;
             case "TimeSeries":

@@ -25,6 +25,8 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
     @JsonProperty("EmbeddingsCacheForQueryingExpiration")
     private long embeddingsCacheForQueryingExpiration = Duration.ofDays(14).toMillis();
 
+    private boolean storeChunkText;
+
     private static final String PATHS_TRANSFORMATION_NAME = "embeddings-from-paths";
     private static final String SCRIPT_TRANSFORMATION_NAME = "embeddings-transform-script";
 
@@ -96,6 +98,19 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
 
     public void setEmbeddingsCacheForQueryingExpiration(Duration embeddingsCacheForQueryingExpiration) {
         this.embeddingsCacheForQueryingExpiration = embeddingsCacheForQueryingExpiration.toMillis();
+    }
+
+    /**
+     * Store the text of each chunk in the database alongside its embedding.
+     * Useful for debugging or highlighting, but increases storage requirements. Defaults to false.
+     * @return Whether chunk text is stored
+     */
+    public boolean isStoreChunkText() {
+        return storeChunkText;
+    }
+
+    public void setStoreChunkText(boolean storeChunkText) {
+        this.storeChunkText = storeChunkText;
     }
 
     public String getTransformationName() {

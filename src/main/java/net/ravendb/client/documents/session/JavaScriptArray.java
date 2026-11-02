@@ -12,6 +12,7 @@ public class JavaScriptArray<U> {
 
     private final List<String> scriptLines = new ArrayList<>();
     private final Map<String, Object> parameters = new HashMap<>();
+    private final List<Operation> operations = new ArrayList<>();
 
     public JavaScriptArray(int suffix, String pathToArray) {
         this.suffix = suffix;
@@ -23,6 +24,7 @@ public class JavaScriptArray<U> {
 
         scriptLines.add("this." + pathToArray + ".push(args." + argumentName + ");");
         parameters.put(argumentName, u);
+        operations.add(Operation.add(Collections.singletonList(u)));
 
         return this;
     }
@@ -36,6 +38,7 @@ public class JavaScriptArray<U> {
         }).collect(Collectors.joining(","));
 
         scriptLines.add("this." + pathToArray + ".push(" + args + ");");
+        operations.add(Operation.add(Arrays.asList(u)));
         return this;
     }
 
@@ -47,6 +50,7 @@ public class JavaScriptArray<U> {
         }).collect(Collectors.joining(","));
 
         scriptLines.add("this." + pathToArray + ".push(" + args + ");");
+        operations.add(Operation.add(new ArrayList<>(u)));
         return this;
     }
 
@@ -55,6 +59,7 @@ public class JavaScriptArray<U> {
 
         scriptLines.add("this." + pathToArray + ".splice(args." + argumentName + ", 1);");
         parameters.put(argumentName, index);
+        operations.add(Operation.removeAt(index));
 
         return this;
     }
@@ -69,5 +74,39 @@ public class JavaScriptArray<U> {
 
     Map<String, Object> getParameters() {
         return parameters;
+    }
+
+    List<Operation> getOperations() {
+        return operations;
+    }
+
+    static final class Operation {
+        private final List<?> valuesToAdd;
+        private final int indexToRemove;
+
+        private Operation(List<?> valuesToAdd, int indexToRemove) {
+            this.valuesToAdd = valuesToAdd;
+            this.indexToRemove = indexToRemove;
+        }
+
+        static Operation add(List<?> values) {
+            return new Operation(values, -1);
+        }
+
+        static Operation removeAt(int index) {
+            return new Operation(null, index);
+        }
+
+        boolean isAdd() {
+            return valuesToAdd != null;
+        }
+
+        List<?> getValuesToAdd() {
+            return valuesToAdd;
+        }
+
+        int getIndexToRemove() {
+            return indexToRemove;
+        }
     }
 }

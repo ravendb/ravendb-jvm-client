@@ -12,7 +12,7 @@ public class CdcSinkPostgresSettings {
 
     /**
      * @return the PostgreSQL publication name used for logical replication. If null on creation, auto-filled
-     *         with an auto-generated name ({@code rvn_cdc_p_{guid}}). Must be a valid PostgreSQL identifier
+     *         with an auto-generated name ({@code rvn_cdc_p_{taskId}}). Must be a valid PostgreSQL identifier
      *         (alphanumeric + underscore, max 63 chars).
      */
     public String getPublicationName() {
@@ -25,7 +25,7 @@ public class CdcSinkPostgresSettings {
 
     /**
      * @return the PostgreSQL logical replication slot name. If null on creation, auto-filled with an
-     *         auto-generated name ({@code rvn_cdc_s_{guid}}). Must be a valid PostgreSQL identifier
+     *         auto-generated name ({@code rvn_cdc_s_{taskId}}). Must be a valid PostgreSQL identifier
      *         (alphanumeric + underscore, max 63 chars).
      */
     public String getSlotName() {

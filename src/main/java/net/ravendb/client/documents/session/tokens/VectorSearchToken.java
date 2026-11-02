@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session.tokens;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
 import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.IVectorEmbeddingFieldFactoryAccessor;
@@ -33,9 +34,6 @@ public class VectorSearchToken extends WhereToken {
     private final String embeddingsGenerationTaskIdentifierByValue;
     private final String embeddingsGenerationTaskIdentifier;
 
-    private final String fieldName;
-    private final String parameterName;
-
     public VectorSearchToken(
             String fieldName,
             String parameterName,
@@ -49,8 +47,8 @@ public class VectorSearchToken extends WhereToken {
             String embeddingsGenerationTaskIdentifierByValue) {
 
         super();
-        this.fieldName = fieldName;
-        this.parameterName = parameterName;
+        setFieldName(fieldName);
+        setParameterName(parameterName);
 
         this.sourceQuantizationType = sourceQuantizationType;
         this.targetQuantizationType = targetQuantizationType;
@@ -88,7 +86,33 @@ public class VectorSearchToken extends WhereToken {
     }
 
     @Override
+    public WhereToken addAlias(String alias) {
+        if (Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME.equals(getFieldName())) {
+            return this;
+        }
+
+        VectorSearchToken token = new VectorSearchToken(
+                alias + "." + getFieldName(),
+                getParameterName(),
+                sourceQuantizationType,
+                targetQuantizationType,
+                similarityThreshold,
+                numberOfCandidatesForQuerying,
+                Boolean.TRUE.equals(getOptions().isExact()),
+                isDocumentId,
+                embeddingsGenerationTaskIdentifier,
+                embeddingsGenerationTaskIdentifierByValue);
+
+        token.setOptions(getOptions());
+        token.setWhereOperator(getWhereOperator());
+        return token;
+    }
+
+    @Override
     public void writeTo(StringBuilder writer) {
+        String fieldName = getFieldName();
+        String parameterName = getParameterName();
+
         if (this.getOptions().getBoost() != null) {
             writer.append("boost(");
         }
@@ -100,7 +124,7 @@ public class VectorSearchToken extends WhereToken {
         writer.append("vector.search(");
         if (this.sourceQuantizationType == VectorEmbeddingType.SINGLE
                 && this.targetQuantizationType == VectorEmbeddingType.SINGLE) {
-            writer.append(this.fieldName);
+            writer.append(fieldName);
         } else {
             String methodName = VectorSearchUtil.vectorSearchConfigurationToMethodName(this.sourceQuantizationType, this.targetQuantizationType);
 

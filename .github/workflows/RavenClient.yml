@@ -31,6 +31,7 @@ jobs:
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL: https://localhost:7325
       RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+      RAVEN_AI_INTEGRATION_OPENAI_API_KEY: ${{ (matrix.java-version == 21 && matrix.serverVersion == '7.2') && secrets.RAVEN_AI_INTEGRATION_OPENAI_API_KEY || '' }}
       RAVENDB_SERVER_VERSION: ${{ matrix.serverVersion }}
 
     steps:
