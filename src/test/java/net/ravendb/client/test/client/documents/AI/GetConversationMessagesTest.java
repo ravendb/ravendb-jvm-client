@@ -158,6 +158,7 @@ public class GetConversationMessagesTest {
                 + "\"visits\":9999999999,\"ratio\":1.5,\"scores\":[1,2,3]},"
                 + "\"TotalUsage\":{\"PromptTokens\":10,\"CompletionTokens\":5,\"TotalTokens\":15,\"CachedTokens\":2,\"ReasoningTokens\":1},"
                 + "\"LastMessageAt\":\"2026-06-16T10:30:00.0000000Z\","
+                + "\"CreatedAt\":\"2026-06-16T10:29:00.0000000Z\","
                 + "\"HasMoreMessages\":true,"
                 + "\"SubConversationIds\":[\"conversations/2-A\"],"
                 + "\"Attachments\":[\"file.txt\"],"
@@ -177,6 +178,7 @@ public class GetConversationMessagesTest {
         assertThat(result.getSubConversationIds()).containsExactly("conversations/2-A");
         assertThat(result.getAttachments()).containsExactly("file.txt");
         assertThat(result.getLastMessageAt()).isEqualTo(utc(2026, 6, 16, 10, 30, 0));
+        assertThat(result.getCreatedAt()).isEqualTo(utc(2026, 6, 16, 10, 29, 0));
 
         // Parameters are heterogeneous - strings, numbers, booleans and arrays. Numbers widen the same way
         // the .NET client materializes them: int, then long, then double.
