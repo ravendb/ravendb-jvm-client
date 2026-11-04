@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -98,6 +99,82 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         onUnexpectedSubscriptionError.remove(handler);
     }
 
+    private final List<BiConsumer<AbstractSubscriptionWorker<TBatch, TType>, SubscriptionWorkerStatus>> onStateChanged = new ArrayList<>();
+
+    private volatile SubscriptionWorkerStatus _status = new SubscriptionWorkerStatus(SubscriptionWorkerState.NOT_STARTED, null, new Date(), null);
+
+    private Date _failingSinceUtc;
+
+    /**
+     * What the worker is doing right now - connecting, waiting for the server to send documents, processing a
+     * batch, retrying after a failure, or stopped. The returned snapshot is immutable, so the state and the
+     * exception that produced it always belong together.
+     * @return current worker status
+     */
+    public SubscriptionWorkerStatus getStatus() {
+        return _status;
+    }
+
+    /**
+     * Raised on every change to {@link #getStatus()}, for callers that would rather be told than poll. The
+     * worker that changed state is passed along with the snapshot that was just installed, so that a single
+     * handler can serve several workers. Exceptions thrown by a handler are logged and swallowed, so that
+     * watching the worker cannot break it.
+     * @param handler handler to add
+     */
+    public void addOnStateChanged(BiConsumer<AbstractSubscriptionWorker<TBatch, TType>, SubscriptionWorkerStatus> handler) {
+        onStateChanged.add(handler);
+    }
+
+    public void removeOnStateChanged(BiConsumer<AbstractSubscriptionWorker<TBatch, TType>, SubscriptionWorkerStatus> handler) {
+        onStateChanged.remove(handler);
+    }
+
+    private void setState(SubscriptionWorkerState state) {
+        setState(state, null);
+    }
+
+    // Called only from the task running the subscription, no synchronization needed
+    private void setState(SubscriptionWorkerState state, Exception exception) {
+        Date now = new Date();
+
+        switch (state) {
+            case WAITING_FOR_DOCUMENTS:
+            case PROCESSING:
+                _failingSinceUtc = null; // we are talking to the server, whatever went wrong before is over
+                break;
+            case RETRYING:
+            case FAULTED:
+                if (_failingSinceUtc == null) {
+                    _failingSinceUtc = now; // keep the first time we failed, so that the user can see how long we've been failing
+                }
+                break;
+            default:
+                break; // CONNECTING is a step of every retry as well as of a healthy start, so it carries the streak over
+        }
+
+        SubscriptionWorkerStatus current = _status;
+        if (current.getState() == state && current.getException() == exception
+                && Objects.equals(current.failingSinceUtcInternal(), _failingSinceUtc)) {
+            return; // same state, no need to change anything
+        }
+
+        SubscriptionWorkerStatus status = new SubscriptionWorkerStatus(state, exception, now, _failingSinceUtc);
+        _status = status;
+
+        for (BiConsumer<AbstractSubscriptionWorker<TBatch, TType>, SubscriptionWorkerStatus> handler : onStateChanged) {
+            try {
+                handler.accept(this, status);
+            } catch (Exception e) {
+                // a failing handler must not take the subscription down with it, and must not replace the
+                // exception we are in the middle of reporting
+                if (_logger.isInfoEnabled()) {
+                    _logger.info("Subscription '" + _options.getSubscriptionName() + "'. onStateChanged handler threw while reporting '" + status + "'.", e);
+                }
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     AbstractSubscriptionWorker(Class<?> clazz, SubscriptionWorkerOptions options, boolean withRevisions, String dbName, ExecutorService executorService) {
         _clazz = (Class<TType>) clazz;
@@ -148,6 +225,12 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                 _logger.debug("Error during close of subscription: " + ex.getMessage(), ex);
             }
         } finally {
+            if (_subscriptionTask == null) {
+                // a worker that was never run has no task to report STOPPED for itself, and cannot be racing
+                // with one either
+                setState(SubscriptionWorkerState.STOPPED);
+            }
+
             if (onClosed != null) {
                 onClosed.accept(this);
             }
@@ -497,6 +580,9 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                     return;
                 }
 
+                // set before raising the event, so that a handler reading the status sees that we are connected
+                setState(SubscriptionWorkerState.WAITING_FOR_DOCUMENTS);
+
                 EventHelper.invoke(onEstablishedSubscriptionConnection, null);
 
                 processSubscriptionInternal(tcpClientCopy);
@@ -520,6 +606,8 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
             while (!_processingCts.getToken().isCancellationRequested()) {
                 prepareBatch(tcpClientCopy, batch, notifiedSubscriber);
+
+                setState(SubscriptionWorkerState.PROCESSING);
 
                 notifiedSubscriber = CompletableFuture.runAsync(() -> {
                     try {
@@ -576,6 +664,14 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             }
 
             throw e;
+        }
+
+        // The read above was started before the subscriber ran, on purpose, so we stay PROCESSING for as long as it
+        // is in flight. Now that the subscriber is done, the server is the only thing left to wait for - unless its
+        // batch already arrived while we were processing, in which case we go straight on to processing that one and
+        // never waited at all.
+        if (!readFromServer.isDone()) {
+            setState(SubscriptionWorkerState.WAITING_FOR_DOCUMENTS);
         }
 
         BatchFromServer incomingBatch = readFromServer.get();
@@ -673,63 +769,86 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
     private CompletableFuture<Void> runSubscriptionAsync() {
         return CompletableFuture.runAsync(() -> {
-            while (!_processingCts.getToken().isCancellationRequested()) {
-                try {
-                    closeTcpClient();
-                    if (_logger.isInfoEnabled()) {
-                        _logger.info("Subscription " + _options.getSubscriptionName() + ". Connecting to server...");
-                    }
+            try {
+                runSubscriptionInternal();
+            } catch (RuntimeException e) {
+                // caller asked us to stop, the failure isn't a problem
+                if (!_disposed) {
+                    setState(SubscriptionWorkerState.FAULTED, e);
+                }
 
-                    processSubscription();
-                } catch (Exception ex) {
-                    try {
-                        if (_processingCts.getToken().isCancellationRequested()) {
-                            if (!_disposed) {
-                                throw ex;
-                            }
-                            return;
-                        }
-
-                        if (_logger.isInfoEnabled()) {
-                            _logger.info("Subscription " + _options.getSubscriptionName() + ". Pulling task threw the following exception", ex);
-                        }
-
-                        Tuple<Boolean, ServerNode> reconnectAndServerNode = checkIfShouldReconnectWorker(ex);
-                        _redirectNode = reconnectAndServerNode.second;
-
-                        if (reconnectAndServerNode.first) {
-                            Thread.sleep(_options.getTimeToWaitBeforeConnectionRetry().toMillis());
-
-                            if (_redirectNode == null) {
-                                RequestExecutor reqEx = getRequestExecutor();
-                                List<ServerNode> curTopology = reqEx.getTopologyNodes();
-                                int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
-                                try {
-                                    _redirectNode = reqEx.getRequestedNode(curTopology.get(nextNodeIndex).getClusterTag(), true).currentNode;
-                                    if (_logger.isInfoEnabled()) {
-                                        _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
-                                    }
-                                } catch (Exception e) {
-                                    // will let topology to decide
-                                    if (_logger.isInfoEnabled()) {
-                                        _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Could not select the redirect node will keep it null.", e);
-                                    }
-                                }
-                            }
-
-                            EventHelper.invoke(onSubscriptionConnectionRetry, ex);
-                        } else {
-                            if (_logger.isErrorEnabled()) {
-                                _logger.error("Connection to subscription " + _options.getSubscriptionName() + " have been shut down because of an error", ex);
-                            }
-                            throw ex;
-                        }
-                    } catch (Exception e) {
-                        throw ExceptionsUtils.unwrapException(e);
-                    }
+                throw e;
+            } finally {
+                // reached on the paths that end the worker without surfacing an error - disposal - while a
+                // worker that gave up on a failure keeps reporting it
+                if (_status.getState() != SubscriptionWorkerState.FAULTED) {
+                    setState(SubscriptionWorkerState.STOPPED);
                 }
             }
         }, _executorService);
+    }
+
+    private void runSubscriptionInternal() {
+        while (!_processingCts.getToken().isCancellationRequested()) {
+            try {
+                closeTcpClient();
+                setState(SubscriptionWorkerState.CONNECTING);
+                if (_logger.isInfoEnabled()) {
+                    _logger.info("Subscription " + _options.getSubscriptionName() + ". Connecting to server...");
+                }
+
+                processSubscription();
+            } catch (Exception ex) {
+                try {
+                    if (_processingCts.getToken().isCancellationRequested()) {
+                        if (!_disposed) {
+                            throw ex;
+                        }
+                        return;
+                    }
+
+                    if (_logger.isInfoEnabled()) {
+                        _logger.info("Subscription " + _options.getSubscriptionName() + ". Pulling task threw the following exception", ex);
+                    }
+
+                    Tuple<Boolean, ServerNode> reconnectAndServerNode = checkIfShouldReconnectWorker(ex);
+                    _redirectNode = reconnectAndServerNode.second;
+
+                    if (reconnectAndServerNode.first) {
+                        // set before waiting, so that the state is accurate for the whole of the retry delay
+                        setState(SubscriptionWorkerState.RETRYING, ex);
+
+                        Thread.sleep(_options.getTimeToWaitBeforeConnectionRetry().toMillis());
+
+                        if (_redirectNode == null) {
+                            RequestExecutor reqEx = getRequestExecutor();
+                            List<ServerNode> curTopology = reqEx.getTopologyNodes();
+                            int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
+                            try {
+                                _redirectNode = reqEx.getRequestedNode(curTopology.get(nextNodeIndex).getClusterTag(), true).currentNode;
+                                if (_logger.isInfoEnabled()) {
+                                    _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
+                                }
+                            } catch (Exception e) {
+                                // will let topology to decide
+                                if (_logger.isInfoEnabled()) {
+                                    _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Could not select the redirect node will keep it null.", e);
+                                }
+                            }
+                        }
+
+                        EventHelper.invoke(onSubscriptionConnectionRetry, ex);
+                    } else {
+                        if (_logger.isErrorEnabled()) {
+                            _logger.error("Connection to subscription " + _options.getSubscriptionName() + " have been shut down because of an error", ex);
+                        }
+                        throw ex;
+                    }
+                } catch (Exception e) {
+                    throw ExceptionsUtils.unwrapException(e);
+                }
+            }
+        }
     }
 
     private Date _lastConnectionFailure;
