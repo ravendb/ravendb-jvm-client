@@ -21,14 +21,20 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
     private String projectId;
 
     /**
-     * Controls the reasoning depth used by supported models (such as GPT-5 family).
-     * Lower values reduce the amount of internal reasoning performed by the model,
+     * The reasoning_effort to send to the provider, controlling the reasoning depth
+     * of supported models (such as the GPT-5 family). Lower values reduce internal reasoning,
      * which may improve latency and reduce variability in responses.
      * <p>
-     * Note that this setting reduces the likelihood of non-deterministic behavior,
-     * but does not guarantee fully deterministic responses.
+     * Typical values are none, minimal, low, medium, high, xhigh and max. Model families accept
+     * different subsets, for example minimal is rejected by gpt-5.1 and later, which take none instead.
+     * When not set the field is omitted and the model applies its own default.
+     * <p>
+     * Sent as supplied apart from trimming, and not validated by RavenDB, so new provider values
+     * can be used without waiting for a RavenDB release. Providers match it exactly: OpenAI accepts
+     * lowercase values only. Legacy {@link OpenAiReasoningEffort} member names persisted by
+     * older clients (e.g. High) are normalized to the provider form by the server.
      */
-    private OpenAiReasoningEffort reasoningEffort;
+    private String reasoningEffort;
 
     /**
      * Optional seed used to make the model's sampling more reproducible across requests.
@@ -49,7 +55,7 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
                           String projectId,
                           Integer dimensions,
                           Double temperature,
-                          OpenAiReasoningEffort reasoningEffort,
+                          String reasoningEffort,
                           Integer seed) {
         super(apiKey, endpoint, model, dimensions, temperature);
         this.organizationId = organizationId;
@@ -118,11 +124,11 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
         this.projectId = projectId;
     }
 
-    public OpenAiReasoningEffort getReasoningEffort() {
+    public String getReasoningEffort() {
         return reasoningEffort;
     }
 
-    public void setReasoningEffort(OpenAiReasoningEffort reasoningEffort) {
+    public void setReasoningEffort(String reasoningEffort) {
         this.reasoningEffort = reasoningEffort;
     }
 
