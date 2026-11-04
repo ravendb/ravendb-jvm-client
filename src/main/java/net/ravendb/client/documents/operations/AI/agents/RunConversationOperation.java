@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.AI.agents;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.AI.AiConversationCreationOptions;
@@ -15,6 +16,7 @@ import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
@@ -24,6 +26,7 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import net.ravendb.client.util.UrlUtils;
 import net.ravendb.client.util.ValidationMethods;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.entity.mime.*;
@@ -325,7 +328,15 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
                     line = line.trim();
 
                     if (line.startsWith("{")) {
-                        this.result = mapper.readValue(line, ConversationResult.class);
+                        ObjectNode finalJson = (ObjectNode) mapper.readTree(line);
+                        // An exception thrown after streaming already started (HTTP 200) is written into the stream as the
+                        // standard error payload - surface it (e.g. RefusedToAnswerException) instead of parsing it as the result.
+                        JsonNode exceptionType = finalJson.get("Type");
+                        if (exceptionType != null && exceptionType.isTextual() && StringUtils.isNotEmpty(exceptionType.asText())) {
+                            throw ExceptionDispatcher.get(finalJson, response.getCode());
+                        }
+
+                        this.result = mapper.treeToValue(finalJson, ConversationResult.class);
                         break;
                     }
 

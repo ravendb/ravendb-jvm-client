@@ -568,6 +568,24 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return null;
     }
 
+    /**
+     * Registers an explicit optimistic concurrency check for a document, without loading it into the
+     * session and without a remote call. The next saveChanges verifies the document against the server
+     * and throws a ConcurrencyException if it no longer matches.
+     * The check is honored regardless of the session's OptimisticConcurrencyMode, and it
+     * overrides anything the session itself tracked for that id.
+     * A non-empty change vector requires the document to still have it, an empty string asserts
+     * the document does not exist, and null disables the check for this id.
+     * The registration is one shot - a successful saveChanges consumes it.
+     */
+    public void registerForConcurrencyCheck(String id, String changeVector) {
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("id cannot be null or empty");
+        }
+
+        trackedEntities.forceRegister(id, changeVector);
+    }
+
     public <T> Date getLastModifiedFor(T instance) {
         if (instance == null) {
             throw new IllegalArgumentException("Instance cannot be null");
@@ -1052,6 +1070,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 case COMPARE_EXCHANGE_DELETE:
                 case COMPARE_EXCHANGE_PUT:
                     break;
+                case BATCH_TRACK_CHANGES:
+                    throw new IllegalStateException("registerForConcurrencyCheck is not supported when using a cluster transaction.");
                 default:
                     throw new IllegalStateException("The command '" + commandData.getType() + "' is not supported in a cluster session.");
             }
@@ -2580,6 +2600,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
                 _session.deferredCommands.clear();
                 _session.deferredCommandsMap.clear();
+                _session.trackedEntities.clearForcedRegistrations();
             }
 
             public void clearDeletedEntities() {
@@ -2591,18 +2612,39 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public static class TrackedEntitiesHolder {
         private final Map<String, String> _trackedEntities = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
+        // Explicit registrations made via registerForConcurrencyCheck. These are kept apart from _trackedEntities so
+        // that tracking operations (loads, refreshes, evictions) can neither override nor remove them, and so that
+        // they are honored in every OptimisticConcurrencyMode. A null value disables the check for that id.
+        private Map<String, String> _forcedEntities;
+
         private final boolean _shouldTrack;
 
         public TrackedEntitiesHolder(boolean shouldTrack) {
             _shouldTrack = shouldTrack;
         }
 
-        public boolean any() {
-            if (_shouldTrack) {
-                return !_trackedEntities.isEmpty();
+        /**
+         * Registers an explicit concurrency check for an id, bypassing the session's OptimisticConcurrencyMode.
+         * The entry is included in the next saveChanges batch and overrides any tracked value for the id.
+         * A null change vector disables the check for the id, an empty string asserts the document does not exist,
+         * and any other value is verified against the server.
+         * @param id document id
+         * @param changeVector expected change vector
+         */
+        public void forceRegister(String id, String changeVector) {
+            if (_forcedEntities == null) {
+                _forcedEntities = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             }
+            _forcedEntities.put(id, changeVector);
+        }
 
-            return false;
+        /**
+         * Registered checks are one shot - the next saveChanges verifies them and then they are done.
+         * Holding on to them would make every later saveChanges on this session re-assert a change vector that
+         * this very session has already validated and replaced.
+         */
+        public void clearForcedRegistrations() {
+            _forcedEntities = null;
         }
 
         public void tryRemove(String id) {
@@ -2618,9 +2660,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         public void clear() {
-            if (_shouldTrack) {
-                _trackedEntities.clear();
-            }
+            _trackedEntities.clear();
+            _forcedEntities = null;
         }
 
         public boolean tryGetValue(String id, Reference<String> changeVector) {
@@ -2654,12 +2695,50 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         public void prepareForEntitiesTrack(SaveChangesData result) {
-            if (!any()) {
+            Map<String, String> entitiesToCheck = buildEntitiesToCheck();
+            if (entitiesToCheck == null) {
                 return;
             }
 
-            result.trackChangesCommandData = new BatchTrackChangesCommandData(_trackedEntities, result.idsAlreadyCheckedForConcurrency);
+            result.trackChangesCommandData = new BatchTrackChangesCommandData(entitiesToCheck, getIdsToSkip(result.idsAlreadyCheckedForConcurrency));
             result.sessionCommands.add(0, result.trackChangesCommandData);
+        }
+
+        private Map<String, String> buildEntitiesToCheck() {
+            boolean hasTracked = _shouldTrack && !_trackedEntities.isEmpty();
+
+            if (_forcedEntities == null) {
+                return hasTracked ? _trackedEntities : null;
+            }
+
+            Map<String, String> entitiesToCheck = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            if (hasTracked) {
+                entitiesToCheck.putAll(_trackedEntities);
+            }
+
+            for (Map.Entry<String, String> forced : _forcedEntities.entrySet()) {
+                // an explicit registration overrides whatever the session tracked for this id
+                if (forced.getValue() == null) {
+                    entitiesToCheck.remove(forced.getKey());
+                } else {
+                    entitiesToCheck.put(forced.getKey(), forced.getValue());
+                }
+            }
+
+            return entitiesToCheck.isEmpty() ? null : entitiesToCheck;
+        }
+
+        private Set<String> getIdsToSkip(Set<String> idsAlreadyCheckedForConcurrency) {
+            // a write that carries its own change vector check makes the tracked read check redundant, but it must
+            // not swallow a check that the user registered explicitly
+            if (_forcedEntities == null || idsAlreadyCheckedForConcurrency.isEmpty()) {
+                return idsAlreadyCheckedForConcurrency;
+            }
+
+            Set<String> idsToSkip = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            idsToSkip.addAll(idsAlreadyCheckedForConcurrency);
+            idsToSkip.removeAll(_forcedEntities.keySet());
+            return idsToSkip;
         }
     }
 

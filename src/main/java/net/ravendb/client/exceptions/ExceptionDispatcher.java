@@ -52,6 +52,16 @@ public class ExceptionDispatcher {
         return exception;
     }
 
+    public static RavenException get(ObjectNode json, int code) {
+        ExceptionSchema schema = JsonExtensions.getDefaultMapper().convertValue(json, ExceptionSchema.class);
+
+        RavenException exception = get(schema, code);
+
+        fillException(exception, json);
+
+        return exception;
+    }
+
     public static void throwException(ClassicHttpResponse response) {
         if (response == null) {
             throw new IllegalArgumentException("Response cannot be null");
@@ -119,7 +129,7 @@ public class ExceptionDispatcher {
 
         if (exception instanceof IndexCompilationException) {
             IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-            JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");
+            JsonNode indexDefinitionProperty = json.get("IndexDefinitionProperty");
             if (indexDefinitionProperty != null) {
                 indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
             }

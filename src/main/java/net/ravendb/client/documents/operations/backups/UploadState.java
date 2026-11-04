@@ -7,5 +7,6 @@ public enum UploadState {
     PENDING_UPLOAD,
     UPLOADING,
     PENDING_RESPONSE,
-    DONE
+    DONE,
+    ABORTED
 }

@@ -16,6 +16,7 @@ public class AiConversationMessagesResult {
     private Map<String, Object> parameters;
     private AiUsage totalUsage;
     private Date lastMessageAt;
+    private Date createdAt;
     private List<AiConversationMessage> messages;
     private boolean hasMoreMessages;
     private List<String> subConversationIds;
@@ -75,6 +76,17 @@ public class AiConversationMessagesResult {
 
     public void setLastMessageAt(Date lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
+    }
+
+    /**
+     * @return when the conversation was created
+     */
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
     /**
