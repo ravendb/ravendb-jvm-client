@@ -129,7 +129,7 @@ public class ExceptionDispatcher {
 
         if (exception instanceof IndexCompilationException) {
             IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-            JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");
+            JsonNode indexDefinitionProperty = json.get("IndexDefinitionProperty");
             if (indexDefinitionProperty != null) {
                 indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
             }
