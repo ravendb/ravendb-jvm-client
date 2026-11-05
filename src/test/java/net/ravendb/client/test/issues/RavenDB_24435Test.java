@@ -18,9 +18,7 @@ public class RavenDB_24435Test extends RemoteTestBase {
 
     @Test
     public void shouldUnescapeDatabaseNameFromDatabaseMissingHeader() throws Exception {
-        // C# uses a non-ASCII name ("database-møøse-{guid}"). The Java client does not percent-encode non-ASCII
-        // database names in request URLs (C# gets that from System.Uri), so an ASCII name is used here.
-        String databaseName = "database-moose-" + UUID.randomUUID();
+        String databaseName = "database-møøse-" + UUID.randomUUID();
 
         DocumentConventions conventions = new DocumentConventions();
 

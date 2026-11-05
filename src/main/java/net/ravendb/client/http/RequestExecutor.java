@@ -1230,7 +1230,8 @@ public class RequestExecutor implements CleanCloseable {
                 command.setTimeout(ObjectUtils.firstNonNull(command.getTimeout(), _firstBroadcastAttemptTimeout));
             }
 
-            request.setUri(builder);
+            // percent-encode non-ASCII characters (e.g. in database names) as UTF-8, like System.Uri does in C#
+            request.setUri(new URI(builder.toASCIIString()));
 
             return request;
         } catch (URISyntaxException e) {
