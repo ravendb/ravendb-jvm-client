@@ -2468,6 +2468,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
     }
 
+    public Lazy<Long> longCountLazily() {
+        if (queryOperation == null) {
+            _take(0);
+            queryOperation = initializeQueryOperation();
+        }
+
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
+        return ((DocumentSession)theSession).addLazyCountLongOperation(lazyQueryOperation);
+    }
+
     @Override
     public void _suggestUsing(SuggestionBase suggestion) {
         if (suggestion == null) {

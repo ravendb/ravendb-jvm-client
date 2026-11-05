@@ -91,6 +91,17 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     }
 
     @Override
+    public IIncludeBuilder includeAllTimeSeries() {
+        return includeAllTimeSeries((Date) null, (Date) null);
+    }
+
+    @Override
+    public IIncludeBuilder includeAllTimeSeries(Date from, Date to) {
+        _includeTimeSeriesFromTo("", Constants.TimeSeries.ALL, from, to);
+        return this;
+    }
+
+    @Override
     public IIncludeBuilder includeRevisions(String changeVectorPaths) {
         _withAlias();
         _includeRevisionsByChangeVectors(changeVectorPaths);

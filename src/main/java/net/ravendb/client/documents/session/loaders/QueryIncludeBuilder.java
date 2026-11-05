@@ -121,6 +121,17 @@ public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
     }
 
     @Override
+    public IQueryIncludeBuilder includeAllTimeSeries() {
+        return includeAllTimeSeries((Date) null, (Date) null);
+    }
+
+    @Override
+    public IQueryIncludeBuilder includeAllTimeSeries(Date from, Date to) {
+        _includeTimeSeriesFromTo("", Constants.TimeSeries.ALL, from, to);
+        return this;
+    }
+
+    @Override
     public IQueryIncludeBuilder includeRevisions(Date before) {
         _includeRevisionsBefore(before);
         return this;
