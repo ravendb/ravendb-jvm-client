@@ -17,6 +17,7 @@ import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetNodeInfoCommand;
 import net.ravendb.client.util.CertificateUtils;
 import net.ravendb.client.util.TimeUtils;
+import net.ravendb.client.util.UrlUtils;
 import net.ravendb.client.util.ZstdInputStreamFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -352,6 +353,16 @@ public class RequestExecutor implements CleanCloseable {
                 }
 
                 conventions.updateFrom(result.getConfiguration());
+
+                NodeSelector nodeSelector = _nodeSelector;
+                if (nodeSelector != null) {
+                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
+                        nodeSelector.scheduleSpeedTest();
+                    } else {
+                        nodeSelector.disableFastestNodeReadBalance();
+                    }
+                }
+
                 clientConfigurationEtag = result.getEtag();
             } finally {
                 _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
@@ -402,26 +413,16 @@ public class RequestExecutor implements CleanCloseable {
                 execute(parameters.getNode(), null, command, false, null);
                 Topology topology = command.getResult();
 
-                if (_nodeSelector == null) {
-                    _nodeSelector = new NodeSelector(topology, _executorService);
-
-                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
-                } else if (_nodeSelector.onUpdateTopology(topology, parameters.isForceUpdate())) {
-                    disposeAllFailedNodesTimers();
-                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
-                }
-
-                topologyEtag = _nodeSelector.getTopology().getEtag();
+                updateNodeSelector(topology, parameters.isForceUpdate());
 
                 onTopologyUpdatedInvoke(topology, parameters.getDebugTag());
             } catch (Exception e) {
+                // we want to throw here only if we are not disposed yet
                 if (!_disposed) {
                     throw e;
                 }
+
+                return false;
             } finally {
                 _updateDatabaseTopologySemaphore.release();
             }
@@ -791,15 +792,12 @@ public class RequestExecutor implements CleanCloseable {
             requestRef.value = request;
         }
 
-        //noinspection SimplifiableConditionalExpression
-        boolean noCaching = sessionInfo != null ? sessionInfo.isNoCaching() : false;
-
         Reference<String> cachedChangeVectorRef = new Reference<>();
         Reference<String> cachedValue = new Reference<>();
 
         String url = getRequestUri(request);
 
-        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, url, cachedChangeVectorRef, cachedValue)) {
+        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, sessionInfo, url, cachedChangeVectorRef, cachedValue)) {
             if (cachedChangeVectorRef.value != null) {
                 if (tryGetFromCache(command, cachedItem, cachedValue.value)) {
                     return;
@@ -847,7 +845,7 @@ public class RequestExecutor implements CleanCloseable {
                     if (!handleUnsuccessfulResponse(chosenNode, nodeIndex, command, request, response, url, sessionInfo, shouldRetry)) {
                         Header dbMissingHeader = response.getFirstHeader(Constants.Headers.DATABASE_MISSING);
                         if (dbMissingHeader != null && dbMissingHeader.getValue() != null) {
-                            throw new DatabaseDoesNotExistException(dbMissingHeader.getValue());
+                            throw new DatabaseDoesNotExistException("Database '" + UrlUtils.unescapeDataString(dbMissingHeader.getValue()) + "' does not exist.");
                         }
 
                         throwFailedToContactAllNodes(command, request);
@@ -987,17 +985,6 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         lastServerVersion = chosenNode.getLastServerVersion();
-
-        if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
-            // if we reach here it means that sometime a cluster transaction has occurred against this database.
-            // Since the current executed command can be dependent on that, we have to wait for the cluster transaction.
-            // But we can't do that if the server is an old one.
-
-            if (lastServerVersion == null || lastServerVersion.compareToIgnoreCase("4.1") < 0) {
-                throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
-                        "the command since this command dependent on a cluster transaction which this node doesn't support.");
-            }
-        }
 
         return response;
     }
@@ -1192,8 +1179,12 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, boolean useCache, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
-        if (useCache && command.canCache() && command.canReadFromCache && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
+    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, SessionInfo sessionInfo, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
+        if (sessionInfo != null && sessionInfo.isNoCaching()) {
+            command.canCache = false;
+        }
+
+        if (command.canCache() && command.canReadFromCache && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
             return cache.get(url, cachedChangeVector, cachedValue);
         }
 
@@ -1762,7 +1753,11 @@ public class RequestExecutor implements CleanCloseable {
         if (_updateTopologyTimer != null) {
             _updateTopologyTimer.close();
         }
-        
+
+        if (_nodeSelector != null) {
+            _nodeSelector.close();
+        }
+
         disposeAllFailedNodesTimers();
     }
 

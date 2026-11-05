@@ -255,6 +255,25 @@ public class NodeSelector implements CleanCloseable {
         }
     }
 
+    void disableFastestNodeReadBalance() {
+        if (_updateFastestNodeTimer == null) {
+            return;
+        }
+
+        synchronized (_timerCreationLocker) {
+            if (_updateFastestNodeTimer == null) {
+                return;
+            }
+
+            _updateFastestNodeTimer.close();
+            _updateFastestNodeTimer = null;
+
+            NodeSelectorState state = _state;
+            state.speedTestMode.set(0);
+            Arrays.fill(state.fastestRecords, 0);
+        }
+    }
+
     @Override
     public void close() {
         if (_updateFastestNodeTimer != null) {
