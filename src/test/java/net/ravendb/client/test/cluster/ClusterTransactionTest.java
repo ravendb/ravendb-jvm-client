@@ -4,6 +4,8 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.operations.compareExchange.CompareExchangeResult;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 import net.ravendb.client.documents.operations.compareExchange.GetCompareExchangeValueOperation;
 import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
@@ -248,6 +250,114 @@ public class ClusterTransactionTest extends RemoteTestBase {
             val = store.operations().send(new GetCompareExchangeValueOperation<>(AtomicGuard.class, compareExchangeKey));
             assertThat(val.getValue().locked)
                     .isTrue();
+        }
+    }
+
+    @Test
+    public void loadIncludeCmpxchg_WhenMissing_ShouldNotCreateAdditionalRequest() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String docId = "users/1";
+            String notExistCmpxchgId = "not-exist";
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName(notExistCmpxchgId);
+                session.store(user, docId);
+                session.saveChanges();
+            }
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.load(User.class, docId, i -> i.includeCompareExchangeValue("name"));
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                CompareExchangeValue<String> cmpxchg = session.advanced().clusterTransaction()
+                        .getCompareExchangeValue(String.class, notExistCmpxchgId);
+                assertThat(cmpxchg)
+                        .isNull();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    public void loadIncludeCmpxchg_WhenGet_ShouldNotTriggerAdditionalRequest() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String docId = "users/0";
+            String cmpxchgId = "cmpxchg/0";
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName(cmpxchgId);
+                session.store(user, docId);
+                session.saveChanges();
+
+                CompareExchangeResult<String> test = store.operations().send(
+                        new PutCompareExchangeValueOperation<>(cmpxchgId, "some content", 0));
+                assertThat(test.isSuccessful())
+                        .isTrue();
+            }
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.load(User.class, docId, i -> i.includeCompareExchangeValue("name"));
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                session.advanced().clusterTransaction().getCompareExchangeValue(String.class, cmpxchgId);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    public void queryIncludeCmpxchg_WhenEmpty_ShouldNotCreateAdditionalRequest() throws Exception {
+        String notExistCmpxchgId = "not-exist";
+        try (IDocumentStore store = getDocumentStore()) {
+            new TestIndex().execute(store);
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.store(new User());
+                session.saveChanges();
+            }
+
+            waitForIndexing(store);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.advanced()
+                        .rawQuery(User.class, "declare function incl(c) {\n" +
+                                "    includes.cmpxchg($ce);\n" +
+                                "    return c;\n" +
+                                "}\n" +
+                                "from index 'TestIndex' as c\n" +
+                                "select incl(c)")
+                        .addParameter("ce", notExistCmpxchgId)
+                        .toList();
+
+                int numberOfRequests = session.advanced().getNumberOfRequests();
+                CompareExchangeValue<Object> cmpxchg = session.advanced().clusterTransaction()
+                        .getCompareExchangeValue(Object.class, notExistCmpxchgId);
+                assertThat(cmpxchg)
+                        .isNull();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests);
+            }
+        }
+    }
+
+    public static class TestIndex extends AbstractIndexCreationTask {
+        public TestIndex() {
+            map = "from u in docs.Users select new { u.name }";
         }
     }
 }

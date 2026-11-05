@@ -212,7 +212,7 @@ public class ExceptionDispatcher {
             throw ctxConcurrencyException;
         }
 
-        ConcurrencyException concurrencyException = new ConcurrencyException(schema.getMessage());
+        ConcurrencyException concurrencyException = new ConcurrencyException(schema.getMessage(), new RavenException(schema.getError()));
         JsonNode idNode = json.get("Id");
         if (idNode != null) {
             concurrencyException.setId(idNode.asText());

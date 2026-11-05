@@ -30,6 +30,7 @@ import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
+import net.ravendb.client.util.ClientChangeVectorUtils;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.IdentityLinkedHashMap;
 import org.apache.commons.beanutils.BeanUtils;
@@ -42,6 +43,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -2563,6 +2565,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             public void updateEntityDocumentInfo(DocumentInfo documentInfo, ObjectNode document) {
+                String clusterId = _session.sessionInfo != null ? _session.sessionInfo.getClusterTransactionId() : null;
+                if (clusterId != null && documentInfo.getChangeVector() != null) {
+                    String[] cv = documentInfo.getChangeVector().split(Pattern.quote(String.valueOf(ClientChangeVectorUtils.SEPARATOR)), -1);
+                    if (cv.length > 2) {
+                        throw new IllegalStateException("The document '" + documentInfo.getId() + "' has invalid change vector '" + documentInfo.getChangeVector() + "'");
+                    }
+
+                    long clusterTxIndex = ClientChangeVectorUtils.getEtagById(cv[cv.length - 1], clusterId);
+                    if (clusterTxIndex > 0) {
+                        Long lastClusterTransactionIndex = _session.sessionInfo.getLastClusterTransactionIndex();
+                        _session.sessionInfo.setLastClusterTransactionIndex(Math.max(lastClusterTransactionIndex != null ? lastClusterTransactionIndex : 0, clusterTxIndex));
+                    }
+                }
                 _documentInfosToUpdate.add(Tuple.create(documentInfo, document));
             }
 

@@ -40,6 +40,8 @@ public class DefaultCommandResponseBehavior extends AbstractCommandResponseBehav
 
     @Override
     public <TResult> boolean tryHandleConflict(RavenCommand<TResult> command, ClassicHttpResponse response) {
+        command.onResponseFailure(response);
+
         ExceptionDispatcher.throwException(response);
         return false;
     }

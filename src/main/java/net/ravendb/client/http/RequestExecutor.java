@@ -853,6 +853,13 @@ public class RequestExecutor implements CleanCloseable {
                     return; // we either handled this already in the unsuccessful response or we are throwing
                 }
 
+                if (sessionInfo != null) {
+                    Header clusterTransactionId = response.getFirstHeader(Constants.Headers.DATABASE_CLUSTER_TRANSACTION_ID);
+                    if (clusterTransactionId != null) {
+                        sessionInfo.setClusterTransactionId(clusterTransactionId.getValue());
+                    }
+                }
+
                 EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, url, response, request, attemptNum));
 
                 responseDispose = command.processResponse(cache, response, url);

@@ -130,6 +130,8 @@ public class Constants {
 
         public static final String LAST_KNOWN_CLUSTER_TRANSACTION_INDEX = "Known-Raft-Index";
 
+        public static final String DATABASE_CLUSTER_TRANSACTION_ID = "Database-Cluster-Tx-Id";
+
         public static final String CLIENT_CONFIGURATION_ETAG = "Client-Configuration-Etag";
 
         public static final String REFRESH_CLIENT_CONFIGURATION = "Refresh-Client-Configuration";
