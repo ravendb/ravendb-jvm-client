@@ -84,8 +84,10 @@ public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
         return false;
     }
 
+    private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
     @Override
     public String getRaftUniqueRequestId() {
-        return RaftIdGenerator.newId();
+        return raftUniqueRequestId;
     }
 }

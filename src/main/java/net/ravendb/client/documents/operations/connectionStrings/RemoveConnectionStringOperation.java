@@ -46,9 +46,11 @@ public class RemoveConnectionStringOperation<T extends ConnectionString> impleme
             return new HttpDelete(url);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
 
         @Override

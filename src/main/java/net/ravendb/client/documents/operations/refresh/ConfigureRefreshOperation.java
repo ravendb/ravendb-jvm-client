@@ -68,9 +68,11 @@ public class ConfigureRefreshOperation implements IMaintenanceOperation<Configur
             result = mapper.readValue(response, ConfigureRefreshOperationResult.class);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

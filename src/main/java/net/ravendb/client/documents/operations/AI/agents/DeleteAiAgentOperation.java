@@ -2,9 +2,11 @@ package net.ravendb.client.documents.operations.AI.agents;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -29,7 +31,7 @@ public class DeleteAiAgentOperation implements IMaintenanceOperation<AiAgentConf
         return new DeleteAiAgentCommand(this.identifier, conventions);
     }
 
-    class DeleteAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> {
+    class DeleteAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> implements IRaftCommand {
         private final String identifier;
         private final DocumentConventions conventions;
 
@@ -52,6 +54,11 @@ public class DeleteAiAgentOperation implements IMaintenanceOperation<AiAgentConf
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             result = mapper.readValue(response, AiAgentConfigurationResult.class);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

@@ -56,9 +56,11 @@ public class EnableIndexOperation implements IVoidMaintenanceOperation {
             return new HttpPost(url);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }
