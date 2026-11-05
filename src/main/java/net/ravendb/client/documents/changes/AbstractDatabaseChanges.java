@@ -355,7 +355,8 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                     String urlString = _serverNode.getUrl() + "/databases/" + _database + "/changes";
                     URI url;
                     try {
-                        url = new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase()));
+                        // percent-encode non-ASCII characters (e.g. in database names) as UTF-8, like System.Uri does in C#
+                        url = new URI(new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase())).toASCIIString());
                         _url = url.toString();
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
