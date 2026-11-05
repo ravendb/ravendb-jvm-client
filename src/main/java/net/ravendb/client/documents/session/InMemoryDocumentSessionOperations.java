@@ -1604,6 +1604,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerIncludes(ObjectNode includes) {
+        registerIncludes(includes, false);
+    }
+
+    public void registerIncludes(ObjectNode includes, boolean registerMissingIds) {
         if (noTracking) {
             return;
         }
@@ -1615,7 +1619,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         for (String fieldName : Lists.newArrayList(includes.fieldNames())) {
             JsonNode fieldValue = includes.get(fieldName);
 
-            if (fieldValue == null) {
+            if (!(fieldValue instanceof ObjectNode)) {
+                if (registerMissingIds) {
+                    registerMissing(fieldName);
+                }
+
                 continue;
             }
 

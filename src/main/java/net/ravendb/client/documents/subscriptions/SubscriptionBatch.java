@@ -80,7 +80,7 @@ public class SubscriptionBatch<T> extends SubscriptionBatchBase<T> {
 
         if (_includes != null && !_includes.isEmpty()) {
             for (ObjectNode item : _includes) {
-                s.registerIncludes(item);
+                s.registerIncludes(item, true);
             }
         }
 
