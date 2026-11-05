@@ -86,7 +86,7 @@ public class DocumentConventions {
     private ObjectMapper _entityMapper;
     private Boolean _useHttpCompression;
     private Boolean _useHttpDecompression;
-    private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
+    private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Zstd;
     private boolean _sendApplicationIdentifier;
 
     private final BulkInsertConventions _bulkInsert;

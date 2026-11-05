@@ -35,13 +35,14 @@ import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.util.StreamExposerContent;
+import net.ravendb.client.documents.operations.backups.CompressionLevel;
+import net.ravendb.client.util.GzipLevelCompressingEntity;
 import net.ravendb.client.util.ZstdCompressingEntity;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.entity.GzipCompressingEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
@@ -54,6 +55,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.zip.Deflater;
 
 public class BulkInsertOperation extends BulkInsertOperationBase<Object> implements CleanCloseable {
 
@@ -83,6 +85,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         private final HttpCompressionAlgorithm _compressionAlgorithm;
+        private final CompressionLevel _compressionLevel;
 
         private final BulkInsertStreamExposerContent _stream;
 
@@ -91,9 +94,10 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
         private String _requestNodeTag;
 
-        public BulkInsertCommand(long id, HttpCompressionAlgorithm compressionAlgorithm, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
+        public BulkInsertCommand(long id, HttpCompressionAlgorithm compressionAlgorithm, CompressionLevel compressionLevel, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
             super(ClassicHttpResponse.class);
             _compressionAlgorithm = compressionAlgorithm;
+            _compressionLevel = compressionLevel;
             _stream = stream;
             _id = id;
             this.selectedNodeTag = nodeTag;
@@ -121,17 +125,39 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         private HttpEntity wrapEntity(HttpEntity entity) {
-            if (_compressionAlgorithm == null) {
+            if (_compressionLevel == null || _compressionLevel == CompressionLevel.NO_COMPRESSION) {
                 return entity;
             }
 
             switch (_compressionAlgorithm) {
                 case Gzip:
-                    return new GzipCompressingEntity(entity);
+                    return new GzipLevelCompressingEntity(entity, toGzipLevel(_compressionLevel));
                 case Zstd:
-                    return new ZstdCompressingEntity(entity);
+                    return new ZstdCompressingEntity(entity, toZstdLevel(_compressionLevel));
                 default:
                     throw new IllegalArgumentException("Invalid compression entity: " + _compressionAlgorithm);
+            }
+        }
+
+        private static int toGzipLevel(CompressionLevel compressionLevel) {
+            switch (compressionLevel) {
+                case OPTIMAL:
+                    return Deflater.DEFAULT_COMPRESSION;
+                case FASTEST:
+                    return Deflater.BEST_SPEED;
+                default:
+                    throw new IllegalArgumentException("Invalid compression level: " + compressionLevel);
+            }
+        }
+
+        private static int toZstdLevel(CompressionLevel compressionLevel) {
+            switch (compressionLevel) {
+                case OPTIMAL:
+                    return 0;
+                case FASTEST:
+                    return 1;
+                default:
+                    throw new IllegalArgumentException("Invalid compression level: " + compressionLevel);
             }
         }
 
@@ -167,16 +193,15 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
 
     private boolean _first = true;
-    private boolean useCompression;
+    private CompressionLevel compressionLevel;
 
     private CleanCloseable _unsubscribeChanges;
     private final List<EventHandler<BulkInsertOnProgressEventArgs>> _onProgress = new ArrayList<>();
     private boolean _onProgressInitialized = false;
 
     private final Timer _timer;
-    private Date _lastWriteToStream;
     private final Semaphore _streamLock;
-    private final Duration _heartbeatCheckInterval = Duration.ofSeconds(40);
+    private final Duration _heartbeatCheckInterval = Duration.ofSeconds(120 / 4);
 
     public BulkInsertOperation(String database, DocumentStore store) {
         this(database, store, null);
@@ -190,7 +215,9 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             throwNoDatabase();
         }
 
-        this.useCompression = options != null ? options.isUseCompression() : false;
+        this.compressionLevel = options != null
+                ? ObjectUtils.firstNonNull(options.getCompressionLevel(), BulkInsertOptions.DEFAULT_COMPRESSION_LEVEL)
+                : BulkInsertOptions.DEFAULT_COMPRESSION_LEVEL;
 
         this.attachmentsOperation = new AttachmentsBulkInsertOperation(this);
         _options = ObjectUtils.firstNonNull(options, new BulkInsertOptions());
@@ -210,7 +237,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 entity -> _requestExecutor.getConventions().generateDocumentId(database, entity));
 
         _streamLock = new Semaphore(1);
-        _lastWriteToStream = new Date();
 
         TimerState timerState = new TimerState();
         timerState.parent = new WeakReference<>(this);
@@ -235,19 +261,19 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     }
 
     private void sendHeartBeat() {
-        if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
+        if (!isHeartbeatIntervalExceeded()) {
             return;
         }
 
-        try {
-            if (!_streamLock.tryAcquire(0, TimeUnit.SECONDS)) {
-                return; // if locked we are already writing
-            }
-        } catch (InterruptedException e) {
-            throw new IllegalStateException("Unable to acquire lock");
+        if (!_streamLock.tryAcquire()) {
+            return; // if locked we are already writing
         }
 
         try {
+            if (_writer.streamExposer.isDone()) {
+                return; // writer already closed
+            }
+
             executeBeforeStore();
             endPreviousCommandIfNeeded();
             if (!checkServerVersion(_requestExecutor.getLastServerVersion())) {
@@ -263,9 +289,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _writer.write("{\"Type\":\"HeartBeat\"}");
 
             flushIfNeeded(true);
-            _writer._requestBodyStream.flush();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            // ignore
         } finally {
             _streamLock.release();
         }
@@ -279,10 +304,16 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 int minor = versionParsed.length > 1 ? Integer.parseInt(versionParsed[1]) : 0;
                 int build = versionParsed.length > 2 ? Integer.parseInt(versionParsed[2]) : 0;
 
-                if (major == 6 && build < 2) {
+                // Version 6 only from 6.0.2
+                if (major == 6 && minor > 0) {
+                    return true;
+                }
+
+                if (major == 6 && minor == 0 && build < 2) {
                     return false;
                 }
 
+                // 5.4.108 or higher
                 return major > 5 || (major == 5 && minor >= 4 && build >= 110);
             }
         } catch (NumberFormatException e) {
@@ -302,12 +333,30 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         this._onProgress.remove(handler);
     }
 
-    public boolean isUseCompression() {
-        return useCompression;
+    public CompressionLevel getCompressionLevel() {
+        return compressionLevel;
     }
 
+    public void setCompressionLevel(CompressionLevel compressionLevel) {
+        this.compressionLevel = compressionLevel;
+    }
+
+    /**
+     * @return true if compression is enabled
+     * @deprecated Bulk insert compression is now configured by compression level (enabled by default, as in the C# client). Use {@link #getCompressionLevel()} instead.
+     */
+    @Deprecated
+    public boolean isUseCompression() {
+        return compressionLevel != null && compressionLevel != CompressionLevel.NO_COMPRESSION;
+    }
+
+    /**
+     * @param useCompression true sets compression level to FASTEST, false to NO_COMPRESSION
+     * @deprecated Bulk insert compression is now configured by compression level (enabled by default, as in the C# client). Use {@link #setCompressionLevel(CompressionLevel)} instead.
+     */
+    @Deprecated
     public void setUseCompression(boolean useCompression) {
-        this.useCompression = useCompression;
+        this.compressionLevel = useCompression ? CompressionLevel.FASTEST : CompressionLevel.NO_COMPRESSION;
     }
 
 
@@ -508,7 +557,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
     protected void ensureStream() {
         try {
-            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, useCompression ? _conventions.getHttpCompressionAlgorithm() : null, _writer.streamExposer, _nodeTag, _options.isSkipOverwriteIfUnchanged());
+            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _requestExecutor.getConventions().getHttpCompressionAlgorithm(), compressionLevel, _writer.streamExposer, _nodeTag, _options.isSkipOverwriteIfUnchanged());
 
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {
                 _requestExecutor.execute(bulkCommand);
@@ -563,6 +612,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 try {
                     _writer.close();
                 } finally {
+                    // stop heartbeats right after the writer is closed, while still holding the stream lock
+                    _timer.close();
                     _streamLock.release();
                 }
             } catch (Exception e) {
@@ -682,12 +733,12 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
 
     private void flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
-        if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
-            _lastWriteToStream = new Date();
-            force = true;
-        }
-
+        force = force || isHeartbeatIntervalExceeded();
         _writer.flushIfNeeded(force);
+    }
+
+    private boolean isHeartbeatIntervalExceeded() {
+        return new Date().getTime() - _writer.getLastFlushToStream().getTime() >= _heartbeatCheckInterval.toMillis();
     }
 
     private static class CountersBulkInsertOperation {
