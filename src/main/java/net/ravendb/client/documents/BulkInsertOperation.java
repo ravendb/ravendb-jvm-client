@@ -376,7 +376,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         _nodeTag = bulkInsertGetIdRequest.getNodeTag();
 
         if (_onProgressInitialized && _unsubscribeChanges == null) {
-            _unsubscribeChanges = _store.changes()
+            _unsubscribeChanges = _store.changes(_database, _nodeTag)
                     .forOperationId(_operationId)
                     .subscribe(new BulkInsertObserver(this, _conventions));
         }

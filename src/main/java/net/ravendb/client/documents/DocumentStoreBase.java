@@ -2,6 +2,7 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
@@ -78,7 +79,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDatabaseChanges changes(String database);
 
-    public abstract IDatabaseChanges changes(String database, String nodeTag);
+    public abstract ISingleNodeDatabaseChanges changes(String database, String nodeTag);
 
     @Override
     public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration);

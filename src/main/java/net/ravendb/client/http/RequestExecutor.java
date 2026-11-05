@@ -1603,7 +1603,7 @@ public class RequestExecutor implements CleanCloseable {
                 updateParameters.setDebugTag("handle-server-not-responsive");
                 updateTopologyAsync(updateParameters).get();
             } catch (InterruptedException | ExecutionException ee) {
-                throw ExceptionsUtils.unwrapException(e);
+                throw ExceptionsUtils.unwrapException(ee);
             }
         }
 

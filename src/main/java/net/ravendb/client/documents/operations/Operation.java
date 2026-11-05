@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
@@ -24,11 +24,11 @@ public class Operation {
         return _id;
     }
 
-    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id) {
+    public Operation(RequestExecutor requestExecutor, Supplier<ISingleNodeDatabaseChanges> changes, DocumentConventions conventions, long id) {
         this(requestExecutor, changes, conventions, id, null);
     }
 
-    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id, String nodeTag) {
+    public Operation(RequestExecutor requestExecutor, Supplier<ISingleNodeDatabaseChanges> changes, DocumentConventions conventions, long id, String nodeTag) {
         _requestExecutor = requestExecutor;
         _conventions = conventions;
         _id = id;

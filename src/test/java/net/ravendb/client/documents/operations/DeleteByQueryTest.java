@@ -3,7 +3,7 @@ package net.ravendb.client.documents.operations;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.changes.IChangesObservable;
-import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.changes.Observers;
 import net.ravendb.client.documents.changes.OperationStatusChange;
 import net.ravendb.client.documents.queries.IndexQuery;
@@ -65,7 +65,8 @@ public class DeleteByQueryTest extends RemoteTestBase {
 
             Semaphore semaphore = new Semaphore(0);
 
-            try (IDatabaseChanges changes = store.changes()) {
+            String nodeTag = store.getRequestExecutor().getPreferredNode().currentNode.getClusterTag();
+            try (ISingleNodeDatabaseChanges changes = store.changes(store.getDatabase(), nodeTag)) {
                 changes.ensureConnectedNow();
 
                 IChangesObservable<OperationStatusChange> allOperationChanges = changes.forAllOperations();

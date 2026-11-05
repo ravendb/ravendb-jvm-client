@@ -12,17 +12,28 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
 
     @SuppressWarnings("FieldCanBeLocal")
     private final String _databaseName;
-    private final DatabaseChanges _changes;
+    private final AggressiveCacheDatabaseChanges _changes;
     private CleanCloseable _documentsSubscription;
     private CleanCloseable _indexesSubscription;
     private final RequestExecutor _requestExecutor;
     private final CompletableFuture _taskConnected;
     private CleanCloseable _aggressiveCachingSubscription;
 
+    /**
+     * @param store document store
+     * @param databaseName database name
+     * @deprecated the store must be notified when the changes connection is closed, use
+     * {@link #EvictItemsFromCacheBasedOnChanges(DocumentStore, String, Runnable)} instead
+     */
+    @Deprecated
     public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName) {
+        this(store, databaseName, null);
+    }
+
+    public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName, Runnable onDispose) {
         _databaseName = databaseName;
         _requestExecutor = store.getRequestExecutor(databaseName);
-        _changes = new DatabaseChanges(_requestExecutor, databaseName, store.getExecutorService(), null, null);
+        _changes = new AggressiveCacheDatabaseChanges(_requestExecutor, databaseName, store.getExecutorService(), onDispose);
 
         _taskConnected = CompletableFuture.runAsync(this::ensureConnectedInternal, store.getExecutorService());
     }
@@ -48,6 +59,8 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
 
     @Override
     public void onError(Exception error) {
+        // any error means that the changes connection was disconnected, and we must invalidate the cache
+        _requestExecutor.getCache().generation.incrementAndGet();
     }
 
     @Override
