@@ -1,8 +1,11 @@
 package net.ravendb.client.documents.operations.backups;
 
+import net.ravendb.client.primitives.UseSharpEnum;
+
 /**
  * S3 storage class options for Amazon S3 or S3‑compatible providers.
  */
+@UseSharpEnum
 public enum S3StorageClass {
 
     /**

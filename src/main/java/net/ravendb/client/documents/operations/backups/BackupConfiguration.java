@@ -13,6 +13,7 @@ public class BackupConfiguration {
     private AzureSettings azureSettings;
     private FtpSettings ftpSettings;
     private GoogleCloudSettings googleCloudSettings;
+    private Integer maxReadOpsPerSecond;
 
     public BackupType getBackupType() {
         return backupType;
@@ -92,5 +93,13 @@ public class BackupConfiguration {
 
     public void setGoogleCloudSettings(GoogleCloudSettings googleCloudSettings) {
         this.googleCloudSettings = googleCloudSettings;
+    }
+
+    public Integer getMaxReadOpsPerSecond() {
+        return maxReadOpsPerSecond;
+    }
+
+    public void setMaxReadOpsPerSecond(Integer maxReadOpsPerSecond) {
+        this.maxReadOpsPerSecond = maxReadOpsPerSecond;
     }
 }

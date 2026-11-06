@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.smuggler;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
 
@@ -67,7 +68,7 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 
     private EnumSet<DatabaseItemType> operateOnTypes;
-    private EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordType;
+    private EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordTypes;
     private boolean includeExpired;
     private boolean includeArtificial;
     private boolean includeArchived;
@@ -77,12 +78,13 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private boolean skipRevisionCreation;
     private String encryptionKey;
     private List<String> collections;
+    private Integer maxReadOpsPerSecond;
 
     private boolean skipCorruptedData;
 
     public DatabaseSmugglerOptions() {
         this.operateOnTypes = DEFAULT_OPERATE_ON_TYPES.clone();
-        this.operateOnDatabaseRecordType = DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES.clone();
+        this.operateOnDatabaseRecordTypes = DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES.clone();
         this.maxStepsForTransformScript = DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT;
         includeExpired = true;
         includeArchived = true;
@@ -99,12 +101,32 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     }
 
     @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
-    public EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordType() {
-        return operateOnDatabaseRecordType;
+    public EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordTypes() {
+        return operateOnDatabaseRecordTypes;
     }
 
+    public void setOperateOnDatabaseRecordTypes(EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordTypes) {
+        this.operateOnDatabaseRecordTypes = operateOnDatabaseRecordTypes;
+    }
+
+    /**
+     * @deprecated The property was sent to the server as OperateOnDatabaseRecordType, which the server ignores. Use {@link #getOperateOnDatabaseRecordTypes()} instead.
+     * @return database record item types
+     */
+    @Deprecated
+    @JsonIgnore
+    public EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordType() {
+        return getOperateOnDatabaseRecordTypes();
+    }
+
+    /**
+     * @deprecated The property was sent to the server as OperateOnDatabaseRecordType, which the server ignores. Use {@link #setOperateOnDatabaseRecordTypes(EnumSet)} instead.
+     * @param operateOnDatabaseRecordType database record item types
+     */
+    @Deprecated
+    @JsonIgnore
     public void setOperateOnDatabaseRecordType(EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordType) {
-        this.operateOnDatabaseRecordType = operateOnDatabaseRecordType;
+        setOperateOnDatabaseRecordTypes(operateOnDatabaseRecordType);
     }
 
     public boolean isIncludeExpired() {
@@ -192,5 +214,13 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
      */
     public void setSkipCorruptedData(boolean skipCorruptedData) {
         this.skipCorruptedData = skipCorruptedData;
+    }
+
+    public Integer getMaxReadOpsPerSecond() {
+        return maxReadOpsPerSecond;
+    }
+
+    public void setMaxReadOpsPerSecond(Integer maxReadOpsPerSecond) {
+        this.maxReadOpsPerSecond = maxReadOpsPerSecond;
     }
 }

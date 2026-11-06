@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.smuggler;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.primitives.UseSharpEnum;
 
 @UseSharpEnum
@@ -27,6 +28,7 @@ public enum DatabaseRecordItemType {
     OLAP_ETLS,
     ELASTIC_SEARCH_CONNECTION_STRINGS,
     ELASTIC_SEARCH_ETLS,
+    @JsonProperty("PostgreSQLIntegration")
     POSTGRE_SQL_INTEGRATION,
     QUEUE_CONNECTION_STRINGS,
     QUEUE_ETLS,

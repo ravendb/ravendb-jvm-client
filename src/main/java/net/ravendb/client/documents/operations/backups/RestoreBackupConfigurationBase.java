@@ -14,6 +14,7 @@ public abstract class RestoreBackupConfigurationBase {
 
     private ShardedRestoreSettings shardRestoreSettings;
     private BackupEncryptionSettings backupEncryptionSettings;
+    private Integer maxReadOpsPerSecond;
 
     public String getDatabaseName() {
         return databaseName;
@@ -77,5 +78,13 @@ public abstract class RestoreBackupConfigurationBase {
 
     public void setBackupEncryptionSettings(BackupEncryptionSettings backupEncryptionSettings) {
         this.backupEncryptionSettings = backupEncryptionSettings;
+    }
+
+    public Integer getMaxReadOpsPerSecond() {
+        return maxReadOpsPerSecond;
+    }
+
+    public void setMaxReadOpsPerSecond(Integer maxReadOpsPerSecond) {
+        this.maxReadOpsPerSecond = maxReadOpsPerSecond;
     }
 }

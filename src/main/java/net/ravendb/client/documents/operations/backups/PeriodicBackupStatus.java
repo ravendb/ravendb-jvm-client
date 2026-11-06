@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.backups;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.serverwide.IDatabaseTaskStatus;
 
 import java.util.Date;
@@ -21,6 +23,7 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
     private UploadToS3 uploadToS3;
     private UploadToGlacier uploadToGlacier;
     private UploadToAzure uploadToAzure;
+    private UploadToGoogleCloud uploadToGoogleCloud;
     private UpdateToGoogleCloud updateToGoogleCloud;
     private UploadToFtp uploadToFtp;
 
@@ -51,10 +54,12 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
         this.backupType = backupType;
     }
 
+    @JsonProperty("IsFull")
     public boolean isFull() {
         return isFull;
     }
 
+    @JsonProperty("IsFull")
     public void setFull(boolean full) {
         isFull = full;
     }
@@ -147,10 +152,30 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
         this.uploadToAzure = uploadToAzure;
     }
 
+    public UploadToGoogleCloud getUploadToGoogleCloud() {
+        return uploadToGoogleCloud;
+    }
+
+    public void setUploadToGoogleCloud(UploadToGoogleCloud uploadToGoogleCloud) {
+        this.uploadToGoogleCloud = uploadToGoogleCloud;
+    }
+
+    /**
+     * @deprecated The server sends this status as UploadToGoogleCloud, so this property is never filled. Use {@link #getUploadToGoogleCloud()} instead.
+     * @return always null when read from the server
+     */
+    @Deprecated
+    @JsonIgnore
     public UpdateToGoogleCloud getUpdateToGoogleCloud() {
         return updateToGoogleCloud;
     }
 
+    /**
+     * @deprecated The server expects this status as UploadToGoogleCloud. Use {@link #setUploadToGoogleCloud(UploadToGoogleCloud)} instead.
+     * @param updateToGoogleCloud value
+     */
+    @Deprecated
+    @JsonIgnore
     public void setUpdateToGoogleCloud(UpdateToGoogleCloud updateToGoogleCloud) {
         this.updateToGoogleCloud = updateToGoogleCloud;
     }
@@ -235,12 +260,28 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
         this.lastOperationId = lastOperationId;
     }
 
+    @JsonProperty("IsEncrypted")
     public boolean isEncrypted() {
         return isEncrypted;
     }
 
+    @JsonProperty("IsEncrypted")
     public void setEncrypted(boolean encrypted) {
         isEncrypted = encrypted;
+    }
+
+    @JsonIgnore
+    public Date getEndTime() {
+        Date start = isFull ? lastFullBackupInternal : lastIncrementalBackupInternal;
+        if (start == null) {
+            return null;
+        }
+
+        return new Date(start.getTime() + (durationInMs != null ? durationInMs : 0));
+    }
+
+    public static String getPrefix() {
+        return "periodic-backups/";
     }
 
     public static class Error {

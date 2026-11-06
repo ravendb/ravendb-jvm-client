@@ -4,6 +4,7 @@ public class RefreshConfiguration {
 
     private boolean disabled;
     private Long refreshFrequencyInSec;
+    private Long maxItemsToProcess;
 
     public boolean isDisabled() {
         return disabled;
@@ -19,5 +20,13 @@ public class RefreshConfiguration {
 
     public void setRefreshFrequencyInSec(Long refreshFrequencyInSec) {
         this.refreshFrequencyInSec = refreshFrequencyInSec;
+    }
+
+    public Long getMaxItemsToProcess() {
+        return maxItemsToProcess;
+    }
+
+    public void setMaxItemsToProcess(Long maxItemsToProcess) {
+        this.maxItemsToProcess = maxItemsToProcess;
     }
 }

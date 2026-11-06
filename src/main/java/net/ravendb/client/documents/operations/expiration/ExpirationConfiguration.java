@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.expiration;
 public class ExpirationConfiguration {
     private boolean disabled;
     private Long deleteFrequencyInSec;
+    private Long maxItemsToProcess;
 
     public Long getDeleteFrequencyInSec() {
         return deleteFrequencyInSec;
@@ -18,5 +19,13 @@ public class ExpirationConfiguration {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public Long getMaxItemsToProcess() {
+        return maxItemsToProcess;
+    }
+
+    public void setMaxItemsToProcess(Long maxItemsToProcess) {
+        this.maxItemsToProcess = maxItemsToProcess;
     }
 }
