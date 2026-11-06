@@ -36,6 +36,26 @@ public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     CloseableAttachmentResult get(Object entity, String name);
 
     /**
+     * Returns a range of the attachment stream for the specified document ID and attachment name.
+     * @param documentId Document Id
+     * @param name Name of attachment
+     * @param from The starting byte offset (inclusive)
+     * @param to The ending byte offset (inclusive)
+     * @return Attachment containing the requested data range
+     */
+    CloseableAttachmentResult getRange(String documentId, String name, Long from, Long to);
+
+    /**
+     * Returns a range of the attachment stream for the specified entity instance and attachment name.
+     * @param entity Entity
+     * @param name Name of attachment
+     * @param from The starting byte offset (inclusive)
+     * @param to The ending byte offset (inclusive)
+     * @return Attachment containing the requested data range
+     */
+    CloseableAttachmentResult getRange(Object entity, String name, Long from, Long to);
+
+    /**
      * Returns an enumerator over multiple attachments. Each result includes the attachment stream and metadata.
      * @param attachments Attachments to get
      * @return attachments
