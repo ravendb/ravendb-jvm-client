@@ -30,6 +30,7 @@ import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
+import net.ravendb.client.documents.operations.revisions.RevisionsBinConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.operations.schemaValidation.SchemaValidationConfiguration;
@@ -62,6 +63,7 @@ public class DatabaseRecord {
     private Map<String, AutoIndexDefinition> autoIndexes;
     private Map<String, String> settings = new HashMap<>();
     private RevisionsConfiguration revisions;
+    private RevisionsBinConfiguration revisionsBin;
     private TimeSeriesConfiguration timeSeries;
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
@@ -235,6 +237,14 @@ public class DatabaseRecord {
 
     public void setRevisions(RevisionsConfiguration revisions) {
         this.revisions = revisions;
+    }
+
+    public RevisionsBinConfiguration getRevisionsBin() {
+        return revisionsBin;
+    }
+
+    public void setRevisionsBin(RevisionsBinConfiguration revisionsBin) {
+        this.revisionsBin = revisionsBin;
     }
 
     public TimeSeriesConfiguration getTimeSeries() {

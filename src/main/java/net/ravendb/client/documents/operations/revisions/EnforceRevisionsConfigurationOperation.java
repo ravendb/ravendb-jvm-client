@@ -19,7 +19,7 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
 
     private final Parameters _parameters;
 
-    public static class Parameters {
+    public static class Parameters extends RevisionsOperationParameters {
 
         /**
          * Indicates whether force-created revisions should be included.
@@ -27,7 +27,6 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
          * <a href="https://ravendb.net/docs/article-page/7.2/csharp/document-extensions/revisions/overview#force-revision-creation">the documentation</a>.
          */
         private boolean includeForceCreated;
-        private String[] collections;
         private Integer maxOpsPerSecond;
 
         public boolean isIncludeForceCreated() {
@@ -36,14 +35,6 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
 
         public void setIncludeForceCreated(boolean includeForceCreated) {
             this.includeForceCreated = includeForceCreated;
-        }
-
-        public String[] getCollections() {
-            return collections;
-        }
-
-        public void setCollections(String[] collections) {
-            this.collections = collections;
         }
 
         /**
@@ -69,6 +60,9 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
     }
 
     public EnforceRevisionsConfigurationOperation(Parameters parameters) {
+        if (parameters == null) {
+            throw new IllegalArgumentException("parameters cannot be null");
+        }
         _parameters = parameters;
     }
 
@@ -94,6 +88,8 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
                     .append("/databases/")
                     .append(node.getDatabase())
                     .append("/admin/revisions/config/enforce");
+
+            selectedNodeTag = _parameters.nodeTagFor(node.getDatabase());
 
             String url = pathBuilder.toString();
 

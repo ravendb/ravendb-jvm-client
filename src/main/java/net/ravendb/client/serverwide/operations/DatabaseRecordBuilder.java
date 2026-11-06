@@ -23,6 +23,7 @@ import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
+import net.ravendb.client.documents.operations.revisions.RevisionsBinConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
@@ -441,6 +442,15 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
             throw new IllegalArgumentException("Configuration cannot be null");
         }
         _databaseRecord.setRevisions(configuration);
+        return this;
+    }
+
+    @Override
+    public IDatabaseRecordBuilderBase configureRevisionsBin(RevisionsBinConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+        _databaseRecord.setRevisionsBin(configuration);
         return this;
     }
 
