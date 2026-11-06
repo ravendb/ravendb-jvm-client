@@ -76,7 +76,7 @@ public class Operation {
                     schema.setError(exceptionResult.getError());
                     schema.setMessage(exceptionResult.getMessage());
                     schema.setType(exceptionResult.getType());
-                    throw ExceptionDispatcher.get(schema, exceptionResult.getStatusCode());
+                    throw ExceptionDispatcher.get(schema, exceptionResult.getStatusCode(), null, exceptionResult.getLimitType());
             }
 
             try {

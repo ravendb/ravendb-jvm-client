@@ -1723,11 +1723,11 @@ public class RequestExecutor implements CleanCloseable {
             try {
                 responseJson = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
-                return ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getCode(), e);
+                return ExceptionDispatcher.get((com.fasterxml.jackson.databind.node.ObjectNode) JsonExtensions.getDefaultMapper().readTree(responseJson), response.getCode(), e);
             } catch (Exception __) {
                 ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
                 exceptionSchema.setUrl(requestUri);
-                exceptionSchema.setMessage("Get unrecognized response from the server");
+                exceptionSchema.setMessage("Got unrecognized response from the server");
                 exceptionSchema.setError(responseJson);
                 exceptionSchema.setType("Unparsable Server Response");
 
@@ -1739,7 +1739,7 @@ public class RequestExecutor implements CleanCloseable {
         ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
         exceptionSchema.setUrl(requestUri);
         exceptionSchema.setMessage(e.getMessage());
-        exceptionSchema.setError("An exception occurred while contacting " + requestUri + "." + System.lineSeparator() + e);
+        exceptionSchema.setError("An exception occurred while contacting " + requestUri + "." + System.lineSeparator() + e + ".");
         exceptionSchema.setType(e.getClass().getCanonicalName());
 
         return ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE, e);
