@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.indexes.timeSeries;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.primitives.SharpEnum;
 
 public abstract class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
 
@@ -39,6 +41,10 @@ public abstract class AbstractTimeSeriesIndexCreationTask extends AbstractGeneri
         indexDefinitionBuilder.setPriority(priority);
         indexDefinitionBuilder.setState(state);
         indexDefinitionBuilder.setDeploymentMode(deploymentMode);
+
+        if (searchEngineType != null) {
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        }
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

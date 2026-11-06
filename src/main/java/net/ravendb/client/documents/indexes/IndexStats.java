@@ -1,9 +1,11 @@
 package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+import net.ravendb.client.util.Size;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
 public class IndexStats {
 
@@ -38,7 +40,10 @@ public class IndexStats {
     private long entriesCount;
     private int errorsCount;
     private IndexSourceType sourceType;
+    private Set<String> referencedCollections;
     private boolean isTestIndex;
+    private MemoryStats memory;
+    private IndexingPerformanceBasicStats lastBatchStats;
 
 
     /**
@@ -497,9 +502,129 @@ public class IndexStats {
         this.sourceType = sourceType;
     }
 
+    /**
+     * @return the names of referenced collections.
+     */
+    public Set<String> getReferencedCollections() {
+        return referencedCollections;
+    }
+
+    /**
+     * @param referencedCollections the names of referenced collections.
+     */
+    public void setReferencedCollections(Set<String> referencedCollections) {
+        this.referencedCollections = referencedCollections;
+    }
+
+    /**
+     * Determines if index is invalid. If more than 15% of attempts (map or reduce) are errors then value will be true.
+     * @return true if index is invalid
+     */
+    public boolean isInvalidIndex() {
+        return checkIndexInvalid(mapAttempts, mapErrors, mapReferenceAttempts, mapReferenceErrors, reduceAttempts, reduceErrors, stale);
+    }
+
+    private static final float FAILURE_THRESHOLD = 0.15f;
+    private static final int SUFFICIENT_NUMBER_OF_ATTEMPTS_TO_CHECK_FAILURE_RATE = 100;
+    private static final int MINIMAL_NUMBER_OF_ATTEMPTS_TO_CHECK_FAILURE_RATE = (int) (SUFFICIENT_NUMBER_OF_ATTEMPTS_TO_CHECK_FAILURE_RATE / (FAILURE_THRESHOLD * 100));
+
+    private static boolean checkIndexInvalid(long mapAttempts, long mapErrors,
+                                             Integer mapReferenceAttempts, Integer mapReferenceErrors,
+                                             Long reduceAttempts, Long reduceErrors,
+                                             boolean isStale) {
+        long attempts = mapAttempts;
+        if (mapReferenceAttempts != null) {
+            attempts += mapReferenceAttempts;
+        }
+        if (reduceAttempts != null) {
+            attempts += reduceAttempts;
+        }
+
+        long errors = mapErrors;
+        if (mapReferenceErrors != null) {
+            errors += mapReferenceErrors;
+        }
+        if (reduceErrors != null) {
+            errors += reduceErrors;
+        }
+
+        if (attempts == 0 || errors == 0) {
+            return false;
+        }
+
+        if (attempts > SUFFICIENT_NUMBER_OF_ATTEMPTS_TO_CHECK_FAILURE_RATE) {
+            return (errors / (float) attempts) > FAILURE_THRESHOLD;
+        }
+
+        // we don't have enough attempts to make a good determination
+
+        if (isStale) { // an index hasn't complete yet, let it index more docs
+            return false;
+        }
+
+        if (attempts >= MINIMAL_NUMBER_OF_ATTEMPTS_TO_CHECK_FAILURE_RATE) { // enough to calculate
+            return (errors / (float) attempts) > FAILURE_THRESHOLD;
+        }
+
+        return attempts == errors; // no results and just errors
+    }
+
+    public MemoryStats getMemory() {
+        return memory;
+    }
+
+    public void setMemory(MemoryStats memory) {
+        this.memory = memory;
+    }
+
+    public IndexingPerformanceBasicStats getLastBatchStats() {
+        return lastBatchStats;
+    }
+
+    public void setLastBatchStats(IndexingPerformanceBasicStats lastBatchStats) {
+        this.lastBatchStats = lastBatchStats;
+    }
+
+    public static class MemoryStats {
+        private Size diskSize;
+        private Size threadAllocations;
+        private Size memoryBudget;
+
+        public MemoryStats() {
+            diskSize = new Size();
+            threadAllocations = new Size();
+            memoryBudget = new Size();
+        }
+
+        public Size getDiskSize() {
+            return diskSize;
+        }
+
+        public void setDiskSize(Size diskSize) {
+            this.diskSize = diskSize;
+        }
+
+        public Size getThreadAllocations() {
+            return threadAllocations;
+        }
+
+        public void setThreadAllocations(Size threadAllocations) {
+            this.threadAllocations = threadAllocations;
+        }
+
+        public Size getMemoryBudget() {
+            return memoryBudget;
+        }
+
+        public void setMemoryBudget(Size memoryBudget) {
+            this.memoryBudget = memoryBudget;
+        }
+    }
+
     public static class CollectionStats {
         private long lastProcessedDocumentEtag;
         private long lastProcessedTombstoneEtag;
+        private long lastProcessedTimeSeriesDeletedRangeEtag;
         private long documentLag;
         private long tombstoneLag;
 
@@ -522,6 +647,14 @@ public class IndexStats {
 
         public void setLastProcessedTombstoneEtag(long lastProcessedTombstoneEtag) {
             this.lastProcessedTombstoneEtag = lastProcessedTombstoneEtag;
+        }
+
+        public long getLastProcessedTimeSeriesDeletedRangeEtag() {
+            return lastProcessedTimeSeriesDeletedRangeEtag;
+        }
+
+        public void setLastProcessedTimeSeriesDeletedRangeEtag(long lastProcessedTimeSeriesDeletedRangeEtag) {
+            this.lastProcessedTimeSeriesDeletedRangeEtag = lastProcessedTimeSeriesDeletedRangeEtag;
         }
 
         public long getDocumentLag() {
