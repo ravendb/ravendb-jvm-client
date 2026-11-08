@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.RavenVector;
 
+import java.util.Collection;
 import java.util.Map;
 
 public interface IVectorEmbeddingFieldValueFactory {
@@ -23,6 +24,26 @@ public interface IVectorEmbeddingFieldValueFactory {
      * @param base64Embedding Embedding encoded as base64 string
      */
     void byBase64(String base64Embedding);
+
+    /**
+     * Defines queried embeddings in base64 format.
+     * @param base64Embeddings Embeddings encoded as base64 strings
+     */
+    void byBase64(Collection<String> base64Embeddings);
+
+    /**
+     * Defines a queried embedding.
+     * @param embedding Collection containing embedding values
+     * @param <T> embedding element type
+     */
+    <T extends Number> void byEmbedding(Collection<T> embedding);
+
+    /**
+     * Defines queried embeddings (C# ByEmbedding(IEnumerable&lt;IEnumerable&lt;T&gt;&gt;)).
+     * @param embeddings Collection of embeddings
+     * @param <T> embedding element type
+     */
+    <T extends Number> void byEmbeddings(Collection<? extends Collection<T>> embeddings);
 
     /**
      * Defines queried embedding.

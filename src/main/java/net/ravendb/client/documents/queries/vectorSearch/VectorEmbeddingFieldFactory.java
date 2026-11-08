@@ -23,6 +23,35 @@ public class VectorEmbeddingFieldFactory<T> implements IVectorFieldFactory<T> {
     }
 
     @Override
+    public IVectorEmbeddingTextField withText(SerializableFunction<T, ?> propertySelector) {
+        return new VectorEmbeddingTextField<>(toPropertyPath(propertySelector));
+    }
+
+    @Override
+    public IVectorEmbeddingField withEmbedding(SerializableFunction<T, ?> propertySelector) {
+        return new VectorEmbeddingField<>(toPropertyPath(propertySelector), null, false);
+    }
+
+    @Override
+    public IVectorEmbeddingField withBase64(String fieldName) {
+        return new VectorEmbeddingField<>(fieldName, null, true);
+    }
+
+    @Override
+    public IVectorEmbeddingField withBase64(SerializableFunction<T, ?> propertySelector, VectorEmbeddingType storedEmbeddingQuantization) {
+        return new VectorEmbeddingField<>(toPropertyPath(propertySelector), storedEmbeddingQuantization, true);
+    }
+
+    @Override
+    public IVectorEmbeddingField withBase64(SerializableFunction<T, ?> propertySelector) {
+        return new VectorEmbeddingField<>(toPropertyPath(propertySelector), null, true);
+    }
+
+    private String toPropertyPath(SerializableFunction<T, ?> propertySelector) {
+        return expressionExtension.toPropertyPath(propertySelector, DocumentConventions.defaultConventions);
+    }
+
+    @Override
     public IVectorEmbeddingField withEmbedding(SerializableFunction<T, ?> propertySelector, VectorEmbeddingType storedEmbeddingQuantization) {
         String name = expressionExtension.toPropertyPath(propertySelector, DocumentConventions.defaultConventions);
         return new VectorEmbeddingField<>(name, storedEmbeddingQuantization, false);

@@ -2679,6 +2679,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                             fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
                                     fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ? fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() :
                                     fieldValueFactory.getById();
+            if (factoryResult == null) {
+                throw new IllegalStateException("Cannot use VectorSearch without text(s), document id or embedding(s).");
+            }
             String embeddingsGenerationTaskIdentifierByValue = fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ?
                     fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() : null;
             return new VectorSearchValueResult(factoryResult, embeddingsGenerationTaskIdentifierByValue, fieldValueFactory.getById() != null);

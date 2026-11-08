@@ -15,7 +15,19 @@ public interface IVectorFieldFactory<T> extends IVectorField {
      */
      IVectorEmbeddingTextField withText(String fieldName);
 
-    //TBD expr should add withText(Expression<Func<T, string>> fieldName);??
+    /**
+     * Creates a vector field from text
+     * @param propertySelector The field selector
+     * @return The vector embedding text field
+     */
+    IVectorEmbeddingTextField withText(SerializableFunction<T, ?> propertySelector);
+
+    /**
+     * Creates a vector field from embedding (stored as Single)
+     * @param propertySelector The field selector
+     * @return The vector embedding field
+     */
+    IVectorEmbeddingField withEmbedding(SerializableFunction<T, ?> propertySelector);
 
     /**
      * Creates a vector field from embedding
@@ -47,6 +59,28 @@ public interface IVectorFieldFactory<T> extends IVectorField {
      * @return The vector embedding field
      */
       IVectorEmbeddingField withBase64(String fieldName, VectorEmbeddingType storedEmbeddingQuantization);
+
+    /**
+     * Creates a vector field from base64 encoded embedding (stored as Single)
+     * @param fieldName The field name
+     * @return The vector embedding field
+     */
+    IVectorEmbeddingField withBase64(String fieldName);
+
+    /**
+     * Creates a vector field from base64 encoded embedding
+     * @param propertySelector The field selector
+     * @param storedEmbeddingQuantization The stored embedding quantization
+     * @return The vector embedding field
+     */
+    IVectorEmbeddingField withBase64(SerializableFunction<T, ?> propertySelector, VectorEmbeddingType storedEmbeddingQuantization);
+
+    /**
+     * Creates a vector field from base64 encoded embedding (stored as Single)
+     * @param propertySelector The field selector
+     * @return The vector embedding field
+     */
+    IVectorEmbeddingField withBase64(SerializableFunction<T, ?> propertySelector);
 
     /**
      * Creates a vector field

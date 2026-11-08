@@ -37,7 +37,7 @@ public class VectorEmbeddingField<T> extends VectorField implements
     @Override
     public IVectorEmbeddingField targetQuantization(VectorEmbeddingType targetEmbeddingQuantization) {
         if (targetEmbeddingQuantization == VectorEmbeddingType.TEXT) {
-            throw new IllegalArgumentException("Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
+            throw new IllegalStateException("Cannot quantize the embedding to Text. This option is only available for SourceQuantizationType.");
         }
 
         this.setDestinationQuantizationType(targetEmbeddingQuantization);
@@ -45,7 +45,7 @@ public class VectorEmbeddingField<T> extends VectorField implements
         if ((this.getSourceQuantizationType() == VectorEmbeddingType.INT8 ||
              this.getSourceQuantizationType() == VectorEmbeddingType.BINARY) &&
              this.getDestinationQuantizationType() != this.getSourceQuantizationType()) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     String.format("Cannot quantize already quantized embeddings. Source VectorEmbeddingType is %s; however the destination is %s.",
                             this.getSourceQuantizationType(), this.getDestinationQuantizationType()));
         }

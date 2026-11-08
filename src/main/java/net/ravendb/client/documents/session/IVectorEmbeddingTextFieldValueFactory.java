@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.session;
 
+import java.util.Collection;
+
 public interface IVectorEmbeddingTextFieldValueFactory {
     /**
      * Defines queried text.
@@ -26,6 +28,10 @@ public interface IVectorEmbeddingTextFieldValueFactory {
      * @param embeddingsGenerationTaskIdentifier The embeddings generation task identifier
      */
     void byTexts(String[] texts, String embeddingsGenerationTaskIdentifier);
+
+    void byTexts(Collection<String> texts);
+
+    void byTexts(Collection<String> texts, String embeddingsGenerationTaskIdentifier);
 
     /**
      * Query by the embedding(s) indexed from the specified document for the quried field.

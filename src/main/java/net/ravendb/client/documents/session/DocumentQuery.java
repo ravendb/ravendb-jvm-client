@@ -1069,4 +1069,25 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         this._vectorSearch(vector, valueFactory, null, null, null);
         return this;
     }
+
+    @Override
+    public IDocumentQuery<T> vectorSearch(
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
+            Consumer<IVectorFieldValueFactory> valueFactory,
+            Float minimumSimilarity
+    ) {
+        this._vectorSearch(vector, valueFactory, minimumSimilarity, null, null);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> vectorSearch(
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
+            Consumer<IVectorFieldValueFactory> valueFactory,
+            Float minimumSimilarity,
+            Integer numberOfCandidates
+    ) {
+        this._vectorSearch(vector, valueFactory, minimumSimilarity, numberOfCandidates, null);
+        return this;
+    }
 }
