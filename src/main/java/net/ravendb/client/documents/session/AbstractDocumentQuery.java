@@ -340,13 +340,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         builder.accept(builderImpl);
 
-        Object shardContext;
-
-        if (builderImpl.documentIds.size() == 1) {
-            shardContext = builderImpl.documentIds.iterator().next();
-        } else {
-            shardContext = builderImpl.documentIds;
-        }
+        Map<String, Object> shardContext = new LinkedHashMap<>();
+        shardContext.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_DOCUMENT_IDS, builderImpl.documentIds);
+        shardContext.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_PREFIXES, builderImpl.prefixes);
 
         queryParameters.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_PARAMETER_NAME, shardContext);
     }

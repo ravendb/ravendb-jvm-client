@@ -6,6 +6,13 @@ public class PrefixedShardingSetting {
     private String prefix;
     private List<Integer> shards;
 
+    public PrefixedShardingSetting() {
+    }
+
+    public PrefixedShardingSetting(String prefix) {
+        this.prefix = prefix;
+    }
+
     public String getPrefix() {
         return prefix;
     }

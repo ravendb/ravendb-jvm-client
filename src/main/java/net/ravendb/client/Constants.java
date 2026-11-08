@@ -90,6 +90,10 @@ public class Constants {
                 private Sharding() {}
 
                 public static final String SHARD_CONTEXT_PARAMETER_NAME = "__shardContext";
+
+                public static final String SHARD_CONTEXT_DOCUMENT_IDS = "DocumentIds";
+
+                public static final String SHARD_CONTEXT_PREFIXES = "Prefixes";
             }
         }
 

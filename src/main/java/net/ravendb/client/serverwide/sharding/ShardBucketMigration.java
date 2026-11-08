@@ -1,5 +1,7 @@
 package net.ravendb.client.serverwide.sharding;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,5 +98,23 @@ public class ShardBucketMigration {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    @JsonIgnore
+    public boolean isActive() {
+        return status == MigrationStatus.MOVED || status == MigrationStatus.MOVING;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Bucket '" + bucket + "' is migrating from '" + sourceShard + "' to '" + destinationShard + "'. current status: '" + status + "'.");
+        if (status == MigrationStatus.MOVED || status == MigrationStatus.OWNERSHIP_TRANSFERRED) {
+            sb.append("Migrations index '").append(migrationIndex).append("', Last change vector from source '").append(lastSourceChangeVector).append("',")
+                    .append(System.lineSeparator());
+            sb.append("Propagated to ").append(String.join(", ", confirmedDestinations)).append(" and confirmed at ").append(confirmationIndex)
+                    .append(", Cleaned up at ").append(String.join(", ", confirmedSourceCleanup))
+                    .append(System.lineSeparator());
+        }
+        return sb.toString();
     }
 }
