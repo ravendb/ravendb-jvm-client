@@ -80,6 +80,22 @@ public class DatabaseSmuggler {
         }
     }
 
+    /**
+     * Exports the database to the provided stream. The stream is not closed by this method.
+     * @param options export options
+     * @param toStream stream the export is written to
+     * @return operation
+     */
+    public Operation exportAsync(DatabaseSmugglerExportOptions options, OutputStream toStream) {
+        return exportAsync(options, response -> {
+            try {
+                IOUtils.copyLarge(response, toStream);
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not export to provided stream.", e);
+            }
+        });
+    }
+
     private Operation exportAsync(DatabaseSmugglerExportOptions options, Consumer<InputStream> handleStreamResponse) {
         if (options == null) {
             throw new IllegalArgumentException("Options cannot be null");

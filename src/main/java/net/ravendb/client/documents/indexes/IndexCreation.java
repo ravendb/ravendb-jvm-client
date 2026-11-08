@@ -2,36 +2,26 @@ package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class IndexCreation {
-    private static final Log logger = LogFactory.getLog(IndexCreation.class);
 
     public static void createIndexes(Collection<? extends IAbstractIndexCreationTask> indexes, IDocumentStore store) {
         createIndexes(indexes, store, null);
     }
 
     public static void createIndexes(Collection<? extends IAbstractIndexCreationTask> indexes, IDocumentStore store, DocumentConventions conventions) {
+        createIndexes(indexes, store, conventions, null);
+    }
 
-        if (conventions == null) {
-            conventions = store.getConventions();
-        }
+    public static void createIndexes(Collection<? extends IAbstractIndexCreationTask> indexes, IDocumentStore store, DocumentConventions conventions, String database) {
+        List<IAbstractIndexCreationTask> indexesList = indexes != null ? new ArrayList<>(indexes) : new ArrayList<>();
 
-        try {
-            IndexDefinition[] indexesToAdd = createIndexesToAdd(indexes, conventions);
-            store.maintenance().send(new PutIndexesOperation(indexesToAdd));
-        } catch (Exception e) { // For old servers that don't have the new endpoint for executing multiple indexes
-            logger.info("Could not create indexes in one shot (maybe using older version of RavenDB ?)", e);
-
-            for (IAbstractIndexCreationTask index : indexes) {
-                index.execute(store, conventions);
-            }
-        }
+        store.executeIndexes(indexesList, conventions, database);
     }
 
     public static IndexDefinition[] createIndexesToAdd(Collection<? extends IAbstractIndexCreationTask> indexCreationTasks, DocumentConventions conventions) {

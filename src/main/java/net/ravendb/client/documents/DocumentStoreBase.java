@@ -129,8 +129,21 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database) {
+        executeIndexes(tasks, conventions, database);
+    }
+
+    @Override
+    public void executeIndexes(List<IAbstractIndexCreationTask> tasks, DocumentConventions conventions, String database) {
         assertInitialized();
+
+        if (conventions == null) {
+            conventions = this.conventions;
+        }
+
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
+        if (indexesToAdd == null || indexesToAdd.length == 0) {
+            return;
+        }
 
         maintenance()
                 .forDatabase(getEffectiveDatabase(database))

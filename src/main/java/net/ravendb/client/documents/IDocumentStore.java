@@ -253,6 +253,14 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database);
 
+    /**
+     * Executes the index creation
+     * @param tasks Index Creation tasks to use
+     * @param conventions Conventions used to create index definitions (store conventions are used when null)
+     * @param database Target database
+     */
+    void executeIndexes(List<IAbstractIndexCreationTask> tasks, DocumentConventions conventions, String database);
+
     TimeSeriesOperations timeSeries();
 
     /**

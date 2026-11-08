@@ -79,6 +79,8 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
                         .append(TimeUtils.durationToTimeSpan(_options.getStaleTimeout()));
             }
 
+            PatchByQueryOperation.appendIndexPatchOptions(path, _options);
+
             HttpDelete request = new HttpDelete(path.toString());
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {

@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations;
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.queries.IndexPatchOptions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperationOptions;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -11,6 +12,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.util.TimeUtils;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -44,6 +46,24 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
         return new PatchByQueryCommand(conventions, _queryToUpdate, _options);
     }
 
+    static void appendIndexPatchOptions(StringBuilder path, QueryOperationOptions options) {
+        IndexPatchOptions indexPatchOptions = options.getIndexPatchOptions();
+        if (indexPatchOptions == null) {
+            return;
+        }
+
+        path.append("&waitForIndexesTimeout=").append(TimeUtils.durationToTimeSpan(indexPatchOptions.getWaitForIndexesTimeout()));
+        path.append("&throwOnTimeoutInWaitForIndexes=").append(indexPatchOptions.isThrowOnTimeoutInWaitForIndexes());
+
+        if (indexPatchOptions.getWaitForSpecificIndexes() == null) {
+            return;
+        }
+
+        for (String specificIndex : indexPatchOptions.getWaitForSpecificIndexes()) {
+            path.append("&waitForSpecificIndexes=").append(UrlUtils.escapeDataString(specificIndex));
+        }
+    }
+
     private static class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
         private final DocumentConventions _conventions;
         private final IndexQuery _queryToUpdate;
@@ -74,7 +94,10 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                 path += "&ignoreMaxStepsForScript=" + _options.isIgnoreMaxStepsForScript();
             }
 
-            HttpPatch request = new HttpPatch(path);
+            StringBuilder pathBuilder = new StringBuilder(path);
+            appendIndexPatchOptions(pathBuilder, _options);
+
+            HttpPatch request = new HttpPatch(pathBuilder.toString());
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
