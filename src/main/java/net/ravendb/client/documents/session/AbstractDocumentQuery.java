@@ -1026,8 +1026,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 numberOfCandidates,
                 isExact != null ? isExact : VectorSearchToken.DEFAULT_IS_EXACT,
                 vectorSearchResult.isDocumentId(),
-                taskIdentifier == "" ? null : taskIdentifier,
-                taskIdentifierByValue == "" ? null : taskIdentifierByValue
+                StringUtils.isEmpty(taskIdentifier) ? null : taskIdentifier,
+                StringUtils.isEmpty(taskIdentifierByValue) ? null : taskIdentifierByValue
         );
         tokens.add(vectorSearchToken);
     }
