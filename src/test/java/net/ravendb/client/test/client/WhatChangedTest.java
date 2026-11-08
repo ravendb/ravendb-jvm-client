@@ -7,7 +7,6 @@ import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -391,7 +390,43 @@ public class WhatChangedTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled("We don't support whatChanged for metadata")
+    public void whatChanged_ReadingMetadataDoesNotReportChanges() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("user1");
+                session.store(user, "users/1");
+                session.advanced().getMetadataFor(user).put("Test-A", new String[] { "a", "b" });
+                session.countersFor(user).increment("likes", 3);
+                session.advanced().attachments().store(user, "a.txt",
+                        new java.io.ByteArrayInputStream(new byte[] { 1, 2, 3 }));
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/1");
+                IMetadataDictionary metadata = session.advanced().getMetadataFor(user);
+                assertThat(metadata.get("Test-A")).isNotNull();
+
+                assertThat(session.advanced().whatChanged()).isEmpty();
+                assertThat(session.advanced().hasChanged(user)).isFalse();
+                assertThat(session.advanced().hasChanges()).isFalse();
+
+                metadata.put("Test-A", new String[] { "a", "c" });
+
+                assertThat(session.advanced().whatChanged()).containsKey("users/1");
+                assertThat(session.advanced().hasChanged(user)).isTrue();
+
+                session.saveChanges();
+
+                // after save the tracked original reflects the saved metadata
+                assertThat(session.advanced().whatChanged()).isEmpty();
+                assertThat(session.advanced().hasChanges()).isFalse();
+            }
+        }
+    }
+
+    @Test
     public void what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
             String docId = "d/1";

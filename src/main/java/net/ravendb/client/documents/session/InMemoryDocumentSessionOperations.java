@@ -1084,6 +1084,22 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public abstract ClusterTransactionOperationsBase getClusterSession();
 
+    private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
+        IMetadataDictionary metadataInstance = documentInfo.getMetadataInstance();
+        ObjectNode metadata = documentInfo.getMetadata();
+
+        if (metadataInstance != null && metadata != null) {
+            ObjectNode document = documentInfo.getDocument();
+            if (document != null && document.get(Constants.Documents.Metadata.KEY) == metadata) {
+                // the original document shares its metadata node with documentInfo.getMetadata(); keep the original
+                // metadata untouched, so change tracking (whatChanged) sees metadata modifications, as in C#
+                document.set(Constants.Documents.Metadata.KEY, metadata.deepCopy());
+            }
+        }
+
+        return updateMetadataModifications(metadataInstance, metadata);
+    }
+
     public static boolean updateMetadataModifications(IMetadataDictionary metadataDictionary, ObjectNode metadata) {
         boolean dirty = false;
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
@@ -1213,7 +1229,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     continue;
                 }
 
-                boolean dirtyMetadata = updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
+                boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
 
                 ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
@@ -1232,7 +1248,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
 
                     if (beforeStoreEventArgs.isMetadataAccessed()) {
-                        updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
+                        updateMetadataModifications(entity.getValue());
                     }
 
                     if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
@@ -1335,7 +1351,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return Collections.singletonList(change);
         }
 
-        updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
+        updateMetadataModifications(documentInfo);
         ObjectNode document = entityToJson.convertEntityToJson(documentInfo.getEntity(), documentInfo);
 
         Map<String, List<DocumentsChanges>> changes = new HashMap<>();
@@ -1372,7 +1388,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     public boolean hasChanges() {
         for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
-            boolean dirtyMetadata = updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
+            boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
             if (dirtyMetadata || entityChanged(document, entity.getValue(), null)) {
                 return true;
@@ -1395,7 +1411,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return false;
         }
 
-        boolean dirtyMetadata = updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
+        boolean dirtyMetadata = updateMetadataModifications(documentInfo);
         ObjectNode document = entityToJson.convertEntityToJson(entity, documentInfo);
         return dirtyMetadata || entityChanged(document, documentInfo, null);
     }
@@ -1447,7 +1463,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {
-            updateMetadataModifications(pair.getValue().getMetadataInstance(), pair.getValue().getMetadata());
+            updateMetadataModifications(pair.getValue());
             ObjectNode newObj = entityToJson.convertEntityToJson(pair.getValue().getEntity(), pair.getValue());
             entityChanged(newObj, pair.getValue(), changes);
         }
