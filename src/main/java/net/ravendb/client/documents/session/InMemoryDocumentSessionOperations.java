@@ -1372,8 +1372,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     public boolean hasChanges() {
         for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
+            boolean dirtyMetadata = updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
-            if (entityChanged(document, entity.getValue(), null)) {
+            if (dirtyMetadata || entityChanged(document, entity.getValue(), null)) {
                 return true;
             }
         }
@@ -1394,8 +1395,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return false;
         }
 
+        boolean dirtyMetadata = updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
         ObjectNode document = entityToJson.convertEntityToJson(entity, documentInfo);
-        return entityChanged(document, documentInfo, null);
+        return dirtyMetadata || entityChanged(document, documentInfo, null);
     }
 
     public void waitForReplicationAfterSaveChanges() {
@@ -2838,7 +2840,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void assertNoIncludesInNonTrackingSession() {
         if (noTracking) {
-            throw new IllegalStateException("This session does not track any entities, because of that registering includes is forbidden to avoid false expectations when later load operations are performed on those and no requests are being sent to the server. Please avoid any 'Include' operations during non-tracking session actions like load or query.");
+            throw new IllegalStateException(
+                    "Cannot register includes when NoTracking is enabled. " +
+                    "Included documents are not tracked, so subsequent Load operations for that data will still trigger additional server requests. " +
+                    "To avoid confusion, 'Include' operations are disallowed when tracking is disabled on the session or query.");
         }
     }
 

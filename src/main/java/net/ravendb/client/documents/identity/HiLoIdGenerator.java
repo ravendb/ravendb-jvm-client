@@ -64,8 +64,20 @@ public class HiLoIdGenerator {
      * Generates the document ID.
      * @param entity Entity
      * @return document id
+     * @deprecated This method is deprecated and will be removed in RavenDB 8.0, use the overload with collectionName instead
      */
+    @Deprecated
     public String generateDocumentId(Object entity) {
+        NextId result = getNextId();
+        return getDocumentIdFromId(result);
+    }
+
+    /**
+     * Generates the document ID.
+     * @param collectionName The collection name.
+     * @return document id
+     */
+    public String generateDocumentId(String collectionName) {
         NextId result = getNextId();
         return getDocumentIdFromId(result);
     }

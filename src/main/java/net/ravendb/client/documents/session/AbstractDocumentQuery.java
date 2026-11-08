@@ -1705,6 +1705,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         QueryToken lastToken = tokens.get(tokens.size() - 1);
+
+        if (lastToken instanceof TrueToken) {
+            tokens.add(getDefaultOperatorToken());
+            return;
+        }
+
         if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
             return;
         }
@@ -1718,13 +1724,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
         }
 
-        QueryOperatorToken token = defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
+        QueryOperatorToken token = getDefaultOperatorToken();
 
         if (lastWhere != null && lastWhere.getOptions().getSearchOperator() != null) {
             token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
         }
 
         tokens.add(token);
+    }
+
+    private QueryOperatorToken getDefaultOperatorToken() {
+        return defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
     }
 
     private Collection<?> transformCollection(String fieldName, Collection<?> values) {
