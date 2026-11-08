@@ -136,7 +136,7 @@ public class VectorSearchToken extends WhereToken {
                 writer.append(methodName)
                         .append("(")
                         .append(fieldName)
-                        .append(", ")
+                        .append(",")
                         .append(AI_TASK_METHOD_NAME)
                         .append("('")
                         .append(embeddingsGenerationTaskIdentifier)
