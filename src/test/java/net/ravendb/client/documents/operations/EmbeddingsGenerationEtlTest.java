@@ -162,7 +162,7 @@ public class EmbeddingsGenerationEtlTest extends RemoteTestBase {
             config.setEmbeddingsCacheExpiration(Duration.ofDays(60));
             config.setEmbeddingsCacheForQueryingExpiration(Duration.ofDays(7));
 
-            ObjectMapper mapper = store.getConventions().getEntityMapper();
+            ObjectMapper mapper = net.ravendb.client.extensions.JsonExtensions.getDefaultMapper();
 
             JsonNode serialized = mapper.valueToTree(config);
 

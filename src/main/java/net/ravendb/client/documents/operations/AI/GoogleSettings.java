@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.EnumSet;
@@ -50,6 +51,7 @@ public final class GoogleSettings extends OpenAiBaseSettings {
     }
 
     @Override
+    @JsonIgnore
     public String getBaseEndpointUri() {
         if (StringUtils.isNotEmpty(getEndpoint())) {
             return super.getBaseEndpointUri();

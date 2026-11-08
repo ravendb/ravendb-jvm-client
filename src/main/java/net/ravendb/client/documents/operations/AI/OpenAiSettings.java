@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.EnumSet;
@@ -135,6 +136,7 @@ public final class OpenAiSettings extends OpenAiBaseSettings {
     }
 
     @Override
+    @JsonIgnore
     public String getBaseEndpointUri() {
         String uri = StringUtils.isEmpty(getEndpoint()) ? OPENAI_BASE_URI : super.getBaseEndpointUri();
         if (OPENAI_BASE_URI.equals(uri)) {

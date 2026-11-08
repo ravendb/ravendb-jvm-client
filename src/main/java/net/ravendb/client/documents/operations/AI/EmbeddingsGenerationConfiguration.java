@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.operations.etl.EtlType;
 import net.ravendb.client.documents.operations.etl.Transformation;
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
@@ -16,14 +15,12 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
     private String collection;
     private List<EmbeddingPathConfiguration> embeddingsPathConfigurations;
     private EmbeddingsTransformation embeddingsTransformation;
-    private VectorEmbeddingType quantization;
+    private VectorEmbeddingType quantization = VectorEmbeddingType.SINGLE;
     private ChunkingOptions chunkingOptionsForQuerying;
 
-    @JsonProperty("EmbeddingsCacheExpiration")
-    private long embeddingsCacheExpiration = Duration.ofDays(90).toMillis();
+    private Duration embeddingsCacheExpiration = Duration.ofDays(90);
 
-    @JsonProperty("EmbeddingsCacheForQueryingExpiration")
-    private long embeddingsCacheForQueryingExpiration = Duration.ofDays(14).toMillis();
+    private Duration embeddingsCacheForQueryingExpiration = Duration.ofDays(14);
 
     private boolean storeChunkText;
 
@@ -84,20 +81,20 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
         this.chunkingOptionsForQuerying = chunkingOptionsForQuerying;
     }
 
-    public long getEmbeddingsCacheExpiration() {
+    public Duration getEmbeddingsCacheExpiration() {
         return embeddingsCacheExpiration;
     }
 
     public void setEmbeddingsCacheExpiration(Duration embeddingsCacheExpiration) {
-        this.embeddingsCacheExpiration = embeddingsCacheExpiration.toMillis();
+        this.embeddingsCacheExpiration = embeddingsCacheExpiration;
     }
 
-    public long getEmbeddingsCacheForQueryingExpiration() {
+    public Duration getEmbeddingsCacheForQueryingExpiration() {
         return embeddingsCacheForQueryingExpiration;
     }
 
     public void setEmbeddingsCacheForQueryingExpiration(Duration embeddingsCacheForQueryingExpiration) {
-        this.embeddingsCacheForQueryingExpiration = embeddingsCacheForQueryingExpiration.toMillis();
+        this.embeddingsCacheForQueryingExpiration = embeddingsCacheForQueryingExpiration;
     }
 
     /**
@@ -113,6 +110,7 @@ public final class EmbeddingsGenerationConfiguration extends AbstractAiIntegrati
         this.storeChunkText = storeChunkText;
     }
 
+    @JsonIgnore
     public String getTransformationName() {
         return embeddingsTransformation == null
                 ? PATHS_TRANSFORMATION_NAME

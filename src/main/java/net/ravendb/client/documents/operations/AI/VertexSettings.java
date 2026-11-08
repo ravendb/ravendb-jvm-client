@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,6 +84,7 @@ public final class VertexSettings extends AbstractAiSettings {
     /**
      * Extracts the project ID from the Google credentials JSON.
      */
+    @JsonIgnore
     public String getProjectId() {
         ObjectMapper mapper = new ObjectMapper();
         try {
