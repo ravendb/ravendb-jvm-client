@@ -74,9 +74,9 @@ public class MaintenanceOperationExecutor {
         return command.getResult();
     }
 
-    public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
+    public Operation sendAsync(IMaintenanceOperation<? extends OperationIdResult> operation) {
         assertDatabaseNameSet();
-        RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
+        RavenCommand<? extends OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
         applyNodeTagAndShardNumberToCommandIfSet(command);
         getRequestExecutor().execute(command);
         String node = ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag());

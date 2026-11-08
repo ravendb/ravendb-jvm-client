@@ -59,13 +59,33 @@ public class Operation {
     }
 
     public void waitForCompletion() {
+        waitForCompletionAndGetStatus();
+    }
+
+    /**
+     * Waits for the operation to complete and returns its result deserialized to the requested type
+     * (e.g. {@code ValidateSchemaResult}).
+     * @param resultClass type of the operation result
+     * @param <TResult> type of the operation result
+     * @return operation result or null when the server returned no result
+     */
+    public <TResult> TResult waitForCompletion(Class<TResult> resultClass) {
+        ObjectNode status = waitForCompletionAndGetStatus();
+        JsonNode result = status.get("Result");
+        if (result == null || result.isNull()) {
+            return null;
+        }
+        return JsonExtensions.getDefaultMapper().convertValue(result, resultClass);
+    }
+
+    private ObjectNode waitForCompletionAndGetStatus() {
         while (true) {
             ObjectNode status = fetchOperationsStatus();
 
             String operationStatus = status.get("Status").asText();
             switch (operationStatus) {
                 case "Completed":
-                    return ;
+                    return status;
                 case "Canceled":
                     throw new OperationCancelledException();
                 case "Faulted":

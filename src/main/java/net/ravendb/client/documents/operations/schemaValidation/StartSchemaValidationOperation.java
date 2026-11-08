@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.documents.operations.OperationIdResultGeneric;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
@@ -121,12 +122,12 @@ public final class StartSchemaValidationOperation
 
         if (parameters.getMaxErrorMessages() != null &&
                 parameters.getMaxErrorMessages() < 0) {
-            throw new IllegalArgumentException("MaxErrorMessages must be >= 0.");
+            throw new IllegalArgumentException("Property MaxErrorMessages must be >= 0.");
         }
 
         if (parameters.getMaxDocumentsToValidate() != null &&
                 parameters.getMaxDocumentsToValidate() <= 0) {
-            throw new IllegalArgumentException("MaxDocumentsToValidate must be > 0.");
+            throw new IllegalArgumentException("Property MaxDocumentsToValidate must be > 0.");
         }
 
         this.parameters = parameters;
@@ -205,7 +206,14 @@ public final class StartSchemaValidationOperation
                 throwInvalidResponse();
             }
 
-            result = mapper.readValue(response, resultClass);
+            StartValidateSchemaOperationResult validateResult = mapper.readValue(response, StartValidateSchemaOperationResult.class);
+            OperationIdResult operationIdResult = mapper.readValue(response, OperationIdResult.class);
+
+            OperationIdResultGeneric<StartValidateSchemaOperationResult> forResult = new OperationIdResultGeneric<>();
+            forResult.setOperationId(operationIdResult.getOperationId());
+            forResult.setOperationNodeTag(operationIdResult.getOperationNodeTag());
+            forResult.setResult(validateResult);
+            result = forResult;
         }
 
 
