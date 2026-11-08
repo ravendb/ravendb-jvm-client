@@ -174,6 +174,34 @@ public class AiDatabaseRecordTest extends RemoteTestBase {
     }
 
     @Test
+    public void genAiHelpersMatchCSharp() {
+        GenAiConfiguration config = new GenAiConfiguration();
+        config.setName("My GenAI Task #1");
+        assertThat(config.generateIdentifier()).isEqualTo("my-genai-task-1");
+        config.setName("!!!");
+        assertThat(config.generateIdentifier()).isEqualTo("AiConnectionStringIdentifier");
+
+        GenAiTransformation transformation = new GenAiTransformation();
+        transformation.setScript("ai.genContext({ name: this.Name });");
+        net.ravendb.client.primitives.Reference<String> error = new net.ravendb.client.primitives.Reference<>();
+        assertThat(transformation.validateScript(error)).isTrue();
+        assertThat(error.value).isEmpty();
+
+        transformation.setScript("var x = 1;");
+        assertThat(transformation.validateScript(error)).isFalse();
+        assertThat(error.value).isEqualTo("You must call the ai.genContext(ctx) function in your script");
+
+        OllamaSettings ollama = new OllamaSettings("http://localhost:11434", "llama3");
+        IAiSettings settings = ollama;
+        assertThat(settings.getApiKey()).isNull();
+        assertThat(settings.getEndpoint()).isEqualTo("http://localhost:11434");
+        ObjectNode json = JsonExtensions.getDefaultMapper().valueToTree(ollama);
+        assertThat(json.has("ApiKey")).isFalse();
+        assertThat(json.has("Endpoint")).isFalse();
+        assertThat(json.has("BaseEndpointUri")).isFalse();
+    }
+
+    @Test
     public void databaseRecordBuilderCanAddEmbeddingsGeneration() {
         EmbeddingsGenerationConfiguration config = new EmbeddingsGenerationConfiguration();
         config.setIdentifier("x");
