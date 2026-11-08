@@ -37,6 +37,7 @@ public class ElasticSearchConnectionString extends ConnectionString {
     /**
      * @deprecated Elasticsearch compatibility isn't required anymore to connect with Elasticsearch server v8.x.
      */
+    @Deprecated
     public boolean isEnableCompatibilityMode() {
         return enableCompatibilityMode;
     }
@@ -44,6 +45,7 @@ public class ElasticSearchConnectionString extends ConnectionString {
     /**
      * @deprecated Elasticsearch compatibility isn't required anymore to connect with Elasticsearch server v8.x.
      */
+    @Deprecated
     public void setEnableCompatibilityMode(boolean enableCompatibilityMode) {
         this.enableCompatibilityMode = enableCompatibilityMode;
     }
@@ -81,6 +83,7 @@ public class ElasticSearchConnectionString extends ConnectionString {
     public static class ApiKeyAuthentication {
         private String apiKeyId;
         private String apiKey;
+        private String encodedApiKey;
 
         public String getApiKeyId() {
             return apiKeyId;
@@ -96,6 +99,14 @@ public class ElasticSearchConnectionString extends ConnectionString {
 
         public void setApiKey(String apiKey) {
             this.apiKey = apiKey;
+        }
+
+        public String getEncodedApiKey() {
+            return encodedApiKey;
+        }
+
+        public void setEncodedApiKey(String encodedApiKey) {
+            this.encodedApiKey = encodedApiKey;
         }
     }
 
