@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.RavenVector;
+
 import java.util.Map;
 
 public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactory  {
@@ -38,6 +40,12 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
     }
 
     @Override
+    public <T extends Number> void byEmbedding(RavenVector<T> embedding) {
+        this.embedding = embedding;
+    }
+
+    @Override
+    @Deprecated
     public <T extends Number> void byEmbedding(Map<String, IRavenVector<T>> embedding) {
         this.embedding = embedding;
     }

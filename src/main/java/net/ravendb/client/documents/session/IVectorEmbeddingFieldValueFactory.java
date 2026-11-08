@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.RavenVector;
+
 import java.util.Map;
 
 public interface IVectorEmbeddingFieldValueFactory {
@@ -23,9 +25,19 @@ public interface IVectorEmbeddingFieldValueFactory {
     void byBase64(String base64Embedding);
 
     /**
+     * Defines queried embedding.
+     * @param embedding RavenVector containing embedding values.
+     * @param <T> embedding element type
+     */
+    <T extends Number> void byEmbedding(RavenVector<T> embedding);
+
+    /**
      * Defines queried embedding using a RavenVector wrapper.
      * @param embedding Map with "@vector" key containing a RavenVector
+     * @param <T> embedding element type
+     * @deprecated Map-wrapped vectors are not part of the C# API. Use {@link #byEmbedding(RavenVector)} instead.
      */
+    @Deprecated
     <T extends Number> void byEmbedding(Map<String, IRavenVector<T>> embedding);
 
     /**
