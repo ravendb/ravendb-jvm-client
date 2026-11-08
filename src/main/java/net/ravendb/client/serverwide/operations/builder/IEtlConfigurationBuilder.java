@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide.operations.builder;
 
+import net.ravendb.client.documents.operations.AI.EmbeddingsGenerationConfiguration;
 import net.ravendb.client.documents.operations.etl.RavenEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
@@ -14,4 +15,5 @@ public interface IEtlConfigurationBuilder {
     IEtlConfigurationBuilder addOlapEtl(OlapEtlConfiguration configuration);
     IEtlConfigurationBuilder addQueueEtl(QueueEtlConfiguration configuration);
     IEtlConfigurationBuilder addSnowflakeEtl(SnowflakeEtlConfiguration configuration);
+    IEtlConfigurationBuilder addEmbeddingsGeneration(EmbeddingsGenerationConfiguration configuration);
 }

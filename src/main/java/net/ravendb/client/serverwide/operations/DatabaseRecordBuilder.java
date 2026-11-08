@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
+import net.ravendb.client.documents.operations.AI.EmbeddingsGenerationConfiguration;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.AI.AiConnectionString;
@@ -281,6 +282,20 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
         }
 
         _databaseRecord.getSnowflakeEtls().add(configuration);
+        return this;
+    }
+
+    @Override
+    public IEtlConfigurationBuilder addEmbeddingsGeneration(EmbeddingsGenerationConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+
+        if (_databaseRecord.getEmbeddingsGenerations() == null) {
+            _databaseRecord.setEmbeddingsGenerations(new ArrayList<>());
+        }
+
+        _databaseRecord.getEmbeddingsGenerations().add(configuration);
         return this;
     }
 
