@@ -14,6 +14,7 @@ import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,9 +80,6 @@ public class RavenDB_17494Test extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            Date from = null; // after 5th revision
-            Date to = null; // before 9th revision
-
             for (int i = 0; i < 10; i++) {
                 try (IDocumentSession session = store.openSession()) {
                     session.load(User.class, user1.getId()).setName("Shahar1_" + i);
@@ -90,16 +88,30 @@ public class RavenDB_17494Test extends RemoteTestBase {
                     session.load(Company.class, company2.getId()).setName("RavenDB2_" + i);
                     session.load(Company.class, company3.getId()).setName("RavenDB3_" + i);
 
-                    if (i == 9) {
-                        to = new Date();
-                    }
-
                     session.saveChanges();
-
-                    if (i == 5) {
-                        from = new Date();
-                    }
                 }
+
+                // keep consecutive revisions at least 2 ms apart, so a millisecond-precision Date always fits between them
+                Thread.sleep(2);
+            }
+
+            // The C# test samples DateTime.UtcNow on the client after the 6th and before the 10th update.
+            // Java's Date has millisecond precision and the client clock is coarse on Windows (up to ~15 ms),
+            // while the server stamps revisions with 100 ns precision, so client-side timestamps could
+            // include/exclude a neighbouring revision. Derive the same range from the server's revision timestamps:
+            // from = the update with i == 6, to = just after the update with i == 8.
+            Date from;
+            Date to;
+            try (IDocumentSession session = store.openSession()) {
+                List<Instant> company2RevisionTimes = session.advanced().revisions().getMetadataFor(company2.getId())
+                        .stream()
+                        .map(m -> Instant.parse(m.getString(Constants.Documents.Metadata.LAST_MODIFIED)))
+                        .sorted()
+                        .collect(Collectors.toList());
+                assertThat(company2RevisionTimes).hasSize(11); // [0] = initial store, [i + 1] = update i
+
+                from = new Date(company2RevisionTimes.get(7).toEpochMilli());
+                to = new Date(company2RevisionTimes.get(9).toEpochMilli() + 1);
             }
 
             List<String> user1revisionsToDelete;
