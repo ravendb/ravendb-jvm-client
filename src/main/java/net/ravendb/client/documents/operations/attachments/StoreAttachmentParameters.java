@@ -56,7 +56,7 @@ public class StoreAttachmentParameters implements IStoreAttachmentParameters {
             throw new IllegalArgumentException("Attachment name cannot be null or whitespace.");
         }
         if (stream == null) {
-            throw new IllegalArgumentException("Attachment stream represented in bytes array cannot be null.");
+            throw new IllegalArgumentException("Attachment stream cannot be null.");
         }
 
         this.name = name;

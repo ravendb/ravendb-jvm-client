@@ -3,11 +3,15 @@ package net.ravendb.client.util;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 
 public class TimeUtils {
@@ -88,4 +92,34 @@ public class TimeUtils {
         return sb.toString();
     }
 
+    /**
+     * Formats an instant using the RavenDB UTC date format (e.g. 2024-01-01T10:00:00.0000000Z),
+     * the same format the .NET client writes for UTC DateTime values.
+     * @param instant instant to format
+     * @return formatted value or null when instant is null
+     */
+    public static String instantToRavenFormat(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return instant.atZone(ZoneOffset.UTC).format(RAVEN_FORMAT);
+    }
+
+    /**
+     * Parses a date written by the server (ISO-8601, 1-7 fraction digits) into an instant.
+     * A value without a zone designator is treated as UTC.
+     * @param value value to parse
+     * @return parsed instant or null when value is empty
+     */
+    public static Instant parseInstant(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return null;
+        }
+
+        TemporalAccessor parsed = DateTimeFormatter.ISO_DATE_TIME.parseBest(value, OffsetDateTime::from, LocalDateTime::from);
+        if (parsed instanceof OffsetDateTime) {
+            return ((OffsetDateTime) parsed).toInstant();
+        }
+        return ((LocalDateTime) parsed).toInstant(ZoneOffset.UTC);
+    }
 }

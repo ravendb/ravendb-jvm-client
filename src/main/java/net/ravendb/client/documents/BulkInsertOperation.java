@@ -22,6 +22,7 @@ import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.exceptions.BulkInsertClientException;
 import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.exceptions.RavenException;
@@ -38,6 +39,7 @@ import net.ravendb.client.util.StreamExposerContent;
 import net.ravendb.client.documents.operations.backups.CompressionLevel;
 import net.ravendb.client.util.GzipLevelCompressingEntity;
 import net.ravendb.client.util.ZstdCompressingEntity;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1055,6 +1057,31 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         public void store(String name, byte[] bytes, String contentType, RemoteAttachmentParameters remoteParameters) {
            _operation.getAttachmentsOperation().store(_id, name, bytes, contentType, remoteParameters);
         }
+
+        /**
+         * Stores an attachment synchronously with advanced parameters for the associated document.
+         * Use this overload when you need to specify remote attachment parameters for cloud
+         * storage (Amazon S3 or Azure Blob Storage) via
+         * {@link StoreAttachmentParameters#getRemoteParameters()}.
+         * <p>The stream is read to its end and is not closed by this method.</p>
+         * @param parameters the attachment parameters (name, stream, content type and optional remote parameters)
+         * @throws BulkInsertAbortedException
+         *         Thrown when the bulk insert operation is aborted due to server errors.
+         */
+        public void store(StoreAttachmentParameters parameters) {
+            if (parameters == null) {
+                throw new IllegalArgumentException("parameters cannot be null");
+            }
+
+            byte[] bytes;
+            try {
+                bytes = IOUtils.toByteArray(parameters.getStream());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to read attachment stream: " + e.getMessage(), e);
+            }
+
+            store(parameters.getName(), bytes, parameters.getContentType(), parameters.getRemoteParameters());
+        }
     }
 
     private static class AttachmentsBulkInsertOperation {
@@ -1096,8 +1123,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                         _operation._writer.write(",\"RemoteParameters\":");
                         _operation._writer.flush();
 
-                        ObjectMapper mapper = new ObjectMapper();
-                        String json = mapper.writeValueAsString(remoteParameters);
+                        String json = JsonExtensions.getDefaultMapper().writeValueAsString(remoteParameters);
                         _operation._writer.write(json);
                     }
 

@@ -1,9 +1,12 @@
 package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.ravendb.client.documents.attachments.RemoteAttachmentFlags;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.attachments.RemoteAttachmentParameters;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.primitives.SharpEnum;
+import net.ravendb.client.util.TimeUtils;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -266,6 +269,27 @@ public class PutAttachmentCommandData implements ICommandData {
         generator.writeStringField("ContentType", contentType);
         generator.writeStringField("ChangeVector", changeVector);
         generator.writeStringField("Type", "AttachmentPUT");
+        generator.writeBooleanField("FromEtl", fromEtl);
+        generator.writeFieldName("RemoteParameters");
+        writeRemoteParameters(generator, remoteParameters);
+        generator.writeStringField("Hash", hash);
+        if (sizeInBytes != null) {
+            generator.writeNumberField("SizeInBytes", sizeInBytes);
+        }
+        generator.writeEndObject();
+    }
+
+    static void writeRemoteParameters(JsonGenerator generator, RemoteAttachmentParameters remoteParameters) throws IOException {
+        if (remoteParameters == null) {
+            generator.writeNull();
+            return;
+        }
+
+        generator.writeStartObject();
+        generator.writeStringField("At", TimeUtils.instantToRavenFormat(remoteParameters.getAt()));
+        generator.writeStringField("Identifier", remoteParameters.getIdentifier());
+        RemoteAttachmentFlags flags = remoteParameters.getFlags();
+        generator.writeStringField("Flags", flags != null ? SharpEnum.value(flags) : null);
         generator.writeEndObject();
     }
 

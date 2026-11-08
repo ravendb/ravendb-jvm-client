@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
+import net.ravendb.client.util.TimeUtils;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -22,6 +23,7 @@ import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
 import net.ravendb.client.exceptions.documents.attachments.InvalidAttachmentRangeException;
 import java.time.Instant;
+import java.util.Objects;
 
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
@@ -194,7 +196,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 String atValue = atHeader.getValue();
                 Instant attachmentRemoteAt;
                 try {
-                    attachmentRemoteAt = Instant.parse(atValue);
+                    attachmentRemoteAt = Objects.requireNonNull(TimeUtils.parseInstant(atValue));
                 } catch (Exception e) {
                     throwOnBadHeader(Constants.Headers.ATTACHMENT_REMOTE_PARAMETERS_AT, atValue);
                     return null;

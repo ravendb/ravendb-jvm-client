@@ -87,7 +87,7 @@ public class RemoteAttachmentParameters {
      * Gets or sets flags controlling the remote upload behavior.
      * Use {@link RemoteAttachmentFlags#REMOTE} to mark the attachment for remote handling.
      */
-    RemoteAttachmentFlags flags;
+    private RemoteAttachmentFlags flags = RemoteAttachmentFlags.NONE;
 
     public RemoteAttachmentFlags getFlags() {
         return flags;
