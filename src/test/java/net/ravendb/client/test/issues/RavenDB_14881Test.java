@@ -48,6 +48,8 @@ public class RavenDB_14881Test extends RemoteTestBase {
 
             assertThat(detailedCollectionStatistics.getCountOfDocuments())
                     .isEqualTo(20);
+            assertThat(detailedCollectionStatistics.getCountOfRevisionDocuments())
+                    .isEqualTo(20);
             assertThat(detailedCollectionStatistics.getCountOfConflicts())
                     .isZero();
 

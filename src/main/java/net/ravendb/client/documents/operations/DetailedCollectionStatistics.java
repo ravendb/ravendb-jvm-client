@@ -1,12 +1,24 @@
 package net.ravendb.client.documents.operations;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 public class DetailedCollectionStatistics {
 
     private long countOfDocuments;
     private long countOfConflicts;
+    private long countOfRevisionDocuments;
+    private long countOfTombstones;
+    private long countOfTimeSeriesDeletedRanges;
+    private long countOfDocumentsConflicts;
+    private long countOfAttachments;
+    private long countOfCounterEntries;
+    private long countOfTimeSeriesSegments;
     private Map<String, CollectionDetails> collections;
+
+    public DetailedCollectionStatistics() {
+        collections = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    }
 
     public long getCountOfDocuments() {
         return countOfDocuments;
@@ -24,11 +36,74 @@ public class DetailedCollectionStatistics {
         this.countOfConflicts = countOfConflicts;
     }
 
+    public long getCountOfRevisionDocuments() {
+        return countOfRevisionDocuments;
+    }
+
+    public void setCountOfRevisionDocuments(long countOfRevisionDocuments) {
+        this.countOfRevisionDocuments = countOfRevisionDocuments;
+    }
+
+    public long getCountOfTombstones() {
+        return countOfTombstones;
+    }
+
+    public void setCountOfTombstones(long countOfTombstones) {
+        this.countOfTombstones = countOfTombstones;
+    }
+
+    public long getCountOfTimeSeriesDeletedRanges() {
+        return countOfTimeSeriesDeletedRanges;
+    }
+
+    public void setCountOfTimeSeriesDeletedRanges(long countOfTimeSeriesDeletedRanges) {
+        this.countOfTimeSeriesDeletedRanges = countOfTimeSeriesDeletedRanges;
+    }
+
+    public long getCountOfDocumentsConflicts() {
+        return countOfDocumentsConflicts;
+    }
+
+    public void setCountOfDocumentsConflicts(long countOfDocumentsConflicts) {
+        this.countOfDocumentsConflicts = countOfDocumentsConflicts;
+    }
+
+    public long getCountOfAttachments() {
+        return countOfAttachments;
+    }
+
+    public void setCountOfAttachments(long countOfAttachments) {
+        this.countOfAttachments = countOfAttachments;
+    }
+
+    public long getCountOfCounterEntries() {
+        return countOfCounterEntries;
+    }
+
+    public void setCountOfCounterEntries(long countOfCounterEntries) {
+        this.countOfCounterEntries = countOfCounterEntries;
+    }
+
+    public long getCountOfTimeSeriesSegments() {
+        return countOfTimeSeriesSegments;
+    }
+
+    public void setCountOfTimeSeriesSegments(long countOfTimeSeriesSegments) {
+        this.countOfTimeSeriesSegments = countOfTimeSeriesSegments;
+    }
+
     public Map<String, CollectionDetails> getCollections() {
         return collections;
     }
 
     public void setCollections(Map<String, CollectionDetails> collections) {
-        this.collections = collections;
+        if (collections == null) {
+            this.collections = null;
+            return;
+        }
+
+        Map<String, CollectionDetails> caseInsensitive = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        caseInsensitive.putAll(collections);
+        this.collections = caseInsensitive;
     }
 }
