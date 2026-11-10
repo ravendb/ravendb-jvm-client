@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.smuggler;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
 
@@ -100,6 +101,7 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         this.operateOnTypes = operateOnTypes;
     }
 
+    @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = DefaultDatabaseRecordTypesFilter.class)
     @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
     public EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordTypes() {
         return operateOnDatabaseRecordTypes;
@@ -222,5 +224,19 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public void setMaxReadOpsPerSecond(Integer maxReadOpsPerSecond) {
         this.maxReadOpsPerSecond = maxReadOpsPerSecond;
+    }
+
+    private static class DefaultDatabaseRecordTypesFilter {
+        private static final EnumSet<DatabaseRecordItemType> DEFAULT = new DatabaseSmugglerOptions().DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES;
+
+        @Override
+        public boolean equals(Object obj) {
+            return DEFAULT.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return DEFAULT.hashCode();
+        }
     }
 }

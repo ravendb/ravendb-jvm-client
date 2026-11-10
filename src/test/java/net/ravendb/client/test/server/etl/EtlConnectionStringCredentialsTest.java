@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.connectionStrings.PutConnectionSt
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.*;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +59,7 @@ public class EtlConnectionStringCredentialsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void amazonSqsBasicCredentialsSurviveRoundTrip() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -80,6 +82,7 @@ public class EtlConnectionStringCredentialsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void amazonSqsPasswordlessSurvivesRoundTrip() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

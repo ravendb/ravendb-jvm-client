@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOpera
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableOnServer(thresholdVersion = "7.0")
 public class RavenDB_14963Test extends RemoteTestBase {
 
+    @DisabledOnPullRequest
     @Test
     public void getCollectionRevisionsStatistics() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

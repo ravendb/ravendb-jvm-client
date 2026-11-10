@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.GetOperationStateOperation;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ public class RevisionsOperationsResultsTest extends RemoteTestBase {
         return JsonExtensions.getDefaultMapper().convertValue(state.get("Result"), clazz);
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canAdoptOrphanedRevisions() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -58,6 +60,7 @@ public class RevisionsOperationsResultsTest extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canEnforceConfigurationAndResumeFromContinuation() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

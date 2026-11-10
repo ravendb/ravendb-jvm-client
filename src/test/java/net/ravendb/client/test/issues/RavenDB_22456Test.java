@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConf
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.RavenException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,7 @@ public class RavenDB_22456Test extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void revertByDocumentEP() throws Exception {
         User user1 = user("Users/1-A", "Shahar1");
@@ -92,6 +94,7 @@ public class RavenDB_22456Test extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void revertByDocumentEpMultipleDocs() throws Exception {
         User user1 = user("Users/1-A", "Shahar1");
@@ -135,6 +138,7 @@ public class RavenDB_22456Test extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void revertByDocumentEpFail() throws Exception {
         User user1 = user("Users/1-A", "Shahar1");

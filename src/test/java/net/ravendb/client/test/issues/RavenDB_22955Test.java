@@ -5,7 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskReplication;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
-import net.ravendb.client.infrastructure.EnableOnServer;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +13,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@EnableOnServer(thresholdVersion = "6.2")
 public class RavenDB_22955Test extends ReplicationTestBase {
 
+    @DisabledOnPullRequest
     @Test
     public void ongoingTaskReplicationContainsReplicationProgress() throws Exception {
         try (IDocumentStore source = getDocumentStore();

@@ -14,6 +14,7 @@ import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.snowflake.SnowflakeConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import net.ravendb.client.serverwide.operations.connectionStrings.GetServerWideConnectionStringsOperation;
@@ -223,6 +224,7 @@ public class ServerWideConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void canCreateGetAndDeleteServerWideConnectionString() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -252,6 +254,7 @@ public class ServerWideConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void serverWideConnectionStringIsPropagatedToDatabases() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -275,6 +278,7 @@ public class ServerWideConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void excludedDatabasesAreRespected() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

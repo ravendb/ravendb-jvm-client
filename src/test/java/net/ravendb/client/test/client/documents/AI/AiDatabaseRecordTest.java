@@ -12,6 +12,7 @@ import net.ravendb.client.documents.operations.connectionStrings.GetConnectionSt
 import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsResult;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
@@ -128,6 +129,7 @@ public class AiDatabaseRecordTest extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void sampleObjectIsUsedOnlyWhenNoSchemaOrSampleIsSet() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

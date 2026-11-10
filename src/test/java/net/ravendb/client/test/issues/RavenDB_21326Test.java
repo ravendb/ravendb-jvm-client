@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.revisions.RevisionsBinConfigurati
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @EnableOnServer(thresholdVersion = "6.2")
 public class RavenDB_21326Test extends RemoteTestBase {
 
+    @DisabledOnPullRequest
     @Test
     public void revisionsBinCleanerTest() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

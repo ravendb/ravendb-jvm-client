@@ -8,7 +8,7 @@ import net.ravendb.client.documents.operations.revisions.DeleteRevisionsOperatio
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
@@ -60,6 +60,7 @@ public class RavenDB_17494Test extends RemoteTestBase {
         return company;
     }
 
+    @DisabledOnPullRequest
     @Test
     public void deleteRevisionsManuallyEPTest() throws Exception {
         User user1 = user("Users/1-A", "Shahar1");
@@ -151,6 +152,7 @@ public class RavenDB_17494Test extends RemoteTestBase {
         }
     }
 
+    @DisabledOnPullRequest
     @Test
     public void deleteRevisionsManuallyEpMultipleIDsTest() throws Exception {
         Company company1 = company("Companies/1-A", "RavenDB_0");

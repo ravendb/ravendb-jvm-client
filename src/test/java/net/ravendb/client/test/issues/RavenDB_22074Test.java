@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.expiration.ConfigureExpirationOpe
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
 import net.ravendb.client.documents.operations.refresh.ConfigureRefreshOperation;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
@@ -21,6 +22,7 @@ public class RavenDB_22074Test extends RemoteTestBase {
     // C# ExpirationWithMaxItemsToProcessConfiguredShouldWork / RefreshWithMaxItemsToProcessConfiguredShouldWork drive the
     // server-side cleaner with a mocked clock, so only the configuration round-trip is client-observable
 
+    @DisabledOnPullRequest
     @Test
     public void canSetMaxItemsToProcessOnExpirationRefreshAndDataArchival() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

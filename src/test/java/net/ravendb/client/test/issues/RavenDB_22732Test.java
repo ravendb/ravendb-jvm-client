@@ -11,16 +11,16 @@ import net.ravendb.client.documents.operations.backups.S3StorageClass;
 import net.ravendb.client.documents.operations.backups.UpdatePeriodicBackupOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
-import net.ravendb.client.infrastructure.EnableOnServer;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@EnableOnServer(thresholdVersion = "6.2")
 public class RavenDB_22732Test extends RemoteTestBase {
 
+    @DisabledOnPullRequest
     @Test
     public void ongoingTaskBackupContainsFrequenciesAndUploadMode() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

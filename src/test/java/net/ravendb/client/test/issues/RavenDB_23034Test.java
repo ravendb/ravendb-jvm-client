@@ -24,20 +24,21 @@ public class RavenDB_23034Test {
 
         DatabaseSmugglerExportOptions exportOptions = new DatabaseSmugglerExportOptions();
         exportOptions.setMaxReadOpsPerSecond(100);
-        exportOptions.setOperateOnDatabaseRecordTypes(EnumSet.of(DatabaseRecordItemType.CLIENT, DatabaseRecordItemType.EXPIRATION));
+        exportOptions.setOperateOnDatabaseRecordTypes(EnumSet.of(DatabaseRecordItemType.CLIENT, DatabaseRecordItemType.EXPIRATION, DatabaseRecordItemType.POSTGRE_SQL_INTEGRATION));
 
         JsonNode json = mapper.valueToTree(exportOptions);
         assertThat(json.get("MaxReadOpsPerSecond").asInt())
                 .isEqualTo(100);
         assertThat(json.get("OperateOnDatabaseRecordTypes").asText().split(","))
-                .containsExactlyInAnyOrder("Client", "Expiration");
+                .containsExactlyInAnyOrder("Client", "Expiration", "PostgreSQLIntegration");
         assertThat(json.has("OperateOnDatabaseRecordType"))
                 .isFalse();
 
         DatabaseSmugglerImportOptions importOptions = new DatabaseSmugglerImportOptions();
         json = mapper.valueToTree(importOptions);
-        assertThat(json.get("OperateOnDatabaseRecordTypes").asText().split(","))
-                .contains("Client", "PostgreSQLIntegration", "CdcSinks");
+        // the default set is not sent - the server applies its own default (older servers reject unknown record types)
+        assertThat(json.has("OperateOnDatabaseRecordTypes"))
+                .isFalse();
         assertThat(json.has("MaxReadOpsPerSecond"))
                 .isTrue();
         assertThat(json.get("MaxReadOpsPerSecond").isNull())
