@@ -108,9 +108,11 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             result = (CompareExchangeResult<T>) CompareExchangeResult.parseFromString(_value.getClass(), response, _conventions);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

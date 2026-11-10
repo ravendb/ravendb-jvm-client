@@ -51,9 +51,11 @@ public class ToggleServerWideTaskStateOperation implements IVoidServerOperation 
             return false;
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
 
         @Override

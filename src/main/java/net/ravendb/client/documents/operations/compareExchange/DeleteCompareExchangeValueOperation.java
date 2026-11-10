@@ -69,9 +69,11 @@ public class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
             result = CompareExchangeResult.parseFromString(_clazz, response, _conventions);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

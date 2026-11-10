@@ -95,9 +95,11 @@ public class ModifyConflictSolverOperation implements IServerOperation<ModifySol
             return false;
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

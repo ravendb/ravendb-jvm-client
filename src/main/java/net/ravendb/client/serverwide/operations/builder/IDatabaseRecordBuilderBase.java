@@ -6,6 +6,7 @@ import net.ravendb.client.documents.operations.configuration.ClientConfiguration
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
+import net.ravendb.client.documents.operations.revisions.RevisionsBinConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
@@ -27,6 +28,7 @@ public interface IDatabaseRecordBuilderBase {
     IDatabaseRecordBuilderBase withSettings(Map<String, String> settings);
     IDatabaseRecordBuilderBase withSettings(Consumer<Map<String, String>> builder);
     IDatabaseRecordBuilderBase configureRevisions(RevisionsConfiguration configuration);
+    IDatabaseRecordBuilderBase configureRevisionsBin(RevisionsBinConfiguration configuration);
     IDatabaseRecordBuilderBase withEtls(Consumer<IEtlConfigurationBuilder> builder);
     IDatabaseRecordBuilderBase withBackups(Consumer<IBackupConfigurationBuilder> builder);
     IDatabaseRecordBuilderBase withReplication(Consumer<IReplicationConfigurationBuilder> builder);

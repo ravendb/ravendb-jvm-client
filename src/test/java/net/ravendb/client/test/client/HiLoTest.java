@@ -184,6 +184,41 @@ public class HiLoTest extends RemoteTestBase {
     }
 
     @Test
+    public void generateNextIdAndGenerateDocumentIdUseTheSameHiLoRange() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            // call generateNextIdFor methods:
+            long id1 = store.getHiLoIdGenerator().generateNextIdFor(null, new User());
+            assertThat(id1).isEqualTo(1);
+
+            long id2 = store.getHiLoIdGenerator().generateNextIdFor(null, User.class);
+            assertThat(id2).isEqualTo(2);
+
+            long id3 = store.getHiLoIdGenerator().generateNextIdFor(null, "Users");
+            assertThat(id3).isEqualTo(3);
+
+            // call generateDocumentId:
+            String fullDocumentId4 = store.getHiLoIdGenerator().generateDocumentId(null, new User());
+            String fullDocumentId5 = store.getHiLoIdGenerator().generateDocumentId(null, User.class);
+            String fullDocumentId6 = store.getHiLoIdGenerator().generateDocumentId(null, "Users");
+            assertThat(fullDocumentId4).isEqualTo("users/4-A");
+            assertThat(fullDocumentId5).isEqualTo("users/5-A");
+            assertThat(fullDocumentId6).isEqualTo("users/6-A");
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                session.store(user);
+                String userId = session.advanced().getDocumentId(user);
+                assertThat(userId).isEqualTo("users/7-A");
+            }
+
+            store.getHiLoIdGenerator().generateNextIdFor(null, new User());
+            store.getHiLoIdGenerator().generateNextIdFor(null, User.class);
+            long id10 = store.getHiLoIdGenerator().generateNextIdFor(null, "Users");
+            assertThat(id10).isEqualTo(10);
+        }
+    }
+
+    @Test
     public void capacityShouldDouble() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
 
@@ -196,7 +231,7 @@ public class HiLoTest extends RemoteTestBase {
                 session.saveChanges();
 
                 for (int i = 0; i < 32; i++) {
-                    hiLoIdGenerator.generateDocumentId(new User());
+                    hiLoIdGenerator.generateDocumentId("Users");
                 }
             }
 
@@ -207,7 +242,7 @@ public class HiLoTest extends RemoteTestBase {
                         .isEqualTo(96);
 
                 //we should be receiving a range of 64 now
-                hiLoIdGenerator.generateDocumentId(new User());
+                hiLoIdGenerator.generateDocumentId("Users");
             }
 
             try (IDocumentSession session = store.openSession()) {

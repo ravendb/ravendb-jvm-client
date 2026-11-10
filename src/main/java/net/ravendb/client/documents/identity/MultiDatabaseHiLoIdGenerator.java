@@ -21,6 +21,19 @@ public class MultiDatabaseHiLoIdGenerator implements IHiLoIdGenerator {
         return generator.generateDocumentId(entity);
     }
 
+    @Override
+    public String generateDocumentId(String database, Class<?> type) {
+        String collectionName = store.getConventions().getCollectionName(type);
+        return generateDocumentId(database, collectionName);
+    }
+
+    @Override
+    public String generateDocumentId(String database, String collectionName) {
+        database = store.getEffectiveDatabase(database);
+        MultiTypeHiLoIdGenerator generator = _generators.computeIfAbsent(database, this::generateMultiTypeHiLoFunc);
+        return generator.generateDocumentId(collectionName);
+    }
+
     public MultiTypeHiLoIdGenerator generateMultiTypeHiLoFunc(String database) {
         return new MultiTypeHiLoIdGenerator(store, database);
     }

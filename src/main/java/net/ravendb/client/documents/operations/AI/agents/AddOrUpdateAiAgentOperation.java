@@ -2,7 +2,6 @@ package net.ravendb.client.documents.operations.AI.agents;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
@@ -12,9 +11,11 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import net.ravendb.client.util.RaftIdGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+
 import java.io.IOException;
 
 public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgentConfigurationResult> {
@@ -30,11 +31,12 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
             throw new IllegalArgumentException("Configuration cannot be null");
         }
 
-        if (hasNoSampleObjectAndScheme(configuration) && sampleObject == null) {
-            throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleObject.");
-        }
         this.configuration = configuration;
         this.sampleObject = sampleObject;
+    }
+
+    public static <T> AddOrUpdateAiAgentOperation create(AiAgentConfiguration configuration, T outputType) {
+        return new AddOrUpdateAiAgentOperation(configuration, outputType);
     }
 
     public TcpConnectionHeaderMessage.OperationResultType getResultType() {
@@ -43,40 +45,40 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
 
     @Override
     public RavenCommand<AiAgentConfigurationResult> getCommand(DocumentConventions conventions) {
-        String json = toJson(sampleObject);
-        configuration.setSampleObject(json);
-        return new AddOrUpdateAiAgentCommand(this.configuration, this.sampleObject, conventions);
+        if (sampleObject != null && hasNoSampleObjectAndScheme(configuration)) {
+            try {
+                configuration.setSampleObject(conventions.getEntityMapper().writeValueAsString(sampleObject));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize sample object to JSON", e);
+            }
+        }
+
+        return new AddOrUpdateAiAgentCommand(configuration, conventions);
     }
 
     public static boolean hasNoSampleObjectAndScheme(AiAgentConfiguration configuration) {
-        return (configuration.getOutputSchema() == null || configuration.getOutputSchema().trim().isEmpty())
-                && (configuration.getSampleObject() == null || configuration.getSampleObject().trim().isEmpty());
+        return StringUtils.isBlank(configuration.getOutputSchema()) && StringUtils.isBlank(configuration.getSampleObject());
     }
 
-    private String toJson(Object obj){
-        try {
-            return new ObjectMapper().writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize object to JSON", e);
-        }
-    }
-
-    class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> implements IRaftCommand {
+    private static class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> implements IRaftCommand {
         private final AiAgentConfiguration configuration;
         private final DocumentConventions conventions;
-        private final Object sampleSchema;
 
-        public AddOrUpdateAiAgentCommand(AiAgentConfiguration configuration, Object sampleSchema, DocumentConventions conventions) {
+        public AddOrUpdateAiAgentCommand(AiAgentConfiguration configuration, DocumentConventions conventions) {
             super(AiAgentConfigurationResult.class);
-            if(AddOrUpdateAiAgentOperation.hasNoSampleObjectAndScheme(configuration))
-                throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleObject.");
+            if (hasNoSampleObjectAndScheme(configuration)) {
+                // message mirrors the C# client (which interpolates the OutputSchema value)
+                throw new IllegalArgumentException("Please provide a non-empty value for either "
+                        + StringUtils.defaultString(configuration.getOutputSchema()) + " or SampleObject is required.");
+            }
             this.configuration = configuration;
             this.conventions = conventions;
-            this.sampleSchema = sampleSchema;
         }
 
         @Override
-        public boolean isReadRequest() {return false;}
+        public boolean isReadRequest() {
+            return false;
+        }
 
         @Override
         public String getRaftUniqueRequestId() {
@@ -86,10 +88,6 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
         @Override
         public HttpUriRequestBase createRequest(ServerNode node) {
             String uri = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/ai/agent";
-
-            if (this.configuration == null  && sampleSchema != null) {
-                this.configuration.setSampleObject(sampleSchema.toString());
-            }
 
             HttpPut request = new HttpPut(uri);
 
@@ -105,6 +103,9 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
+            if (response == null) {
+                throwInvalidResponse();
+            }
             result = mapper.readValue(response, AiAgentConfigurationResult.class);
         }
     }

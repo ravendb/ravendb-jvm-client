@@ -74,9 +74,11 @@ public class UpdateDocumentsCompressionConfigurationOperation implements IMainte
             result = mapper.readValue(response, DocumentCompressionConfigurationResult.class);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

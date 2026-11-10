@@ -7,6 +7,7 @@ public class AutoIndexFieldOptions {
     private AutoFieldIndexing indexing;
     private AggregationOperation aggregation;
     private AutoSpatialOptions spatial;
+    private AutoVectorOptions vector;
     private GroupByArrayBehavior groupByArrayBehavior;
     private Boolean suggestions;
     private boolean isNameQuoted;
@@ -33,6 +34,14 @@ public class AutoIndexFieldOptions {
 
     public void setAggregation(AggregationOperation aggregation) {
         this.aggregation = aggregation;
+    }
+
+    public AutoVectorOptions getVector() {
+        return vector;
+    }
+
+    public void setVector(AutoVectorOptions vector) {
+        this.vector = vector;
     }
 
     public AutoSpatialOptions getSpatial() {

@@ -10,4 +10,8 @@ public interface IHiLoIdGenerator {
 
     String generateDocumentId(String database, Object entity);
 
+    String generateDocumentId(String database, Class<?> type);
+
+    String generateDocumentId(String database, String collectionName);
+
 }

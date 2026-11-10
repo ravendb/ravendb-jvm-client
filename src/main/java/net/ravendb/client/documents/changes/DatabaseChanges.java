@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.concurrent.*;
 
 @SuppressWarnings("UnnecessaryLocalVariable")
-public class DatabaseChanges extends AbstractDatabaseChanges<DatabaseConnectionState> implements IDatabaseChanges {
+public class DatabaseChanges extends AbstractDatabaseChanges<DatabaseConnectionState> implements ISingleNodeDatabaseChanges {
 
     public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, ExecutorService executorService, Runnable onDispose, String nodeTag) {
         super(requestExecutor, databaseName, executorService, onDispose, nodeTag);
@@ -52,6 +52,10 @@ public class DatabaseChanges extends AbstractDatabaseChanges<DatabaseConnectionS
 
     @Override
     public IChangesObservable<OperationStatusChange> forOperationId(long operationId) {
+        if (StringUtils.isBlank(_nodeTag)) {
+            throw new IllegalArgumentException("Changes API must be provided a node tag in order to track node-specific operations.");
+        }
+
         DatabaseConnectionState counter = getOrAddConnectionState("operations/" + operationId, "watch-operation", "unwatch-operation", String.valueOf(operationId));
 
         ChangesObservable<OperationStatusChange, DatabaseConnectionState> taskedObservable
@@ -62,6 +66,10 @@ public class DatabaseChanges extends AbstractDatabaseChanges<DatabaseConnectionS
 
     @Override
     public IChangesObservable<OperationStatusChange> forAllOperations() {
+        if (StringUtils.isBlank(_nodeTag)) {
+            throw new IllegalArgumentException("Changes API must be provided a node tag in order to track node-specific operations.");
+        }
+
         DatabaseConnectionState counter = getOrAddConnectionState("all-operations", "watch-operations", "unwatch-operations", null);
 
         ChangesObservable<OperationStatusChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.OPERATION, counter,

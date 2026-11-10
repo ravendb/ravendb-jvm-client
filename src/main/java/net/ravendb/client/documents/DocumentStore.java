@@ -5,6 +5,7 @@ import net.ravendb.client.documents.changes.DatabaseChanges;
 import net.ravendb.client.documents.changes.DatabaseChangesOptions;
 import net.ravendb.client.documents.changes.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
@@ -18,6 +19,7 @@ import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.ssl.SSLContexts;
 
 import javax.crypto.BadPaddingException;
@@ -39,7 +41,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DatabaseChangesOptions, DatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
 
@@ -115,7 +117,7 @@ public class DocumentStore extends DocumentStoreBase {
             value.getValue().close();
         }
 
-        for (IDatabaseChanges changes : _databaseChanges.values()) {
+        for (DatabaseChanges changes : _databaseChanges.values()) {
             try (CleanCloseable value = changes) {
                 // try will close all values
             }
@@ -331,16 +333,24 @@ public class DocumentStore extends DocumentStoreBase {
 
     @Override
     public IDatabaseChanges changes() {
-        return changes(null, null);
+        return changesInternal(null, null);
     }
 
     @Override
     public IDatabaseChanges changes(String database) {
-        return changes(database, null);
+        return changesInternal(database, null);
     }
 
     @Override
-    public IDatabaseChanges changes(String database, String nodeTag) {
+    public ISingleNodeDatabaseChanges changes(String database, String nodeTag) {
+        if (StringUtils.isBlank(nodeTag)) {
+            throw new IllegalArgumentException("nodeTag cannot be null");
+        }
+
+        return changesInternal(database, nodeTag);
+    }
+
+    private DatabaseChanges changesInternal(String database, String nodeTag) {
         assertInitialized();
 
         DatabaseChangesOptions changesOptions = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
@@ -348,7 +358,7 @@ public class DocumentStore extends DocumentStoreBase {
         return _databaseChanges.computeIfAbsent(changesOptions, this::createDatabaseChanges);
     }
 
-    protected IDatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
+    protected DatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
         return new DatabaseChanges(getRequestExecutor(node.getDatabaseName()), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
     }
 
@@ -395,7 +405,7 @@ public class DocumentStore extends DocumentStoreBase {
         Lazy<EvictItemsFromCacheBasedOnChanges> lazy = _aggressiveCacheChanges.get(database);
 
         if (lazy == null) {
-            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database)));
+            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database, () -> _aggressiveCacheChanges.remove(database))));
         }
 
         lazy.getValue(); // force evaluation

@@ -32,6 +32,10 @@ public class LazySessionOperations implements ILazySessionOperations {
 
     @Override
     public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id, Consumer<TResult> onEval) {
+        if (StringUtils.isBlank(id)) {
+            return new Lazy<>(() -> null);
+        }
+
         if (delegate.isLoaded(id)) {
             return new Lazy<>(() -> delegate.load(clazz, id));
         }

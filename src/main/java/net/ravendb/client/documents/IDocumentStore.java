@@ -2,6 +2,7 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
@@ -91,7 +92,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * @param nodeTag The node tag of selected server
      * @return Database changes object
      */
-    IDatabaseChanges changes(String database, String nodeTag);
+    ISingleNodeDatabaseChanges changes(String database, String nodeTag);
 
     /**
      * Setup the context for aggressive caching.
@@ -251,6 +252,14 @@ public interface IDocumentStore extends IDisposalNotification {
      * @param database Target database
      */
     void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database);
+
+    /**
+     * Executes the index creation
+     * @param tasks Index Creation tasks to use
+     * @param conventions Conventions used to create index definitions (store conventions are used when null)
+     * @param database Target database
+     */
+    void executeIndexes(List<IAbstractIndexCreationTask> tasks, DocumentConventions conventions, String database);
 
     TimeSeriesOperations timeSeries();
 

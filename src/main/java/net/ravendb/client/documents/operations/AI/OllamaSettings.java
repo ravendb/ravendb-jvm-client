@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.EnumSet;
@@ -9,7 +10,7 @@ import java.util.Objects;
 /**
  * The configuration for the Ollama API client.
  */
-public final class OllamaSettings extends AbstractAiSettings {
+public final class OllamaSettings extends AbstractAiSettings implements IAiSettings {
 
     /**
      * The URI of the Ollama API.
@@ -125,5 +126,23 @@ public final class OllamaSettings extends AbstractAiSettings {
         }
 
         return diff;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getApiKey() {
+        return null;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getEndpoint() {
+        return getUri();
+    }
+
+    @Override
+    @JsonIgnore
+    public String getBaseEndpointUri() {
+        return getEndpoint();
     }
 }

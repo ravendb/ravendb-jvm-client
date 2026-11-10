@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.ongoingTasks;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Duration;
 import java.util.Date;
 
@@ -26,10 +28,12 @@ public class NextBackup {
         this.dateTime = dateTime;
     }
 
+    @JsonProperty("IsFull")
     public boolean isFull() {
         return isFull;
     }
 
+    @JsonProperty("IsFull")
     public void setFull(boolean full) {
         isFull = full;
     }

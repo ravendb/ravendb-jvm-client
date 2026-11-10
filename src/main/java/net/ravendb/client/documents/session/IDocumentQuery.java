@@ -153,4 +153,17 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
             Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
             Consumer<IVectorFieldValueFactory> value
     );
+
+    IDocumentQuery<T> vectorSearch(
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
+            Consumer<IVectorFieldValueFactory> value,
+            Float minimumSimilarity
+    );
+
+    IDocumentQuery<T> vectorSearch(
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
+            Consumer<IVectorFieldValueFactory> value,
+            Float minimumSimilarity,
+            Integer numberOfCandidates
+    );
 }

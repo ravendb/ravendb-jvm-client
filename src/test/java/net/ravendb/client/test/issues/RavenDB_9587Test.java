@@ -4,11 +4,12 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.SearchEngineType;
+import net.ravendb.client.documents.queries.timings.QueryInspectionNode;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.primitives.Reference;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -50,7 +51,6 @@ public class RavenDB_9587Test extends RemoteTestBase {
     }
 
     @Test
-    @Disabled("TODO")
     public void queryPlan() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -77,6 +77,10 @@ public class RavenDB_9587Test extends RemoteTestBase {
                         .isGreaterThan(0);
                 assertThat(timingsReference.value.getQueryPlan())
                         .isNotNull();
+
+                QueryInspectionNode queryPlan = JsonExtensions.getDefaultMapper().treeToValue(timingsReference.value.getQueryPlan(), QueryInspectionNode.class);
+                assertThat(queryPlan.getOperation())
+                        .isNotEmpty();
             }
         }
     }

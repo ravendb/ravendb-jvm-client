@@ -4,8 +4,22 @@ import java.util.EnumSet;
 import java.util.List;
 
 public interface IDatabaseSmugglerOptions {
+    EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordTypes();
+
+    void setOperateOnDatabaseRecordTypes(EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordTypes);
+
+    /**
+     * @deprecated Use {@link #getOperateOnDatabaseRecordTypes()} instead.
+     * @return database record item types
+     */
+    @Deprecated
     EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordType();
 
+    /**
+     * @deprecated Use {@link #setOperateOnDatabaseRecordTypes(EnumSet)} instead.
+     * @param operateOnDatabaseRecordType database record item types
+     */
+    @Deprecated
     void setOperateOnDatabaseRecordType(EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordType);
 
     EnumSet<DatabaseItemType> getOperateOnTypes();
@@ -43,4 +57,8 @@ public interface IDatabaseSmugglerOptions {
     List<String> getCollections();
 
     void setCollections(List<String> collections);
+
+    Integer getMaxReadOpsPerSecond();
+
+    void setMaxReadOpsPerSecond(Integer maxReadOpsPerSecond);
 }

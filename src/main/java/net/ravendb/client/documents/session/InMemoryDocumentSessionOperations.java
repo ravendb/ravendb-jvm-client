@@ -30,6 +30,7 @@ import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
+import net.ravendb.client.util.ClientChangeVectorUtils;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.IdentityLinkedHashMap;
 import org.apache.commons.beanutils.BeanUtils;
@@ -42,6 +43,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1082,6 +1084,22 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public abstract ClusterTransactionOperationsBase getClusterSession();
 
+    private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
+        IMetadataDictionary metadataInstance = documentInfo.getMetadataInstance();
+        ObjectNode metadata = documentInfo.getMetadata();
+
+        if (metadataInstance != null && metadata != null) {
+            ObjectNode document = documentInfo.getDocument();
+            if (document != null && document.get(Constants.Documents.Metadata.KEY) == metadata) {
+                // the original document shares its metadata node with documentInfo.getMetadata(); keep the original
+                // metadata untouched, so change tracking (whatChanged) sees metadata modifications, as in C#
+                document.set(Constants.Documents.Metadata.KEY, metadata.deepCopy());
+            }
+        }
+
+        return updateMetadataModifications(metadataInstance, metadata);
+    }
+
     public static boolean updateMetadataModifications(IMetadataDictionary metadataDictionary, ObjectNode metadata) {
         boolean dirty = false;
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
@@ -1211,7 +1229,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     continue;
                 }
 
-                boolean dirtyMetadata = updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
+                boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
 
                 ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
@@ -1230,7 +1248,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
 
                     if (beforeStoreEventArgs.isMetadataAccessed()) {
-                        updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
+                        updateMetadataModifications(entity.getValue());
                     }
 
                     if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
@@ -1333,7 +1351,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return Collections.singletonList(change);
         }
 
-        updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
+        updateMetadataModifications(documentInfo);
         ObjectNode document = entityToJson.convertEntityToJson(documentInfo.getEntity(), documentInfo);
 
         Map<String, List<DocumentsChanges>> changes = new HashMap<>();
@@ -1370,8 +1388,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     public boolean hasChanges() {
         for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
+            boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
-            if (entityChanged(document, entity.getValue(), null)) {
+            if (dirtyMetadata || entityChanged(document, entity.getValue(), null)) {
                 return true;
             }
         }
@@ -1392,8 +1411,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return false;
         }
 
+        boolean dirtyMetadata = updateMetadataModifications(documentInfo);
         ObjectNode document = entityToJson.convertEntityToJson(entity, documentInfo);
-        return entityChanged(document, documentInfo, null);
+        return dirtyMetadata || entityChanged(document, documentInfo, null);
     }
 
     public void waitForReplicationAfterSaveChanges() {
@@ -1443,7 +1463,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {
-            updateMetadataModifications(pair.getValue().getMetadataInstance(), pair.getValue().getMetadata());
+            updateMetadataModifications(pair.getValue());
             ObjectNode newObj = entityToJson.convertEntityToJson(pair.getValue().getEntity(), pair.getValue());
             entityChanged(newObj, pair.getValue(), changes);
         }
@@ -1604,6 +1624,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerIncludes(ObjectNode includes) {
+        registerIncludes(includes, false);
+    }
+
+    public void registerIncludes(ObjectNode includes, boolean registerMissingIds) {
         if (noTracking) {
             return;
         }
@@ -1615,7 +1639,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         for (String fieldName : Lists.newArrayList(includes.fieldNames())) {
             JsonNode fieldValue = includes.get(fieldName);
 
-            if (fieldValue == null) {
+            if (!(fieldValue instanceof ObjectNode)) {
+                if (registerMissingIds) {
+                    registerMissing(fieldName);
+                }
+
                 continue;
             }
 
@@ -2478,7 +2506,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (!isIndex && !isCollection) {
             collectionName = ObjectUtils.firstNonNull(
                     conventions.getCollectionName(clazz),
-                    Constants.Documents.Metadata.ALL_DOCUMENTS_COLLECTION);
+                    Constants.Documents.Collections.ALL_DOCUMENTS_COLLECTION);
         }
 
         return Tuple.create(indexName, collectionName);
@@ -2555,6 +2583,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             public void updateEntityDocumentInfo(DocumentInfo documentInfo, ObjectNode document) {
+                String clusterId = _session.sessionInfo != null ? _session.sessionInfo.getClusterTransactionId() : null;
+                if (clusterId != null && documentInfo.getChangeVector() != null) {
+                    String[] cv = documentInfo.getChangeVector().split(Pattern.quote(String.valueOf(ClientChangeVectorUtils.SEPARATOR)), -1);
+                    if (cv.length > 2) {
+                        throw new IllegalStateException("The document '" + documentInfo.getId() + "' has invalid change vector '" + documentInfo.getChangeVector() + "'");
+                    }
+
+                    long clusterTxIndex = ClientChangeVectorUtils.getEtagById(cv[cv.length - 1], clusterId);
+                    if (clusterTxIndex > 0) {
+                        Long lastClusterTransactionIndex = _session.sessionInfo.getLastClusterTransactionIndex();
+                        _session.sessionInfo.setLastClusterTransactionIndex(Math.max(lastClusterTransactionIndex != null ? lastClusterTransactionIndex : 0, clusterTxIndex));
+                    }
+                }
                 _documentInfosToUpdate.add(Tuple.create(documentInfo, document));
             }
 
@@ -2815,7 +2856,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void assertNoIncludesInNonTrackingSession() {
         if (noTracking) {
-            throw new IllegalStateException("This session does not track any entities, because of that registering includes is forbidden to avoid false expectations when later load operations are performed on those and no requests are being sent to the server. Please avoid any 'Include' operations during non-tracking session actions like load or query.");
+            throw new IllegalStateException(
+                    "Cannot register includes when NoTracking is enabled. " +
+                    "Included documents are not tracked, so subsequent Load operations for that data will still trigger additional server requests. " +
+                    "To avoid confusion, 'Include' operations are disallowed when tracking is disabled on the session or query.");
         }
     }
 

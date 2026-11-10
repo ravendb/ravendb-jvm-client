@@ -6,6 +6,8 @@ import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
+import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.backups.CompressionLevel;
 import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
 import net.ravendb.client.documents.operations.attachments.PutAttachmentOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -184,6 +186,81 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
         assertThat(bulkInsert.getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.ZSTD);
+    }
+
+    @Test
+    public void bulkInsertWithDefaultOptionsUsesZstdCompression() throws Exception {
+        assertThat(new DocumentConventions().getHttpCompressionAlgorithm())
+                .isEqualTo(HttpCompressionAlgorithm.Zstd);
+        assertThat(new BulkInsertOptions().getCompressionLevel())
+                .isEqualTo(CompressionLevel.FASTEST);
+
+        this.useHttpDecompression = true;
+        this.useHttpCompression = false;
+        this.compressionAlgorithm = null; // keep the conventions default
+
+        List<LoggedRequest> requests = new ArrayList<>();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (CleanCloseable cleanCloseable = withRequestIntercept(requests)) {
+                try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
+                    assertThat(bulkInsert.getCompressionLevel())
+                            .isEqualTo(CompressionLevel.FASTEST);
+
+                    for (int i = 0; i < 100; i++) {
+                        BulkInsertsTest.FooBar fooBar = new BulkInsertsTest.FooBar();
+                        fooBar.setName("John Doe " + i);
+                        bulkInsert.store(fooBar, "FooBars/" + i);
+                    }
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.load(BulkInsertsTest.FooBar.class, "FooBars/0"))
+                        .isNotNull();
+                assertThat(session.load(BulkInsertsTest.FooBar.class, "FooBars/99").getName())
+                        .isEqualTo("John Doe 99");
+            }
+        }
+
+        LoggedRequest bulkInsertRequest = requests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
+        assertThat(bulkInsertRequest)
+                .isNotNull();
+        assertThat(bulkInsertRequest.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.ZSTD);
+    }
+
+    @Test
+    public void canUseOptimalGzipCompressionLevelInBulkInsert() throws Exception {
+        this.useHttpDecompression = false;
+        this.useHttpCompression = false;
+        this.compressionAlgorithm = HttpCompressionAlgorithm.Gzip;
+
+        List<LoggedRequest> requests = new ArrayList<>();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            BulkInsertOptions options = new BulkInsertOptions();
+            options.setCompressionLevel(CompressionLevel.OPTIMAL);
+
+            try (CleanCloseable cleanCloseable = withRequestIntercept(requests)) {
+                try (BulkInsertOperation bulkInsert = store.bulkInsert(options)) {
+                    BulkInsertsTest.FooBar fooBar = new BulkInsertsTest.FooBar();
+                    fooBar.setName("John Doe");
+                    bulkInsert.store(fooBar, "FooBars/1");
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.load(BulkInsertsTest.FooBar.class, "FooBars/1").getName())
+                        .isEqualTo("John Doe");
+            }
+        }
+
+        LoggedRequest bulkInsertRequest = requests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
+        assertThat(bulkInsertRequest)
+                .isNotNull();
+        assertThat(bulkInsertRequest.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.GZIP);
     }
 
     @Test

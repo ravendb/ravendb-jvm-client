@@ -240,10 +240,12 @@ public abstract class ClusterTransactionOperationsBase {
                         && StringUtils.startsWithIgnoreCase(val.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)
                         && val.getChangeVector() != null) {
                     if (_missingDocumentsTooAtomicGuardIndex == null) {
-                        _missingDocumentsTooAtomicGuardIndex = new HashMap<>();
+                        _missingDocumentsTooAtomicGuardIndex = new TreeMap<>(String::compareToIgnoreCase);
                     }
 
                     _missingDocumentsTooAtomicGuardIndex.put(val.getKey().substring(Constants.CompareExchange.RVN_ATOMIC_PREFIX.length()), val.getChangeVector());
+                } else if (val.getIndex() < 0) {
+                    registerMissingCompareExchangeInclude(val.getKey());
                 } else {
                     registerCompareExchangeInclude(val);
                 }
@@ -283,9 +285,23 @@ public abstract class ClusterTransactionOperationsBase {
         _compareExchangeIncludes.put(value.getKey(), value);
     }
 
+    private void registerMissingCompareExchangeInclude(String key) {
+        assertNotAtomicGuard(key);
+
+        if (session.noTracking) {
+            return;
+        }
+
+        _compareExchangeIncludes.put(key, new CompareExchangeValue<>(key, -1, null));
+    }
+
     private static void assertNotAtomicGuard(CompareExchangeValue<ObjectNode> value) {
-        if (StringUtils.startsWithIgnoreCase(value.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)) {
-            throw new IllegalStateException("'" + value.getKey() + "' is an atomic guard and you cannot load it via the session");
+        assertNotAtomicGuard(value.getKey());
+    }
+
+    private static void assertNotAtomicGuard(String key) {
+        if (StringUtils.startsWithIgnoreCase(key, Constants.CompareExchange.RVN_ATOMIC_PREFIX)) {
+            throw new IllegalStateException("'" + key + "' is an atomic guard and you cannot load it via the session");
         }
     }
 

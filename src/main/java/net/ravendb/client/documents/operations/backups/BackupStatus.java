@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.backups;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Date;
 
 public abstract class BackupStatus {
@@ -7,7 +9,7 @@ public abstract class BackupStatus {
     private Date lastFullBackup;
     private Date lastIncrementalBackup;
     private Long fullBackupDurationInMs;
-    private Long incrementalBackupDurationIsMs;
+    private Long incrementalBackupDurationInMs;
     private String exception;
 
     public Date getLastFullBackup() {
@@ -34,12 +36,32 @@ public abstract class BackupStatus {
         this.fullBackupDurationInMs = fullBackupDurationInMs;
     }
 
-    public Long getIncrementalBackupDurationIsMs() {
-        return incrementalBackupDurationIsMs;
+    public Long getIncrementalBackupDurationInMs() {
+        return incrementalBackupDurationInMs;
     }
 
+    public void setIncrementalBackupDurationInMs(Long incrementalBackupDurationInMs) {
+        this.incrementalBackupDurationInMs = incrementalBackupDurationInMs;
+    }
+
+    /**
+     * @deprecated The property name did not match the server (IncrementalBackupDurationInMs), so it was never filled. Use {@link #getIncrementalBackupDurationInMs()} instead.
+     * @return incremental backup duration in milliseconds
+     */
+    @Deprecated
+    @JsonIgnore
+    public Long getIncrementalBackupDurationIsMs() {
+        return getIncrementalBackupDurationInMs();
+    }
+
+    /**
+     * @deprecated The property name did not match the server (IncrementalBackupDurationInMs). Use {@link #setIncrementalBackupDurationInMs(Long)} instead.
+     * @param incrementalBackupDurationIsMs incremental backup duration in milliseconds
+     */
+    @Deprecated
+    @JsonIgnore
     public void setIncrementalBackupDurationIsMs(Long incrementalBackupDurationIsMs) {
-        this.incrementalBackupDurationIsMs = incrementalBackupDurationIsMs;
+        setIncrementalBackupDurationInMs(incrementalBackupDurationIsMs);
     }
 
     public String getException() {

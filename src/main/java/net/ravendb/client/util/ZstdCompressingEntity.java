@@ -13,8 +13,19 @@ public class ZstdCompressingEntity extends HttpEntityWrapper {
 
     private static final String ZSTD_CODEC = "zstd";
 
+    private final Integer level;
+
     public ZstdCompressingEntity(final HttpEntity entity) {
+        this(entity, null);
+    }
+
+    /**
+     * @param entity wrapped entity
+     * @param level zstd compression level (null - zstd-jni default)
+     */
+    public ZstdCompressingEntity(final HttpEntity entity, final Integer level) {
         super(entity);
+        this.level = level;
     }
 
     @Override
@@ -41,7 +52,7 @@ public class ZstdCompressingEntity extends HttpEntityWrapper {
     @Override
     public void writeTo(final OutputStream outStream) throws IOException {
         Args.notNull(outStream, "Output stream");
-        final ZstdOutputStream zstd = new ZstdOutputStream(outStream);
+        final ZstdOutputStream zstd = level != null ? new ZstdOutputStream(outStream, level) : new ZstdOutputStream(outStream);
         super.writeTo(zstd);
 
         // Only close output stream if the wrapped entity has been

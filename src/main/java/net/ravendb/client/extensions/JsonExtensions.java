@@ -24,7 +24,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.DateTimeException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -146,6 +148,38 @@ public class JsonExtensions {
         }
     }
 
+    public static class InstantSerializer extends StdSerializer<Instant> {
+        public InstantSerializer() {
+            super(Instant.class);
+        }
+
+        @Override
+        public void serialize(Instant value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            if (value == null) {
+                gen.writeNull();
+            } else {
+                gen.writeString(TimeUtils.instantToRavenFormat(value));
+            }
+        }
+    }
+
+    public static class InstantDeserializer extends StdDeserializer<Instant> {
+        public InstantDeserializer() {
+            super(Instant.class);
+        }
+
+        @Override
+        public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            String text = p.getText();
+
+            try {
+                return TimeUtils.parseInstant(text);
+            } catch (DateTimeException e) {
+                throw new JsonParseException(p, "Unexpected Instant format:" + text);
+            }
+        }
+    }
+
     public static ObjectMapper createDefaultJsonSerializer() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setPropertyNamingStrategy(new DotNetNamingStrategy());
@@ -158,6 +192,8 @@ public class JsonExtensions {
         SimpleModule durationModule = new SimpleModule();
         durationModule.addSerializer(new DurationSerializer());
         durationModule.addDeserializer(Duration.class, new DurationDeserializer());
+        durationModule.addSerializer(new InstantSerializer());
+        durationModule.addDeserializer(Instant.class, new InstantDeserializer());
 
         objectMapper.registerModule(durationModule);
 

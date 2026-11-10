@@ -43,9 +43,11 @@ public class DeleteServerWideSorterOperation implements IVoidServerOperation {
             return new HttpDelete(url);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

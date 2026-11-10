@@ -1,8 +1,11 @@
 package net.ravendb.client.documents.attachments;
 
+import net.ravendb.client.primitives.UseSharpEnum;
+
 /**
  * Flags that indicate the location and characteristics of an attachment.
  */
+@UseSharpEnum
 public enum RemoteAttachmentFlags {
 
     /**

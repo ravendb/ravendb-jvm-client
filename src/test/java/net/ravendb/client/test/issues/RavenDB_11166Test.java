@@ -172,4 +172,65 @@ public class RavenDB_11166Test extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void canUseSubscriptionWithIncludes2() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Person person = new Person();
+                person.setName("Arava");
+                session.store(person, "people/1");
+
+                Dog dog = new Dog();
+                dog.setName("Oscar");
+                dog.setOwner("people/1");
+                session.store(dog);
+
+                Dog dog2 = new Dog();
+                dog2.setName("Oscar2");
+                dog2.setOwner("People/2");
+                session.store(dog2);
+
+                session.saveChanges();
+            }
+
+            SubscriptionCreationOptions options = new SubscriptionCreationOptions();
+            options.setQuery("from Dogs include owner");
+            String id = store.subscriptions().create(options);
+
+            try (SubscriptionWorker<Dog> sub = store.subscriptions().getSubscriptionWorker(Dog.class, id)) {
+                Semaphore semaphore = new Semaphore(0);
+                CompletableFuture<Void> run = sub.run(batch -> {
+                    assertThat(batch.getItems())
+                            .isNotEmpty();
+
+                    try (IDocumentSession s = batch.openSession()) {
+                        for (SubscriptionBatch.Item<Dog> item : batch.getItems()) {
+                            Person owner = s.load(Person.class, item.getResult().getOwner());
+                            if ("people/1".equals(item.getResult().getOwner())) {
+                                assertThat(owner).isNotNull();
+                            } else {
+                                assertThat(owner).isNull();
+                            }
+
+                            Dog loadedDog = s.load(Dog.class, item.getId());
+                            assertThat(loadedDog)
+                                    .isSameAs(item.getResult());
+                        }
+
+                        assertThat(s.advanced().getNumberOfRequests())
+                                .isZero();
+                    }
+
+                    semaphore.release();
+                });
+
+                assertThat(semaphore.tryAcquire(60, TimeUnit.SECONDS))
+                        .isTrue();
+
+                sub.close();
+                run.get(); // no error
+            }
+        }
+    }
 }

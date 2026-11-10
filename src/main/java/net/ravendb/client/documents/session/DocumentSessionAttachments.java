@@ -44,6 +44,26 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     }
 
     @Override
+    public CloseableAttachmentResult getRange(String documentId, String name, Long from, Long to) {
+        GetAttachmentOperation operation = new GetAttachmentOperation(documentId, name, AttachmentType.DOCUMENT, null, from, to);
+        session.incrementRequestCount();
+        return session.getOperations().send(operation, sessionInfo);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public CloseableAttachmentResult getRange(Object entity, String name, Long from, Long to) {
+        DocumentInfo document = session.documentsByEntity.get(entity);
+        if (document == null) {
+            throwEntityNotInSessionOrMissingId(entity);
+        }
+
+        GetAttachmentOperation operation = new GetAttachmentOperation(document.getId(), name, AttachmentType.DOCUMENT, null, from, to);
+        session.incrementRequestCount();
+        return session.getOperations().send(operation, sessionInfo);
+    }
+
+    @Override
     public CloseableAttachmentsResult get(List<AttachmentRequest> attachments) {
         GetAttachmentsOperation operation = new GetAttachmentsOperation(attachments, AttachmentType.DOCUMENT);
         return session.getOperations().send(operation, sessionInfo);

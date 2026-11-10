@@ -78,6 +78,9 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             applyValues(indexDefinition, termVectorsStrings, (options, value) -> options.setTermVector(value));
             applyValues(indexDefinition, spatialIndexesStrings, (options, value) -> options.setSpatial(value));
             applyValues(indexDefinition, suggestions, (options, value) -> options.setSuggestions(value));
+            for (FieldVectorOptions vectorOptions : vectorFieldStrings.values()) {
+                vectorOptions.validate();
+            }
             applyValues(indexDefinition, vectorFieldStrings, (options, value) -> options.setVector(value));
 
             // Set Corax search engine type if vector fields are present

@@ -5,6 +5,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeType;
 import net.ravendb.client.primitives.TimeValue;
 
+import java.util.Date;
+
 public class SubscriptionIncludeBuilder extends IncludeBuilderBase implements ISubscriptionIncludeBuilder {
     public SubscriptionIncludeBuilder(DocumentConventions conventions) {
         super(conventions);
@@ -67,6 +69,17 @@ public class SubscriptionIncludeBuilder extends IncludeBuilderBase implements IS
     @Override
     public ISubscriptionIncludeBuilder includeAllTimeSeries(TimeSeriesRangeType type, int count) {
         _includeTimeSeriesByRangeTypeAndCount("", Constants.TimeSeries.ALL, type, count);
+        return this;
+    }
+
+    @Override
+    public ISubscriptionIncludeBuilder includeAllTimeSeries() {
+        return includeAllTimeSeries((Date) null, (Date) null);
+    }
+
+    @Override
+    public ISubscriptionIncludeBuilder includeAllTimeSeries(Date from, Date to) {
+        _includeTimeSeriesFromTo("", Constants.TimeSeries.ALL, from, to);
         return this;
     }
 }

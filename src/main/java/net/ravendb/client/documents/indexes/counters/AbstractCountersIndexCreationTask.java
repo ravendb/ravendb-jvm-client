@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.indexes.counters;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.primitives.SharpEnum;
 
 public class AbstractCountersIndexCreationTask extends AbstractGenericCountersIndexCreationTask {
     protected String map;
@@ -38,6 +40,10 @@ public class AbstractCountersIndexCreationTask extends AbstractGenericCountersIn
         indexDefinitionBuilder.setPriority(getPriority());
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
+
+        if (searchEngineType != null) {
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        }
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

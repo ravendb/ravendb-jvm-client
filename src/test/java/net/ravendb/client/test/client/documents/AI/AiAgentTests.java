@@ -301,7 +301,7 @@ public class AiAgentTests extends RemoteTestBase {
                 Assertions.assertTrue(false, "Expected exception not thrown");
             } catch (Exception e) {
                 assertThat(e.getMessage())
-                        .contains("Please provide a non-empty value for either outputSchema or sampleObject.");
+                        .contains("Please provide a non-empty value for either  or SampleObject is required.");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

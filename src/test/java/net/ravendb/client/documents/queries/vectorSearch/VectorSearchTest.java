@@ -147,7 +147,7 @@ public class VectorSearchTest extends RemoteTestBase {
                         ).toString();
 
                 assertEquals(
-                        "from 'Users' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0)",
+                        "from 'Users' where vector.search(embedding.text(VectorField,ai.task('id-for-task-open-ai')), $p0)",
                         query
                 );
             }
@@ -326,7 +326,7 @@ public class VectorSearchTest extends RemoteTestBase {
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0)",
+                    "from 'Users' where vector.search(embedding.text(TextualValue,ai.task('taskId-123')), $p0)",
                     query
             );
 
@@ -441,7 +441,7 @@ public class VectorSearchTest extends RemoteTestBase {
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0)",
+                    "from 'Users' where vector.search(embedding.text_i1(TextualValue,ai.task('openai-embeddings')), $p0)",
                     query
             );
 
@@ -648,7 +648,7 @@ public class VectorSearchTest extends RemoteTestBase {
                     .toString();
 
             assertEquals(
-                    "from 'Users' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0))",
+                    "from 'Users' where exact(vector.search(embedding.text_i1(TextualValue,ai.task('openai-embeddings')), $p0))",
                     query
             );
 
@@ -764,7 +764,7 @@ public class VectorSearchTest extends RemoteTestBase {
                         .toString();
 
                 assertThat(query).isEqualTo(
-                        "from 'Users' where vector.search(embedding.text(TextualValue, ai.task('openai-task')), embedding.forDoc($p0))"
+                        "from 'Users' where vector.search(embedding.text(TextualValue,ai.task('openai-task')), embedding.forDoc($p0))"
                 );
             }
         } catch (Exception e) {

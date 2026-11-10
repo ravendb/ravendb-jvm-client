@@ -71,9 +71,11 @@ public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<Confi
             result = mapper.readValue(response, ConfigureTimeSeriesOperationResult.class);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

@@ -17,6 +17,8 @@ public class QueryOperationOptions {
 
     private boolean retrieveDetails;
 
+    private IndexPatchOptions indexPatchOptions;
+
     /**
      * Indicates whether operations are allowed on stale indexes.
      * @return true if stale result can be accepted
@@ -99,4 +101,21 @@ public class QueryOperationOptions {
         this.retrieveDetails = retrieveDetails;
     }
 
+    /**
+     * Advanced indexing options for patch operations.
+     * Set the timeout, index preferences, and error-handling options.
+     * @return index patch options
+     */
+    public IndexPatchOptions getIndexPatchOptions() {
+        return indexPatchOptions;
+    }
+
+    /**
+     * Advanced indexing options for patch operations.
+     * Set the timeout, index preferences, and error-handling options.
+     * @param indexPatchOptions index patch options
+     */
+    public void setIndexPatchOptions(IndexPatchOptions indexPatchOptions) {
+        this.indexPatchOptions = indexPatchOptions;
+    }
 }

@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
@@ -24,11 +24,11 @@ public class Operation {
         return _id;
     }
 
-    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id) {
+    public Operation(RequestExecutor requestExecutor, Supplier<ISingleNodeDatabaseChanges> changes, DocumentConventions conventions, long id) {
         this(requestExecutor, changes, conventions, id, null);
     }
 
-    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id, String nodeTag) {
+    public Operation(RequestExecutor requestExecutor, Supplier<ISingleNodeDatabaseChanges> changes, DocumentConventions conventions, long id, String nodeTag) {
         _requestExecutor = requestExecutor;
         _conventions = conventions;
         _id = id;
@@ -59,13 +59,33 @@ public class Operation {
     }
 
     public void waitForCompletion() {
+        waitForCompletionAndGetStatus();
+    }
+
+    /**
+     * Waits for the operation to complete and returns its result deserialized to the requested type
+     * (e.g. {@code ValidateSchemaResult}).
+     * @param resultClass type of the operation result
+     * @param <TResult> type of the operation result
+     * @return operation result or null when the server returned no result
+     */
+    public <TResult> TResult waitForCompletion(Class<TResult> resultClass) {
+        ObjectNode status = waitForCompletionAndGetStatus();
+        JsonNode result = status.get("Result");
+        if (result == null || result.isNull()) {
+            return null;
+        }
+        return JsonExtensions.getDefaultMapper().convertValue(result, resultClass);
+    }
+
+    private ObjectNode waitForCompletionAndGetStatus() {
         while (true) {
             ObjectNode status = fetchOperationsStatus();
 
             String operationStatus = status.get("Status").asText();
             switch (operationStatus) {
                 case "Completed":
-                    return ;
+                    return status;
                 case "Canceled":
                     throw new OperationCancelledException();
                 case "Faulted":
@@ -76,7 +96,7 @@ public class Operation {
                     schema.setError(exceptionResult.getError());
                     schema.setMessage(exceptionResult.getMessage());
                     schema.setType(exceptionResult.getType());
-                    throw ExceptionDispatcher.get(schema, exceptionResult.getStatusCode());
+                    throw ExceptionDispatcher.get(schema, exceptionResult.getStatusCode(), null, exceptionResult.getLimitType());
             }
 
             try {

@@ -23,6 +23,7 @@ public class SessionInfo {
 
     private Long lastClusterTransactionIndex;
     private boolean noCaching;
+    private String clusterTransactionId;
 
     public SessionInfo(InMemoryDocumentSessionOperations session, SessionOptions options, DocumentStoreBase documentStore) {
         if (documentStore == null) {
@@ -142,4 +143,11 @@ public class SessionInfo {
         this.noCaching = noCaching;
     }
 
+    public String getClusterTransactionId() {
+        return clusterTransactionId;
+    }
+
+    public void setClusterTransactionId(String clusterTransactionId) {
+        this.clusterTransactionId = clusterTransactionId;
+    }
 }

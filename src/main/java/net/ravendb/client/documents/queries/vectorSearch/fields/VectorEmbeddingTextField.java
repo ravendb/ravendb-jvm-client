@@ -25,7 +25,7 @@ public class VectorEmbeddingTextField<T> extends VectorField implements IVectorE
     @Override
     public IVectorEmbeddingTextField targetQuantization(VectorEmbeddingType targetEmbeddingQuantization) {
         if (targetEmbeddingQuantization == VectorEmbeddingType.TEXT) {
-            throw new IllegalArgumentException("Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
+            throw new IllegalStateException("Cannot quantize the embedding to Text. This option is only available for SourceQuantizationType.");
         }
 
         this.setDestinationQuantizationType(targetEmbeddingQuantization);

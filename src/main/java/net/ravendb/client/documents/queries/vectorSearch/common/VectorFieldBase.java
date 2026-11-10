@@ -102,7 +102,7 @@ public abstract class VectorFieldBase<T> {
         if (sourceType == VectorEmbeddingType.TEXT && taskIdentifier != null && !taskIdentifier.isEmpty()) {
             return embeddingFunction.isEmpty() 
                 ? rawFieldName.toString() 
-                : embeddingFunction + "(" + rawFieldName + ", ai.task('" + taskIdentifier + "'))";
+                : embeddingFunction + "(" + rawFieldName + ",ai.task('" + taskIdentifier + "'))";
         }
 
         // For empty embedding function (same source and destination for Single), return just the field name

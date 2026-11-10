@@ -65,6 +65,15 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         spatialOptionsStrings.put(field, indexing.apply(new SpatialOptionsFactory()));
     }
 
+    /**
+     * Register a field to be vector indexed
+     * @param field Field name
+     * @param indexing factory for vector options
+     */
+    protected void vector(String field, Function<VectorOptionsFactory, VectorOptionsFactory> indexing) {
+        vectorOptionsStrings.put(field, indexing.apply(new VectorOptionsFactory()).getVectorOptions());
+    }
+
     protected void storeAllFields(FieldStorage storage) {
         storesStrings.put(Constants.Documents.Indexing.Fields.ALL_FIELDS, storage);
     }

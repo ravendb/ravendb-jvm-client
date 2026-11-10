@@ -9,7 +9,7 @@ public class CounterOperation {
 
     private CounterOperationType type;
     private String counterName;
-    private long delta;
+    private long delta = 1;
 
     protected String changeVector;
 

@@ -58,6 +58,10 @@ public class VectorSearchToken extends WhereToken {
         this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
         this.embeddingsGenerationTaskIdentifierByValue = embeddingsGenerationTaskIdentifierByValue;
         this.setOptions(new WhereOptions(isExact));
+
+        if (embeddingsGenerationTaskIdentifier != null && embeddingsGenerationTaskIdentifierByValue != null) {
+            throw new IllegalStateException("Embeddings generation task identifier set in value factory cannot be used with field factory. It solely purpose to use already generated embeddings.");
+        }
     }
 
     public static String getTaskIdentifier(Object value) {
@@ -132,7 +136,7 @@ public class VectorSearchToken extends WhereToken {
                 writer.append(methodName)
                         .append("(")
                         .append(fieldName)
-                        .append(", ")
+                        .append(",")
                         .append(AI_TASK_METHOD_NAME)
                         .append("('")
                         .append(embeddingsGenerationTaskIdentifier)

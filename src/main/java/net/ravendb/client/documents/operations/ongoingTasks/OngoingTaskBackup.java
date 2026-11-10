@@ -2,6 +2,7 @@ package net.ravendb.client.documents.operations.ongoingTasks;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.operations.backups.BackupType;
+import net.ravendb.client.documents.operations.backups.BackupUploadMode;
 import net.ravendb.client.documents.operations.backups.RetentionPolicy;
 
 import java.util.Date;
@@ -24,6 +25,10 @@ public class OngoingTaskBackup extends OngoingTask {
     @JsonProperty("IsEncrypted")
     private boolean encrypted;
     private String lastExecutingNodeTag;
+    private String fullBackupFrequency;
+    private String incrementalBackupFrequency;
+    private BackupUploadMode backupUploadMode;
+    private boolean hasCloudBackup;
 
     public BackupType getBackupType() {
         return backupType;
@@ -95,5 +100,37 @@ public class OngoingTaskBackup extends OngoingTask {
 
     public void setLastExecutingNodeTag(String lastExecutingNodeTag) {
         this.lastExecutingNodeTag = lastExecutingNodeTag;
+    }
+
+    public String getFullBackupFrequency() {
+        return fullBackupFrequency;
+    }
+
+    public void setFullBackupFrequency(String fullBackupFrequency) {
+        this.fullBackupFrequency = fullBackupFrequency;
+    }
+
+    public String getIncrementalBackupFrequency() {
+        return incrementalBackupFrequency;
+    }
+
+    public void setIncrementalBackupFrequency(String incrementalBackupFrequency) {
+        this.incrementalBackupFrequency = incrementalBackupFrequency;
+    }
+
+    public BackupUploadMode getBackupUploadMode() {
+        return backupUploadMode;
+    }
+
+    public void setBackupUploadMode(BackupUploadMode backupUploadMode) {
+        this.backupUploadMode = backupUploadMode;
+    }
+
+    public boolean isHasCloudBackup() {
+        return hasCloudBackup;
+    }
+
+    public void setHasCloudBackup(boolean hasCloudBackup) {
+        this.hasCloudBackup = hasCloudBackup;
     }
 }

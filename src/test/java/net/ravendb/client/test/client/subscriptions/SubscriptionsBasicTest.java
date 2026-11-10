@@ -27,6 +27,8 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.Date;
@@ -1183,6 +1185,138 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
                         .isEqualTo(user1.getName());
 
             }
+        }
+    }
+
+    @Test
+    public void canUpdateSubscriptionPinToMentorNodeByName() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setQuery("from Users");
+            creationOptions.setName("Created");
+            creationOptions.setMentorNode("A");
+            String subsId = store.subscriptions().create(creationOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState state = subscriptions.get(0);
+            assertThat(subscriptions).hasSize(1);
+            assertThat(state.getSubscriptionName()).isEqualTo("Created");
+            assertThat(state.getQuery()).isEqualTo("from Users");
+            assertThat(state.getMentorNode()).isEqualTo("A");
+
+            SubscriptionUpdateOptions updateOptions = new SubscriptionUpdateOptions();
+            updateOptions.setName(subsId);
+            updateOptions.setPinToMentorNode(true);
+            store.subscriptions().update(updateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions).hasSize(1);
+            assertThat(newState.getSubscriptionName()).isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getSubscriptionId()).isEqualTo(state.getSubscriptionId());
+            assertThat(newState.isPinToMentorNode()).isTrue();
+        }
+    }
+
+    @Test
+    public void canUpdateDisabledByName() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setQuery("from Users");
+            creationOptions.setName("Created");
+            String subsId = store.subscriptions().create(creationOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState state = subscriptions.get(0);
+            assertThat(subscriptions).hasSize(1);
+            assertThat(state.getSubscriptionName()).isEqualTo("Created");
+            assertThat(state.getQuery()).isEqualTo("from Users");
+            assertThat(state.isDisabled()).isFalse();
+
+            SubscriptionUpdateOptions updateOptions = new SubscriptionUpdateOptions();
+            updateOptions.setName(subsId);
+            updateOptions.setDisabled(true);
+            store.subscriptions().update(updateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions).hasSize(1);
+            assertThat(newState.getSubscriptionName()).isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getSubscriptionId()).isEqualTo(state.getSubscriptionId());
+            assertThat(newState.isDisabled()).isTrue();
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {"true,", "false,", "true,false", "false,true"})
+    public void canUpdateSubscriptionByIdAndKeepPinToMentorNode(boolean create, Boolean update) throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setQuery("from Users");
+            creationOptions.setName("Created");
+            creationOptions.setMentorNode("A");
+            creationOptions.setPinToMentorNode(create);
+            store.subscriptions().create(creationOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState state = subscriptions.get(0);
+            assertThat(subscriptions).hasSize(1);
+            assertThat(state.getSubscriptionName()).isEqualTo("Created");
+            assertThat(state.getQuery()).isEqualTo("from Users");
+            assertThat(state.getMentorNode()).isEqualTo("A");
+            assertThat(state.isPinToMentorNode()).isEqualTo(create);
+
+            String newQuery = "from Users where Age > 18";
+
+            SubscriptionUpdateOptions updateOptions = new SubscriptionUpdateOptions();
+            updateOptions.setQuery(newQuery);
+            updateOptions.setId(state.getSubscriptionId());
+            if (update != null) {
+                updateOptions.setPinToMentorNode(update);
+                updateOptions.setDisabled(update);
+            }
+            store.subscriptions().update(updateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions).hasSize(1);
+            assertThat(newState.getSubscriptionName()).isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getQuery()).isEqualTo(newQuery);
+            assertThat(newState.getSubscriptionId()).isEqualTo(state.getSubscriptionId());
+            assertThat(newState.getMentorNode()).isEqualTo(state.getMentorNode());
+
+            if (update == null) {
+                assertThat(newState.isPinToMentorNode()).isEqualTo(state.isPinToMentorNode());
+            } else {
+                assertThat(newState.isPinToMentorNode()).isEqualTo(update);
+                assertThat(newState.isDisabled()).isEqualTo(update);
+                assertThat(newState.isPinToMentorNode()).isNotEqualTo(create);
+            }
+        }
+    }
+
+    @Test
+    public void canCreateDisabledSubscriptionByUpdateSubscriptionAndThenUpdate() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String query = "from Users";
+            String name = "Created";
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+            assertThat(subscriptions).isEmpty();
+
+            SubscriptionUpdateOptions updateOptions = new SubscriptionUpdateOptions();
+            updateOptions.setQuery(query);
+            updateOptions.setName(name);
+            updateOptions.setDisabled(true);
+            updateOptions.setCreateNew(true);
+            store.subscriptions().update(updateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            assertThat(newSubscriptions).hasSize(1);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newState.getSubscriptionName()).isEqualTo("Created");
+            assertThat(newState.getQuery()).isEqualTo("from Users");
+            assertThat(newState.isDisabled()).isTrue();
         }
     }
 }

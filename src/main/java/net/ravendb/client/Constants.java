@@ -52,10 +52,34 @@ public class Constants {
             public static final String REFRESH = "@refresh";
             public static final String ARCHIVE_AT = "@archive-at";
             public static final String ARCHIVED = "@archived";
+            public static final String QUANTIZATION = "@quantization";
+
+            /**
+             * @deprecated Moved to {@link Collections#ALL_DOCUMENTS_COLLECTION} (as in the C# client).
+             */
+            @Deprecated
+            public static final String ALL_DOCUMENTS_COLLECTION = Collections.ALL_DOCUMENTS_COLLECTION;
+
+            /**
+             * @deprecated Moved to {@link Collections#EMPTY_COLLECTION} (as in the C# client).
+             */
+            @Deprecated
+            public static final String EMPTY_COLLECTION = Collections.EMPTY_COLLECTION;
+
+        }
+
+        public static class Collections {
+            private Collections() {}
+
             public static final String ALL_DOCUMENTS_COLLECTION = "@all_docs";
 
             public static final String EMPTY_COLLECTION = "@empty";
 
+            public static final String EMBEDDINGS_CACHE_COLLECTION = "@embeddings-cache";
+
+            public static final String AI_AGENT_CONVERSATION_COLLECTION = "@conversations";
+
+            public static final String AI_AGENT_CONVERSATION_HISTORY_COLLECTION = "@conversations-history";
         }
 
         public static class Indexing {
@@ -90,6 +114,10 @@ public class Constants {
                 private Sharding() {}
 
                 public static final String SHARD_CONTEXT_PARAMETER_NAME = "__shardContext";
+
+                public static final String SHARD_CONTEXT_DOCUMENT_IDS = "DocumentIds";
+
+                public static final String SHARD_CONTEXT_PREFIXES = "Prefixes";
             }
         }
 
@@ -129,6 +157,8 @@ public class Constants {
         public static final String CLUSTER_TOPOLOGY_ETAG = "Cluster-Topology-Etag";
 
         public static final String LAST_KNOWN_CLUSTER_TRANSACTION_INDEX = "Known-Raft-Index";
+
+        public static final String DATABASE_CLUSTER_TRANSACTION_ID = "Database-Cluster-Tx-Id";
 
         public static final String CLIENT_CONFIGURATION_ETAG = "Client-Configuration-Etag";
 

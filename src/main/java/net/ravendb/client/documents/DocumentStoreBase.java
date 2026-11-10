@@ -2,6 +2,7 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.changes.ISingleNodeDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
@@ -78,7 +79,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDatabaseChanges changes(String database);
 
-    public abstract IDatabaseChanges changes(String database, String nodeTag);
+    public abstract ISingleNodeDatabaseChanges changes(String database, String nodeTag);
 
     @Override
     public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
@@ -128,8 +129,21 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database) {
+        executeIndexes(tasks, conventions, database);
+    }
+
+    @Override
+    public void executeIndexes(List<IAbstractIndexCreationTask> tasks, DocumentConventions conventions, String database) {
         assertInitialized();
+
+        if (conventions == null) {
+            conventions = this.conventions;
+        }
+
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
+        if (indexesToAdd == null || indexesToAdd.length == 0) {
+            return;
+        }
 
         maintenance()
                 .forDatabase(getEffectiveDatabase(database))

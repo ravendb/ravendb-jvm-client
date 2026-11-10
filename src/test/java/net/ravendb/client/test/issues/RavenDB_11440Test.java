@@ -2,70 +2,67 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.infrastructure.DisabledOn70Server;
 import net.ravendb.client.serverwide.operations.logs.GetLogsConfigurationOperation;
 import net.ravendb.client.serverwide.operations.logs.GetLogsConfigurationResult;
-import net.ravendb.client.serverwide.operations.logs.LogMode;
+import net.ravendb.client.serverwide.operations.logs.LogLevel;
 import net.ravendb.client.serverwide.operations.logs.SetLogsConfigurationOperation;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisabledOn70Server
+@EnableOnServer(thresholdVersion = "7.0")
 public class RavenDB_11440Test extends RemoteTestBase {
 
     @Test
-    public void canGetLogsConfigurationAndChangeMode() throws Exception {
+    public void canGetLogsConfigurationAndChangeLogMode() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            GetLogsConfigurationResult configuration = store.maintenance().server().send(new GetLogsConfigurationOperation());
+            GetLogsConfigurationResult configuration1 = store.maintenance().server().send(new GetLogsConfigurationOperation());
 
+            LogLevel newMinLevel;
+            switch (configuration1.getLogs().getCurrentMinLevel()) {
+                case DEBUG:
+                    newMinLevel = LogLevel.TRACE;
+                    break;
+                case TRACE:
+                case INFO:
+                case WARN:
+                case ERROR:
+                case FATAL:
+                case OFF:
+                    newMinLevel = LogLevel.DEBUG;
+                    break;
+                default:
+                    throw new IllegalArgumentException();
+            }
 
             try {
-
-                LogMode modeToSet;
-
-                switch (configuration.getCurrentMode()) {
-                    case NONE:
-                        modeToSet = LogMode.INFORMATION;
-                        break;
-                    case OPERATIONS:
-                        modeToSet = LogMode.INFORMATION;
-                        break;
-                    case INFORMATION:
-                        modeToSet = LogMode.NONE;
-                        break;
-                    default:
-                        throw new IllegalStateException("Invalid mode: " + configuration.getCurrentMode());
-                }
-
-                Duration time = Duration.ofDays(1000);
-
-                SetLogsConfigurationOperation.Parameters parameters = new SetLogsConfigurationOperation.Parameters();
-                parameters.setMode(modeToSet);
-                parameters.setRetentionTime(time);
-                SetLogsConfigurationOperation setLogsOperation = new SetLogsConfigurationOperation(parameters);
-                store.maintenance().server().send(setLogsOperation);
+                store.maintenance().server().send(new SetLogsConfigurationOperation(
+                        new SetLogsConfigurationOperation.LogsConfiguration(newMinLevel)));
 
                 GetLogsConfigurationResult configuration2 = store.maintenance().server().send(new GetLogsConfigurationOperation());
 
-                assertThat(configuration2.getCurrentMode())
-                        .isEqualTo(modeToSet);
-                assertThat(configuration2.getRetentionTime().toString())
-                        .isEqualTo(time.toString());
-                assertThat(configuration2.getMode())
-                        .isEqualTo(configuration.getMode());
-                assertThat(configuration2.getPath())
-                        .isEqualTo(configuration.getPath());
-                assertThat(configuration2.isUseUtcTime())
-                        .isEqualTo(configuration.isUseUtcTime());
-            } finally {
-                SetLogsConfigurationOperation.Parameters parameters = new SetLogsConfigurationOperation.Parameters();
-                parameters.setMode(configuration.getCurrentMode());
-                parameters.setRetentionTime(configuration.getRetentionTime());
+                assertThat(configuration2.getLogs().getCurrentMinLevel())
+                        .isEqualTo(newMinLevel);
 
-                store.maintenance().server().send(new SetLogsConfigurationOperation(parameters));
+                assertThat(configuration2.getLogs().getMinLevel())
+                        .isEqualTo(configuration1.getLogs().getMinLevel());
+                assertThat(configuration2.getLogs().getArchiveAboveSizeInMb())
+                        .isEqualTo(configuration1.getLogs().getArchiveAboveSizeInMb());
+                assertThat(configuration2.getLogs().isEnableArchiveFileCompression())
+                        .isEqualTo(configuration1.getLogs().isEnableArchiveFileCompression());
+                assertThat(configuration2.getLogs().getMaxArchiveDays())
+                        .isEqualTo(configuration1.getLogs().getMaxArchiveDays());
+                assertThat(configuration2.getLogs().getMaxArchiveFiles())
+                        .isEqualTo(configuration1.getLogs().getMaxArchiveFiles());
+                assertThat(configuration2.getLogs().getPath())
+                        .isEqualTo(configuration1.getLogs().getPath());
+            } finally {
+                SetLogsConfigurationOperation.LogsConfiguration restore =
+                        new SetLogsConfigurationOperation.LogsConfiguration(configuration1.getLogs().getCurrentMinLevel());
+                restore.setFilters(configuration1.getLogs().getCurrentFilters());
+                restore.setLogFilterDefaultAction(configuration1.getLogs().getCurrentLogFilterDefaultAction());
+                store.maintenance().server().send(new SetLogsConfigurationOperation(restore));
             }
         }
     }

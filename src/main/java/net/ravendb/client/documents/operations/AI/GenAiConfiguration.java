@@ -9,6 +9,36 @@ import java.util.List;
 
 public class GenAiConfiguration extends AbstractAiIntegrationConfiguration{
 
+    public String generateIdentifier() {
+        return generateIdentifier(getName());
+    }
+
+    static String generateIdentifier(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean lastWasHyphen = false;
+
+        // normalize to FormD to separate letters from their diacritics (as the C# client)
+        for (char c : java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD).toCharArray()) {
+            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+                result.append(c);
+                lastWasHyphen = false;
+            } else if (c >= 'A' && c <= 'Z') {
+                result.append(Character.toLowerCase(c));
+                lastWasHyphen = false;
+            } else if (!lastWasHyphen && result.length() > 0) {
+                result.append('-');
+                lastWasHyphen = true;
+            }
+        }
+
+        String finalResult = org.apache.commons.lang3.StringUtils.stripEnd(result.toString(), "-");
+        return finalResult.isEmpty() ? "AiConnectionStringIdentifier" : finalResult;
+    }
+
     private String identifier;
     private String collection;
 

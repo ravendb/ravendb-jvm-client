@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
+import net.ravendb.client.documents.operations.AI.EmbeddingsGenerationConfiguration;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.AI.AiConnectionString;
@@ -23,6 +24,7 @@ import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
+import net.ravendb.client.documents.operations.revisions.RevisionsBinConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
@@ -284,6 +286,20 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
     }
 
     @Override
+    public IEtlConfigurationBuilder addEmbeddingsGeneration(EmbeddingsGenerationConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+
+        if (_databaseRecord.getEmbeddingsGenerations() == null) {
+            _databaseRecord.setEmbeddingsGenerations(new ArrayList<>());
+        }
+
+        _databaseRecord.getEmbeddingsGenerations().add(configuration);
+        return this;
+    }
+
+    @Override
     public IIntegrationConfigurationBuilder configurePostgreSql(PostgreSqlConfiguration configuration) {
         if (configuration == null) {
             throw new IllegalArgumentException("Configuration cannot be null");
@@ -441,6 +457,15 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
             throw new IllegalArgumentException("Configuration cannot be null");
         }
         _databaseRecord.setRevisions(configuration);
+        return this;
+    }
+
+    @Override
+    public IDatabaseRecordBuilderBase configureRevisionsBin(RevisionsBinConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+        _databaseRecord.setRevisionsBin(configuration);
         return this;
     }
 

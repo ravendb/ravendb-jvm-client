@@ -17,6 +17,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.UpdateTopologyParameters;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
@@ -35,6 +36,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -50,6 +52,9 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
     private final String _database;
 
     private final Runnable _onDispose;
+    protected final String _nodeTag;
+    private final AtomicBoolean _disposed = new AtomicBoolean();
+    private final CountDownLatch _disposedSignal = new CountDownLatch(1);
 
     private final WebSocketClient _client;
     private Session _clientSession;
@@ -98,9 +103,19 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
         }, _executorService);
 
         _onDispose = onDispose;
+        _nodeTag = nodeTag;
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
         _task = CompletableFuture.runAsync(() -> doWork(nodeTag), executorService);
+        _task.whenComplete((r, e) -> {
+            // the changes object closes itself when its connection loop ends (failure or close),
+            // close is dispatched to the executor since it waits for _task and invokes onDispose
+            try {
+                executorService.execute(this::close);
+            } catch (RejectedExecutionException ignored) {
+                // executor is shut down - the store is being closed
+            }
+        });
     }
 
     protected WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
@@ -181,12 +196,17 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
 
     @Override
     public void close() {
+        if (!_disposed.compareAndSet(false, true)) {
+            return;
+        }
+
         try {
             for (CompletableFuture<Void> confirmation : _confirmations.values()) {
                 confirmation.cancel(false);
             }
 
             _cts.cancel();
+            _disposedSignal.countDown();
 
             if (_clientSession != null) {
                 IOUtils.closeQuietly(_clientSession, null);
@@ -327,6 +347,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
             return;
         }
 
+        int timerInSec = 1;
         boolean wasConnected = false;
         while (!_cts.getToken().isCancellationRequested()) {
             try {
@@ -334,7 +355,9 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                     String urlString = _serverNode.getUrl() + "/databases/" + _database + "/changes";
                     URI url;
                     try {
-                        url = new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase()));
+                        // percent-encode non-ASCII characters (e.g. in database names) as UTF-8, like System.Uri does in C#
+                        url = new URI(new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase())).toASCIIString());
+                        _url = url.toString();
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
@@ -343,6 +366,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                     ClientUpgradeRequest request = new ClientUpgradeRequest();
                     request.setTimeout(10_000, TimeUnit.MILLISECONDS);
                     _clientSession = _client.connect(_processor, url, request).get();
+                    timerInSec = 1;
                     wasConnected = true;
 
                     _immediateConnection.set(1);
@@ -356,18 +380,39 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
 
                 _processor.processing.get();
             } catch (Exception e) {
+                if (_cts.getToken().isCancellationRequested()) {
+                    // disposing
+                    return;
+                }
+
                 if (e instanceof ExecutionException && e.getCause() instanceof ChangeProcessingException) {
                     continue;
                 }
 
                 try {
+                    notifyAboutReconnection(e);
+
                     if (wasConnected) {
                         EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
                     }
                     wasConnected = false;
 
                     try {
-                        _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                        // If node tag is provided we should not failover to a different node
+                        // Failing over will create a mismatch if the operation is created and monitored on the provided node tag
+                        if (StringUtils.isEmpty(_nodeTag)) {
+                            _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                        } else {
+                            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(_serverNode);
+                            updateParameters.setTimeoutInMs(0);
+                            updateParameters.setForceUpdate(true);
+                            updateParameters.setDebugTag("changes-api-connection-failure-" + _database);
+                            try {
+                                _requestExecutor.updateTopologyAsync(updateParameters).get();
+                            } catch (ExecutionException executionException) {
+                                throw ExceptionsUtils.unwrapException(executionException);
+                            }
+                        }
                     } catch (DatabaseDoesNotExistException databaseDoesNotExistException) {
                         e = databaseDoesNotExistException;
                         throw databaseDoesNotExistException;
@@ -395,9 +440,13 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
             }
 
             try {
-                // wait before next retry
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
+                // wait before next retry (exponential backoff, reset on successful connection)
+                timerInSec = Math.min(timerInSec * 2, 60);
+                if (_disposedSignal.await(timerInSec, TimeUnit.SECONDS)) {
+                    return;
+                }
+            } catch (InterruptedException e) {
+                return;
             }
         }
     }
@@ -424,6 +473,12 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
     private void processErrorNotification(ObjectNode json) {
         String exceptionAsString = json.get("Exception").asText();
         notifyAboutError(new RuntimeException(exceptionAsString));
+    }
+
+    /**
+     * Invoked when the connection failed and the changes are about to reconnect.
+     */
+    protected void notifyAboutReconnection(Exception e) {
     }
 
     protected void notifyAboutError(Exception e) {

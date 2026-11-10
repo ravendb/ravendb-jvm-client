@@ -12,9 +12,14 @@ import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
+import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -362,6 +367,84 @@ public class ChangesTest extends RemoteTestBase {
                     .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
 
             store.maintenance().send(new GetStatisticsOperation());
+        }
+    }
+
+    @Test
+    public void cacheIsUpdatedAfterInitialFailure() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String newDatabaseName = store.getDatabase() + UUID.randomUUID();
+            final String oldName = "Grisha";
+            final String newName = "Grisha Kotler";
+
+            assertThatThrownBy(() -> {
+                try (CleanCloseable ignored = store.aggressivelyCacheFor(Duration.ofDays(365), newDatabaseName)) {
+                    // empty
+                }
+            }).isExactlyInstanceOf(DatabaseDoesNotExistException.class);
+
+            store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDatabaseName)));
+
+            try {
+                try (IDocumentSession session = store.openSession(newDatabaseName)) {
+                    User user = new User();
+                    user.setName(oldName);
+                    session.store(user, "users/1");
+                    session.saveChanges();
+                }
+
+                try (CleanCloseable ignored = store.aggressivelyCacheFor(Duration.ofDays(365), newDatabaseName);
+                     IDocumentSession session = store.openSession(newDatabaseName)) {
+                    User loaded = session.load(User.class, "users/1");
+                    assertThat(loaded.getName())
+                            .isEqualTo(oldName);
+                }
+
+                try (IDocumentSession session = store.openSession(newDatabaseName)) {
+                    User loaded = session.load(User.class, "users/1");
+                    loaded.setName(newName);
+                    session.saveChanges();
+                }
+
+                String value = waitForValue(() -> loadNameAggressively(store, newDatabaseName), newName);
+                assertThat(value)
+                        .isEqualTo(newName);
+
+                store.maintenance().server().send(new DeleteDatabasesOperation(newDatabaseName, true));
+
+                Boolean exception = waitForValue(() -> {
+                    try (CleanCloseable ignored = store.aggressivelyCacheFor(Duration.ofDays(365), newDatabaseName)) {
+                        return false;
+                    } catch (DatabaseDoesNotExistException e) {
+                        return true;
+                    }
+                }, true);
+
+                assertThat(exception)
+                        .isTrue();
+
+                store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDatabaseName)));
+
+                try (IDocumentSession session = store.openSession(newDatabaseName)) {
+                    User user = new User();
+                    user.setName(oldName);
+                    session.store(user, "users/1");
+                    session.saveChanges();
+                }
+
+                value = waitForValue(() -> loadNameAggressively(store, newDatabaseName), oldName);
+                assertThat(value)
+                        .isEqualTo(oldName);
+            } finally {
+                store.maintenance().server().send(new DeleteDatabasesOperation(newDatabaseName, true));
+            }
+        }
+    }
+
+    private static String loadNameAggressively(IDocumentStore store, String database) {
+        try (CleanCloseable ignored = store.aggressivelyCacheFor(Duration.ofDays(365), database);
+             IDocumentSession session = store.openSession(database)) {
+            return session.load(User.class, "users/1").getName();
         }
     }
 }

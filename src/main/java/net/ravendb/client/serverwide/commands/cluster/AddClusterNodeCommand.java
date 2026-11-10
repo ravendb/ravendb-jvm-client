@@ -44,8 +44,10 @@ public class AddClusterNodeCommand extends VoidRavenCommand implements IRaftComm
         return new HttpPut(url);
     }
 
+    private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
     @Override
     public String getRaftUniqueRequestId() {
-        return RaftIdGenerator.newId();
+        return raftUniqueRequestId;
     }
 }

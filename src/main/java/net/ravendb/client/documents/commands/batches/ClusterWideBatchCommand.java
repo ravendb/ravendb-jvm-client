@@ -15,9 +15,11 @@ public class ClusterWideBatchCommand extends SingleNodeBatchCommand implements I
         return _disableAtomicDocumentWrites;
     }
 
+    private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
     @Override
     public String getRaftUniqueRequestId() {
-        return RaftIdGenerator.newId();
+        return raftUniqueRequestId;
     }
 
     public ClusterWideBatchCommand(DocumentConventions conventions, List<ICommandData> commands) {

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.indexes.counters;
 
+import net.ravendb.client.Constants;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.documents.indexes.*;
 
 import java.util.HashMap;
@@ -104,6 +106,11 @@ public class AbstractJavaScriptCountersIndexCreationTask extends AbstractIndexCr
         _definition.setPriority(priority);
         _definition.setState(state);
         _definition.setDeploymentMode(deploymentMode);
+        _definition.setCompoundFields(compoundFieldsStrings);
+
+        if (searchEngineType != null) {
+            _definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        }
         return _definition;
     }
 }

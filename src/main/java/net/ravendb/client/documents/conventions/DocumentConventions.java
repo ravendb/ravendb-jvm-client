@@ -29,6 +29,10 @@ import java.util.function.Function;
 
 public class DocumentConventions {
 
+    // must be initialized before defaultConventions/defaultForServerConventions are constructed
+    static final HttpCompressionAlgorithm DEFAULT_HTTP_COMPRESSION_ALGORITHM =
+            parseHttpCompressionAlgorithm(System.getenv("RAVEN_HTTP_COMPRESSION_ALGORITHM"), HttpCompressionAlgorithm.Zstd);
+
     public static final DocumentConventions defaultConventions = new DocumentConventions();
     public static final DocumentConventions defaultForServerConventions = new DocumentConventions();
 
@@ -36,6 +40,22 @@ public class DocumentConventions {
         defaultConventions.freeze();
         defaultForServerConventions._sendApplicationIdentifier = false;
         defaultForServerConventions.freeze();
+    }
+
+    static HttpCompressionAlgorithm parseHttpCompressionAlgorithm(String httpCompressionAlgorithmAsString, HttpCompressionAlgorithm defaultValue) {
+        if (httpCompressionAlgorithmAsString == null) {
+            return defaultValue;
+        }
+
+        String trimmed = httpCompressionAlgorithmAsString.trim();
+        for (HttpCompressionAlgorithm algorithm : HttpCompressionAlgorithm.values()) {
+            if (algorithm.name().equalsIgnoreCase(trimmed)) {
+                return algorithm;
+            }
+        }
+
+        throw new IllegalStateException("Could not parse 'RAVEN_HTTP_COMPRESSION_ALGORITHM' env variable with value '" + httpCompressionAlgorithmAsString + "'.",
+                new IllegalArgumentException("Requested value '" + httpCompressionAlgorithmAsString + "' was not found."));
     }
 
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
@@ -86,7 +106,7 @@ public class DocumentConventions {
     private ObjectMapper _entityMapper;
     private Boolean _useHttpCompression;
     private Boolean _useHttpDecompression;
-    private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
+    private HttpCompressionAlgorithm _httpCompressionAlgorithm = DEFAULT_HTTP_COMPRESSION_ALGORITHM;
     private boolean _sendApplicationIdentifier;
 
     private final BulkInsertConventions _bulkInsert;

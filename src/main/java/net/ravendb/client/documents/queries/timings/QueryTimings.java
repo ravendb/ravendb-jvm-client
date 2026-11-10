@@ -45,5 +45,6 @@ public class QueryTimings {
 
         durationInMs = queryResult.getTimings().getDurationInMs();
         timings = queryResult.getTimings().getTimings();
+        queryPlan = queryResult.getTimings().getQueryPlan();
     }
 }

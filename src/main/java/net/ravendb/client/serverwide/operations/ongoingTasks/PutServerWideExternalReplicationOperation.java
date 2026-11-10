@@ -49,9 +49,11 @@ public class PutServerWideExternalReplicationOperation implements IServerOperati
             return false;
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
 
         @Override

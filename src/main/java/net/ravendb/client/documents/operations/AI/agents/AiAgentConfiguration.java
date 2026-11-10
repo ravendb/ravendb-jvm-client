@@ -10,12 +10,13 @@ public class AiAgentConfiguration {
     private String systemPrompt;
     private String sampleObject;
     private String outputSchema;
-    private List<AiAgentToolQuery> queries;
-    private List<AiAgentToolAction> actions;
+    private List<AiAgentToolQuery> queries = new ArrayList<>();
+    private List<AiAgentToolAction> actions = new ArrayList<>();
     private List<AiAgentToolSubAgent> subAgents = new ArrayList<>();
-    private List<AiAgentParameter> parameters;
-    private AiAgentChatTrimmingConfiguration chatTrimming;
+    private List<AiAgentParameter> parameters = new ArrayList<>();
+    private AiAgentChatTrimmingConfiguration chatTrimming = new AiAgentChatTrimmingConfiguration(new AiAgentSummarizationByTokens());
     private Integer maxModelIterationsPerCall;
+    private boolean disabled;
 
     public AiAgentConfiguration() {
     }
@@ -142,5 +143,13 @@ public class AiAgentConfiguration {
 
     public void setMaxModelIterationsPerCall(Integer maxModelIterationsPerCall) {
         this.maxModelIterationsPerCall = maxModelIterationsPerCall;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 }

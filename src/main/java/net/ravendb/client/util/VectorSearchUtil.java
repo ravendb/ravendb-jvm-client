@@ -39,6 +39,13 @@ public class VectorSearchUtil {
                         source, dest));
     }
 
+    /**
+     * @param vector vector to wrap
+     * @param <T> embedding element type
+     * @return map with "@vector" key
+     * @deprecated Use {@link net.ravendb.client.documents.RavenVector}, which serializes itself as <code>{"@vector": [...]}</code>.
+     */
+    @Deprecated
     public static <T extends Number> Map<String, IRavenVector<T>> ravenVector(IRavenVector<T> vector) {
         Map<String, IRavenVector<T>> wrapper = new HashMap<>();
         wrapper.put("@vector", vector);

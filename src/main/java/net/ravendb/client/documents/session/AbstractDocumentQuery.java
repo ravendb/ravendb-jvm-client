@@ -340,13 +340,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         builder.accept(builderImpl);
 
-        Object shardContext;
-
-        if (builderImpl.documentIds.size() == 1) {
-            shardContext = builderImpl.documentIds.iterator().next();
-        } else {
-            shardContext = builderImpl.documentIds;
-        }
+        Map<String, Object> shardContext = new LinkedHashMap<>();
+        shardContext.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_DOCUMENT_IDS, builderImpl.documentIds);
+        shardContext.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_PREFIXES, builderImpl.prefixes);
 
         queryParameters.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_PARAMETER_NAME, shardContext);
     }
@@ -1030,8 +1026,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 numberOfCandidates,
                 isExact != null ? isExact : VectorSearchToken.DEFAULT_IS_EXACT,
                 vectorSearchResult.isDocumentId(),
-                taskIdentifier == "" ? null : taskIdentifier,
-                taskIdentifierByValue == "" ? null : taskIdentifierByValue
+                StringUtils.isEmpty(taskIdentifier) ? null : taskIdentifier,
+                StringUtils.isEmpty(taskIdentifierByValue) ? null : taskIdentifierByValue
         );
         tokens.add(vectorSearchToken);
     }
@@ -1709,6 +1705,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         QueryToken lastToken = tokens.get(tokens.size() - 1);
+
+        if (lastToken instanceof TrueToken) {
+            tokens.add(getDefaultOperatorToken());
+            return;
+        }
+
         if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
             return;
         }
@@ -1722,13 +1724,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
         }
 
-        QueryOperatorToken token = defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
+        QueryOperatorToken token = getDefaultOperatorToken();
 
         if (lastWhere != null && lastWhere.getOptions().getSearchOperator() != null) {
             token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
         }
 
         tokens.add(token);
+    }
+
+    private QueryOperatorToken getDefaultOperatorToken() {
+        return defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
     }
 
     private Collection<?> transformCollection(String fieldName, Collection<?> values) {
@@ -2468,6 +2474,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
     }
 
+    public Lazy<Long> longCountLazily() {
+        if (queryOperation == null) {
+            _take(0);
+            queryOperation = initializeQueryOperation();
+        }
+
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
+        return ((DocumentSession)theSession).addLazyCountLongOperation(lazyQueryOperation);
+    }
+
     @Override
     public void _suggestUsing(SuggestionBase suggestion) {
         if (suggestion == null) {
@@ -2663,6 +2679,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                             fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
                                     fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ? fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() :
                                     fieldValueFactory.getById();
+            if (factoryResult == null) {
+                throw new IllegalStateException("Cannot use VectorSearch without text(s), document id or embedding(s).");
+            }
             String embeddingsGenerationTaskIdentifierByValue = fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ?
                     fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() : null;
             return new VectorSearchValueResult(factoryResult, embeddingsGenerationTaskIdentifierByValue, fieldValueFactory.getById() != null);

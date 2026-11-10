@@ -29,6 +29,12 @@ public class MultiTypeHiLoIdGenerator {
         _identityPartsSeparator = conventions.getIdentityPartsSeparator();
     }
 
+    /**
+     * @param entity Entity
+     * @return document id
+     * @deprecated This method is deprecated and will be removed in RavenDB 8.0, use the overload with collectionName instead
+     */
+    @Deprecated
     public String generateDocumentId(Object entity) {
         char identityPartsSeparator = conventions.getIdentityPartsSeparator();
         if (_identityPartsSeparator != identityPartsSeparator) {
@@ -62,6 +68,37 @@ public class MultiTypeHiLoIdGenerator {
         return value.generateDocumentId(entity);
     }
 
+    public String generateDocumentId(String collectionName) {
+        char identityPartsSeparator = conventions.getIdentityPartsSeparator();
+        if (_identityPartsSeparator != identityPartsSeparator) {
+            maybeRefresh(identityPartsSeparator);
+        }
+
+        if (StringUtils.isEmpty(collectionName)) {
+            return null;
+        }
+
+        String tag = conventions.getTransformClassCollectionNameToDocumentIdPrefix().apply(collectionName);
+
+        HiLoIdGenerator value = _idGeneratorsByTag.get(tag);
+        if (value != null) {
+            return value.generateDocumentId(collectionName);
+        }
+
+        synchronized (_generatorLock) {
+            value = _idGeneratorsByTag.get(tag);
+
+            if (value != null) {
+                return value.generateDocumentId(collectionName);
+            }
+
+            value = createGeneratorFor(tag);
+            _idGeneratorsByTag.put(tag, value);
+        }
+
+        return value.generateDocumentId(collectionName);
+    }
+
     private void maybeRefresh(char identityPartsSeparator) {
         List<HiLoIdGenerator> idGenerators = null;
 
@@ -86,6 +123,8 @@ public class MultiTypeHiLoIdGenerator {
     }
 
     public long generateNextIdFor(String collectionName) {
+        collectionName = conventions.getTransformClassCollectionNameToDocumentIdPrefix().apply(collectionName);
+
         HiLoIdGenerator value = _idGeneratorsByTag.get(collectionName);
         if (value != null) {
             return value.getNextId().getId();

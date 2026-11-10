@@ -76,9 +76,11 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
             return request;
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

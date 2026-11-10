@@ -117,9 +117,11 @@ public final class ConfigureRemoteAttachmentsOperation
             result = mapper.readValue(response, resultClass);
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

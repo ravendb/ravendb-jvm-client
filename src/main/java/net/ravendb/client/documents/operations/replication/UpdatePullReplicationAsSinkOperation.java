@@ -108,9 +108,11 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
             return false;
         }
 
+        private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
         @Override
         public String getRaftUniqueRequestId() {
-            return RaftIdGenerator.newId();
+            return raftUniqueRequestId;
         }
     }
 }

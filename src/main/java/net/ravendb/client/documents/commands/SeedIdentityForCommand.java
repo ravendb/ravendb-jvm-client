@@ -63,8 +63,10 @@ public class SeedIdentityForCommand extends RavenCommand<Long> implements IRaftC
         result = jsonNode.get("NewSeedValue").asLong();
     }
 
+    private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
     @Override
     public String getRaftUniqueRequestId() {
-        return RaftIdGenerator.newId();
+        return raftUniqueRequestId;
     }
 }

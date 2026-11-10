@@ -32,11 +32,35 @@ public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
         HttpPost request = new HttpPost(url);
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
-                generator.getCodec().writeValue(generator, _options);
+                writeSubscriptionUpdateOptions(generator, _options);
             }
         }, ContentType.APPLICATION_JSON, _conventions));
 
         return request;
+    }
+
+    private static void writeSubscriptionUpdateOptions(JsonGenerator generator, SubscriptionUpdateOptions options) throws IOException {
+        generator.writeStartObject();
+
+        if (options.getId() != null) {
+            generator.writeNumberField("Id", options.getId());
+        }
+
+        if (options.isPinToMentorNodeWasSet()) {
+            generator.writeBooleanField("PinToMentorNode", options.isPinToMentorNode());
+        }
+
+        generator.writeBooleanField("CreateNew", options.isCreateNew());
+        generator.writeStringField("Name", options.getName());
+        generator.writeStringField("Query", options.getQuery());
+        generator.writeStringField("ChangeVector", options.getChangeVector());
+        generator.writeStringField("MentorNode", options.getMentorNode());
+
+        if (options.isDisabledWasSet()) {
+            generator.writeBooleanField("Disabled", options.isDisabled());
+        }
+
+        generator.writeEndObject();
     }
 
     @Override
@@ -60,8 +84,10 @@ public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
         return false;
     }
 
+    private final String raftUniqueRequestId = RaftIdGenerator.newId();
+
     @Override
     public String getRaftUniqueRequestId() {
-        return RaftIdGenerator.newId();
+        return raftUniqueRequestId;
     }
 }

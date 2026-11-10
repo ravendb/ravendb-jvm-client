@@ -5,6 +5,10 @@ public class AiAgentHistoryConfiguration {
     public AiAgentHistoryConfiguration() {
     }
 
+    public AiAgentHistoryConfiguration(java.time.Duration expiration) {
+        this.historyExpirationInSec = (int) expiration.getSeconds();
+    }
+
     public AiAgentHistoryConfiguration(Integer historyExpirationInSec) {
         this.historyExpirationInSec = historyExpirationInSec;
     }

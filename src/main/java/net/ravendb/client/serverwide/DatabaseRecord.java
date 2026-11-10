@@ -8,6 +8,9 @@ import net.ravendb.client.documents.indexes.RollingIndex;
 import net.ravendb.client.documents.indexes.RollingIndexDeployment;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.AI.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.EmbeddingsGenerationConfiguration;
+import net.ravendb.client.documents.operations.AI.GenAiConfiguration;
+import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
@@ -30,6 +33,7 @@ import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
+import net.ravendb.client.documents.operations.revisions.RevisionsBinConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.operations.schemaValidation.SchemaValidationConfiguration;
@@ -62,6 +66,7 @@ public class DatabaseRecord {
     private Map<String, AutoIndexDefinition> autoIndexes;
     private Map<String, String> settings = new HashMap<>();
     private RevisionsConfiguration revisions;
+    private RevisionsBinConfiguration revisionsBin;
     private TimeSeriesConfiguration timeSeries;
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
@@ -79,6 +84,7 @@ public class DatabaseRecord {
     private Map<String, SqlConnectionString> sqlConnectionStrings = new HashMap<>();
     private Map<String, OlapConnectionString> olapConnectionStrings = new HashMap<>();
     private Map<String, AiConnectionString> aiConnectionStrings = new HashMap<>();
+    private List<AiAgentConfiguration> aiAgents = new ArrayList<>();
     private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings = new HashMap<>();
     private Map<String, QueueConnectionString> queueConnectionStrings = new HashMap<>();
     private Map<String, SnowflakeConnectionString> snowflakeConnectionStrings = new HashMap<>();
@@ -90,6 +96,8 @@ public class DatabaseRecord {
     private List<SnowflakeEtlConfiguration> snowflakeEtls = new ArrayList<>();
     private List<QueueSinkConfiguration> queueSinks = new ArrayList<>();
     private List<CdcSinkConfiguration> cdcSinks = new ArrayList<>();
+    private List<EmbeddingsGenerationConfiguration> embeddingsGenerations = new ArrayList<>();
+    private List<GenAiConfiguration> genAis = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -235,6 +243,14 @@ public class DatabaseRecord {
 
     public void setRevisions(RevisionsConfiguration revisions) {
         this.revisions = revisions;
+    }
+
+    public RevisionsBinConfiguration getRevisionsBin() {
+        return revisionsBin;
+    }
+
+    public void setRevisionsBin(RevisionsBinConfiguration revisionsBin) {
+        this.revisionsBin = revisionsBin;
     }
 
     public TimeSeriesConfiguration getTimeSeries() {
@@ -487,6 +503,30 @@ public class DatabaseRecord {
 
     public void setQueueSinks(List<QueueSinkConfiguration> queueSinks) {
         this.queueSinks = queueSinks;
+    }
+
+    public List<AiAgentConfiguration> getAiAgents() {
+        return aiAgents;
+    }
+
+    public void setAiAgents(List<AiAgentConfiguration> aiAgents) {
+        this.aiAgents = aiAgents;
+    }
+
+    public List<EmbeddingsGenerationConfiguration> getEmbeddingsGenerations() {
+        return embeddingsGenerations;
+    }
+
+    public void setEmbeddingsGenerations(List<EmbeddingsGenerationConfiguration> embeddingsGenerations) {
+        this.embeddingsGenerations = embeddingsGenerations;
+    }
+
+    public List<GenAiConfiguration> getGenAis() {
+        return genAis;
+    }
+
+    public void setGenAis(List<GenAiConfiguration> genAis) {
+        this.genAis = genAis;
     }
 
     public List<CdcSinkConfiguration> getCdcSinks() {

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 
@@ -111,6 +112,7 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
     /**
      * Returns the base endpoint URI, ensuring it ends with a slash.
      */
+    @JsonIgnore
     public String getBaseEndpointUri() {
         String uri = this.endpoint;
         if (uri != null && !uri.endsWith("/")) {

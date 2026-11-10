@@ -3,14 +3,19 @@ package net.ravendb.client.documents.operations.etl.sql;
 import net.ravendb.client.documents.operations.etl.EtlConfiguration;
 import net.ravendb.client.documents.operations.etl.EtlType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SqlEtlConfiguration extends EtlConfiguration<SqlConnectionString> {
-    private boolean parameterizeDeletes;
+    private boolean parameterizeDeletes = true;
     private boolean forceQueryRecompile;
-    private boolean quoteTables;
+    private boolean quoteTables = true;
     private Integer commandTimeout;
     private List<SqlEtlTable> sqlTables;
+
+    public SqlEtlConfiguration() {
+        sqlTables = new ArrayList<>();
+    }
 
     public boolean isParameterizeDeletes() {
         return parameterizeDeletes;
